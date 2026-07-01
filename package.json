@@ -8,13 +8,25 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "sh -c 'npm run dev:api & npm run dev:web & wait'",
     "dev:web": "npm run dev -w apps/web",
     "dev:api": "npm run dev -w apps/api",
+    "build:types": "npm run build -w packages/types",
+    "build:ui": "npm run build -w packages/ui",
+    "build:api": "npm run build -w apps/api",
+    "build:web": "npm run build -w apps/web",
     "build": "npm run build -w packages/types && npm run build -w packages/ui && npm run build -w apps/api && npm run build -w apps/web",
+    "test:api": "npm run test -w apps/api",
+    "test:web": "npm run test -w apps/web",
     "test": "npm run test -w apps/api && npm run test -w apps/web",
+    "lint:api": "npm run lint -w apps/api",
+    "lint:web": "npm run lint -w apps/web",
     "lint": "npm run lint -w apps/api && npm run lint -w apps/web",
+    "start:api": "npm run start -w apps/api",
+    "preview:web": "npm run preview -w apps/web",
     "prisma:generate": "npm run prisma:generate -w apps/api",
     "prisma:migrate": "npm run prisma:migrate -w apps/api",
+    "prisma:seed": "npm run seed -w apps/api",
     "seed": "npm run seed -w apps/api"
   },
   "devDependencies": {
