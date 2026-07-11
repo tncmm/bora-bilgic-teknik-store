@@ -1,0 +1,11 @@
+services:
+  - type: static_site
+    name: bora-bilgic-teknik-store-web
+    env: static
+    rootDir: .
+    buildCommand: npm install && npm run build:web
+    staticPublishPath: ./apps/web/dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false

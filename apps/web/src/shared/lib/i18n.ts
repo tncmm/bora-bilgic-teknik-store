@@ -16,9 +16,14 @@ export function getDefaultLanguage(): Language {
 
 export function translateCategoryName(language: Language, slug?: string, fallback?: string) {
   const dictionary: Record<string, { tr: string; en: string }> = {
-    'camera-drones': { tr: 'Kamera Dronlari', en: 'Camera Drones' },
-    handheld: { tr: 'Handheld', en: 'Handheld' },
-    enterprise: { tr: 'Enterprise', en: 'Enterprise' },
+    'camera-drones': { tr: 'Drone', en: 'Drone' },
+    handheld: { tr: 'Creator Sistemleri', en: 'Creator Systems' },
+    enterprise: { tr: 'Kurumsal', en: 'Enterprise' },
+    drone: { tr: 'Drone', en: 'Drone' },
+    gimbal: { tr: 'Gimbal', en: 'Gimbal' },
+    'aksiyon-kamera': { tr: 'Aksiyon Kamera', en: 'Action Camera' },
+    aksesuar: { tr: 'Aksesuar', en: 'Accessories' },
+    kurumsal: { tr: 'Kurumsal', en: 'Enterprise' },
   };
 
   if (!slug || !dictionary[slug]) {

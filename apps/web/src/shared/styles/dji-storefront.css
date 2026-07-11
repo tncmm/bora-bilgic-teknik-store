@@ -1,0 +1,1385 @@
+:root {
+  --font-heading: 'Avenir Next', 'Helvetica Neue', sans-serif;
+  --font-body: 'SF Pro Display', 'Avenir Next', sans-serif;
+  --container-max: 1520px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 18px;
+}
+
+:root,
+:root[data-theme='light'],
+:root[data-theme='dark'] {
+  --bg: #07090d;
+  --bg-elevated: rgba(12, 17, 23, 0.86);
+  --surface: #0d1218;
+  --surface-strong: #111822;
+  --surface-muted: #151d28;
+  --surface-ink: #05070a;
+  --text: #d7dde7;
+  --text-strong: #ffffff;
+  --text-soft: #8e97a8;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --primary: #ff6a1a;
+  --primary-strong: #ff8744;
+  --primary-contrast: #ffffff;
+  --danger: #ff8f80;
+  --success: #2de28f;
+  --warning: #ffb648;
+}
+
+body {
+  background:
+    radial-gradient(circle at top center, rgba(255, 106, 26, 0.18), transparent 26%),
+    linear-gradient(180deg, #06080b 0%, #0a0f14 48%, #05070a 100%);
+  color: var(--text);
+}
+
+.ui-card,
+.ui-button--secondary,
+.ui-input,
+.ui-select,
+.ui-textarea {
+  backdrop-filter: blur(18px);
+}
+
+.ui-button {
+  border-radius: 10px;
+  letter-spacing: 0.06em;
+}
+
+.ui-button--primary {
+  background: linear-gradient(135deg, #ff6a1a 0%, #ff7f33 100%);
+}
+
+.ui-button--secondary {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-strong);
+}
+
+.ui-input,
+.ui-select,
+.ui-textarea {
+  background: rgba(15, 21, 29, 0.82);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dji-main {
+  min-height: 100vh;
+}
+
+.dji-wordmark {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.dji-wordmark--footer {
+  font-size: 1.55rem;
+  margin-bottom: 1rem;
+}
+
+.dji-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(5, 8, 11, 0.84);
+  backdrop-filter: blur(18px);
+}
+
+.dji-header__inner {
+  min-height: 84px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+.dji-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1.8rem;
+}
+
+.dji-nav a,
+.dji-header__icon,
+.dji-header__toggle {
+  color: rgba(255, 255, 255, 0.88);
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 180ms ease, opacity 180ms ease;
+}
+
+.dji-nav a {
+  position: relative;
+  padding: 0.35rem 0;
+}
+
+.dji-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1.2rem;
+  height: 2px;
+  background: var(--primary);
+  opacity: 0;
+}
+
+.dji-nav a.active::after,
+.dji-nav a:hover::after {
+  opacity: 1;
+}
+
+.dji-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dji-header__icon,
+.dji-header__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.dji-header__toggle {
+  display: none;
+  cursor: pointer;
+}
+
+.dji-cart-link {
+  position: relative;
+}
+
+.dji-cart-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.dji-hero,
+.dji-listing-hero,
+.dji-contact-hero {
+  position: relative;
+  padding-top: 84px;
+  overflow: hidden;
+}
+
+.dji-hero {
+  min-height: 760px;
+}
+
+.dji-listing-hero,
+.dji-contact-hero {
+  min-height: 420px;
+}
+
+.dji-hero__background,
+.dji-listing-hero__background {
+  position: absolute;
+  inset: 0;
+}
+
+.dji-hero__background::after,
+.dji-listing-hero__background::after,
+.dji-contact-hero::after,
+.dji-newsletter__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(4, 7, 11, 0.92) 0%, rgba(7, 11, 15, 0.52) 46%, rgba(4, 7, 11, 0.94) 100%);
+}
+
+.dji-hero__background img,
+.dji-listing-hero__background img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dji-hero__content,
+.dji-listing-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-height: inherit;
+  padding-bottom: 3.6rem;
+}
+
+.dji-hero__copy {
+  max-width: 560px;
+  padding: 0;
+}
+
+.dji-kicker {
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.9rem;
+}
+
+.dji-hero h1,
+.dji-listing-hero h1,
+.dji-contact-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.8rem, 5vw, 4.6rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.dji-hero h2 {
+  margin: 0.65rem 0 0.95rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dji-hero p,
+.dji-listing-hero p,
+.dji-contact-hero p {
+  max-width: 540px;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.dji-hero__actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dji-service-band {
+  position: relative;
+  z-index: 2;
+}
+
+.dji-service-band--overlay {
+  margin-top: -42px;
+}
+
+.dji-service-band__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(10, 15, 21, 0.92);
+}
+
+.dji-service-band__item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.6rem 1.8rem;
+}
+
+.dji-service-band__item + .dji-service-band__item {
+  border-left: 1px solid var(--border);
+}
+
+.dji-service-band__item .material-symbols-outlined {
+  font-size: 2rem;
+}
+
+.dji-service-band__item strong {
+  display: block;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.dji-service-band__item p {
+  margin: 0.35rem 0 0;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.dji-section {
+  padding: 4.5rem 0;
+}
+
+.dji-section--listing {
+  padding-top: 2rem;
+}
+
+.dji-section__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dji-section__heading h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 2.2rem;
+  letter-spacing: -0.03em;
+}
+
+.dji-section__heading a {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dji-category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dji-category-card,
+.dji-product-card,
+.dji-newsletter__card,
+.dji-contact-card,
+.auth-card,
+.profile-card,
+.checkout-panel,
+.order-panel,
+.admin-panel,
+.admin-table {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(12, 17, 23, 0.96), rgba(10, 14, 19, 0.94));
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.25);
+}
+
+.dji-category-card {
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.dji-category-card__media {
+  height: 180px;
+  background: radial-gradient(circle at top right, rgba(255, 106, 26, 0.2), transparent 48%);
+}
+
+.dji-category-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.84;
+}
+
+.dji-category-card__content {
+  padding: 1.25rem;
+}
+
+.dji-category-card__content h3 {
+  margin: 0 0 0.55rem;
+  color: #fff;
+  font-size: 1.35rem;
+}
+
+.dji-category-card__content p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.dji-product-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dji-product-card {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 340px;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.dji-category-card:hover,
+.dji-product-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 106, 26, 0.34);
+}
+
+.dji-product-card__link {
+  display: block;
+  padding: 0.95rem 0.95rem 0.5rem;
+}
+
+.dji-product-card__badge {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dji-product-card__image {
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dji-product-card__image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.dji-product-card__content h3 {
+  margin: 0 0 0.4rem;
+  color: #fff;
+  font-size: 0.96rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dji-product-card__price {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dji-product-card__actions {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0 0.95rem 0.95rem;
+}
+
+.dji-icon-button {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: rgba(14, 20, 27, 0.8);
+  color: #fff;
+  cursor: pointer;
+}
+
+.dji-icon-button.is-active {
+  color: var(--primary);
+}
+
+.dji-icon-button--accent {
+  margin-left: auto;
+  border-color: var(--primary);
+  background: linear-gradient(135deg, #ff6a1a 0%, #ff7f33 100%);
+}
+
+.dji-icon-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dji-newsletter__card {
+  position: relative;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  overflow: hidden;
+}
+
+.dji-editorial-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.dji-editorial-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(13, 18, 24, 0.96), rgba(9, 14, 19, 0.92));
+  overflow: hidden;
+}
+
+.dji-editorial-card h3 {
+  margin: 0.2rem 0 0.8rem;
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.dji-editorial-card p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.dji-editorial-card--wide {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  align-items: end;
+}
+
+.dji-editorial-card--wide img {
+  width: 100%;
+  height: auto;
+  align-self: end;
+}
+
+.dji-newsletter__card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dji-newsletter__card h2 {
+  margin: 0 0 0.5rem;
+  color: #fff;
+  font-size: 2.4rem;
+}
+
+.dji-newsletter__card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.dji-newsletter__form {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: min(100%, 460px);
+}
+
+.dji-newsletter__form .ui-input {
+  min-width: 280px;
+}
+
+.dji-footer {
+  padding: 3.8rem 0 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(5, 8, 11, 0.76);
+}
+
+.dji-footer__top {
+  display: grid;
+  grid-template-columns: 1.2fr 0.85fr 0.85fr 0.9fr;
+  gap: 2rem;
+}
+
+.dji-footer__top h4 {
+  margin: 0 0 1rem;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.dji-footer__top p,
+.dji-footer__top a {
+  color: var(--text-soft);
+  line-height: 1.8;
+}
+
+.dji-footer__top nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dji-footer__socials,
+.dji-footer__payments {
+  display: flex;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.dji-footer__payments span {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+}
+
+.dji-footer__bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.dji-footer__bottom div {
+  display: flex;
+  gap: 1rem;
+}
+
+.dji-breadcrumbs {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.dji-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1.1rem 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  background: rgba(9, 14, 20, 0.9);
+}
+
+.dji-toolbar__left,
+.dji-toolbar__right {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.dji-toolbar span {
+  color: #fff;
+  font-weight: 600;
+}
+
+.dji-toolbar .ui-select {
+  min-width: 150px;
+}
+
+.dji-listing-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1rem;
+}
+
+.dji-sidebar,
+.dji-listing-grid-shell {
+  border: 1px solid var(--border);
+  background: rgba(9, 14, 20, 0.9);
+}
+
+.dji-sidebar {
+  padding: 1.3rem;
+  border-radius: 0 0 0 18px;
+}
+
+.dji-listing-grid-shell {
+  padding: 1rem;
+  border-radius: 0 0 18px 0;
+}
+
+.dji-sidebar__group + .dji-sidebar__group {
+  margin-top: 1.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--border);
+}
+
+.dji-sidebar__group h3 {
+  margin: 0 0 0.9rem;
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.dji-sidebar__link,
+.dji-range-chip,
+.dji-clear-button {
+  width: 100%;
+  display: block;
+  margin-bottom: 0.55rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(14, 20, 27, 0.74);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dji-sidebar__link.is-active,
+.dji-range-chip.is-active {
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.dji-price-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.dji-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+  color: var(--text);
+}
+
+.dji-check-row input {
+  accent-color: var(--primary);
+}
+
+.dji-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  color: var(--text-soft);
+}
+
+.dji-pagination__buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dji-pagination__buttons button,
+.dji-pagination__buttons strong {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(14, 20, 27, 0.74);
+  color: #fff;
+}
+
+.dji-detail {
+  padding: 7rem 0 2.4rem;
+}
+
+.dji-detail__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  gap: 1.5rem;
+}
+
+.dji-detail__gallery {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 1rem;
+}
+
+.dji-detail__thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.dji-detail__thumbs button {
+  width: 92px;
+  height: 92px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(14, 20, 27, 0.74);
+  cursor: pointer;
+}
+
+.dji-detail__thumbs button.is-active {
+  border-color: var(--primary);
+}
+
+.dji-detail__thumbs img,
+.dji-detail__stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dji-detail__stage {
+  min-height: 560px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(8, 12, 17, 0.96);
+}
+
+.dji-detail__copy h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 1.06;
+}
+
+.dji-detail__subtitle {
+  margin: 0.45rem 0 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.dji-detail__rating,
+.dji-detail__price-row,
+.dji-detail__cta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.dji-detail__rating {
+  margin-bottom: 1.2rem;
+  font-size: 0.92rem;
+}
+
+.dji-detail__rating .material-symbols-outlined {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.dji-detail__rating .material-symbols-outlined.is-filled {
+  color: #ffbf2e;
+}
+
+.dji-detail__price-row {
+  margin-bottom: 1.3rem;
+}
+
+.dji-detail__price-row strong {
+  color: #fff;
+  font-size: 2.15rem;
+  letter-spacing: -0.03em;
+}
+
+.dji-detail__price-row span {
+  color: var(--text-soft);
+}
+
+.dji-detail__price-row em {
+  color: var(--success);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.dji-detail__features {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.dji-detail__features li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.dji-detail__features .material-symbols-outlined {
+  color: var(--primary);
+}
+
+.dji-detail__packages h3 {
+  margin: 0 0 0.9rem;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.dji-detail__package-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.4rem;
+}
+
+.dji-detail__package-grid button {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(14, 20, 27, 0.78);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dji-detail__package-grid button.is-active {
+  border-color: var(--primary);
+}
+
+.dji-detail__package-grid strong,
+.dji-detail__package-grid span {
+  display: block;
+}
+
+.dji-detail__package-grid strong {
+  font-size: 0.92rem;
+}
+
+.dji-detail__package-grid span {
+  margin-top: 0.25rem;
+  font-size: 0.98rem;
+}
+
+.dji-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dji-stepper button,
+.dji-stepper span {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14, 20, 27, 0.8);
+  color: #fff;
+  border: 0;
+}
+
+.dji-stepper span {
+  border-inline: 1px solid var(--border);
+}
+
+.dji-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+  padding: 0 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 18px 18px 0 0;
+  background: rgba(8, 12, 17, 0.9);
+}
+
+.dji-tabs button {
+  padding: 1.1rem 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dji-tabs button.is-active {
+  color: #fff;
+  border-bottom-color: var(--primary);
+}
+
+.dji-detail-tabpanel {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 2rem;
+  padding: 1.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0 0 18px 18px;
+  background: rgba(8, 12, 17, 0.9);
+}
+
+.dji-detail-tabpanel h2 {
+  margin: 0 0 1rem;
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.dji-detail-tabpanel p,
+.dji-detail-tabpanel li {
+  color: var(--text);
+  font-size: 0.96rem;
+  line-height: 1.75;
+}
+
+.dji-detail-tabpanel ul {
+  padding-left: 1.2rem;
+}
+
+.dji-detail-tabpanel__media {
+  min-height: 300px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.dji-detail-tabpanel__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dji-contact-hero {
+  padding-bottom: 3rem;
+}
+
+.dji-contact-hero::after {
+  background: linear-gradient(180deg, rgba(5, 8, 11, 0.92) 0%, rgba(5, 8, 11, 0.82) 100%);
+}
+
+.dji-contact-hero > .ui-shell {
+  position: relative;
+  z-index: 1;
+  padding-top: 7rem;
+}
+
+.dji-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dji-contact-card {
+  padding: 1.6rem;
+}
+
+.dji-contact-card h2 {
+  margin: 0 0 0.8rem;
+  color: #fff;
+}
+
+.dji-contact-card p {
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.dji-muted {
+  color: var(--text-soft);
+}
+
+.auth-shell,
+.cart-page,
+.profile-layout,
+.admin-layout {
+  padding-top: 120px;
+}
+
+.auth-shell {
+  padding-bottom: 4rem;
+}
+
+.auth-card,
+.profile-card,
+.checkout-panel,
+.order-panel,
+.admin-panel,
+.admin-table {
+  padding: 1.6rem;
+}
+
+.auth-card h1,
+.profile-card h2,
+.admin-headline h1,
+.cart-page__headline h1 {
+  color: #fff;
+}
+
+.form-feedback--error,
+.text-muted,
+.footer-caption,
+.profile-card p,
+.admin-headline p,
+.cart-page__headline p,
+.section-header p,
+.order-history-row span,
+.favorite-card__body p,
+.favorite-preview-card p {
+  color: var(--text-soft);
+}
+
+.admin-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1rem;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 100px;
+  align-self: start;
+  margin-left: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(9, 14, 20, 0.92);
+}
+
+.admin-sidebar__nav {
+  display: grid;
+  gap: 0.8rem;
+  margin: 2rem 0;
+}
+
+.admin-sidebar__nav a {
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  color: var(--text);
+}
+
+.admin-sidebar__nav a.active {
+  background: rgba(255, 106, 26, 0.14);
+  color: #fff;
+}
+
+.admin-content {
+  padding: 120px 20px 40px 0;
+}
+
+.admin-headline {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-grid,
+.admin-stat-grid,
+.admin-products-layout,
+.checkout-layout,
+.cart-layout,
+.profile-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-stat-grid,
+.checkout-layout,
+.cart-layout {
+  grid-template-columns: 1fr 360px;
+}
+
+.profile-layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-card--full {
+  grid-column: 1 / -1;
+}
+
+.auth-actions,
+.admin-headline__actions,
+.cart-product-card__actions,
+.favorite-card__actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.cart-product-card,
+.favorite-card,
+.favorite-preview-card,
+.order-history-row {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(10, 14, 19, 0.88);
+}
+
+.cart-product-card,
+.favorite-card {
+  overflow: hidden;
+}
+
+.cart-product-card__media,
+.favorite-card__media {
+  background: rgba(13, 19, 26, 0.94);
+}
+
+.cart-product-card__media img,
+.favorite-card__media img,
+.favorite-preview-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-history-row,
+.cart-mini-list__row,
+.summary-row {
+  padding: 1rem 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toast-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 0.75rem;
+  z-index: 120;
+}
+
+.toast {
+  min-width: 280px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(9, 14, 20, 0.95);
+  color: #fff;
+}
+
+.toast p {
+  margin: 0.35rem 0 0;
+  color: var(--text-soft);
+}
+
+@media (max-width: 1200px) {
+  .dji-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dji-footer__top,
+  .dji-contact-grid,
+  .admin-grid,
+  .dji-editorial-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dji-detail__grid,
+  .admin-stat-grid,
+  .checkout-layout,
+  .cart-layout,
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .dji-header__inner {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+  }
+
+  .dji-header__toggle {
+    display: inline-flex;
+  }
+
+  .dji-nav {
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 20px;
+    right: 20px;
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(9, 14, 20, 0.98);
+  }
+
+  .dji-nav.is-open {
+    display: flex;
+  }
+
+  .dji-nav a::after {
+    display: none;
+  }
+
+  .dji-service-band__grid,
+  .dji-category-grid,
+  .dji-toolbar,
+  .dji-listing-layout,
+  .dji-footer__top,
+  .dji-footer__bottom,
+  .dji-newsletter__card,
+  .admin-layout,
+  .dji-editorial-grid,
+  .dji-editorial-card--wide {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .dji-service-band__item + .dji-service-band__item {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .dji-toolbar__left,
+  .dji-toolbar__right,
+  .dji-newsletter__form,
+  .admin-headline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dji-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dji-detail__gallery,
+  .dji-detail-tabpanel {
+    grid-template-columns: 1fr;
+  }
+
+  .dji-detail__thumbs {
+    flex-direction: row;
+    overflow: auto;
+  }
+
+  .admin-sidebar {
+    position: static;
+    margin: 0 20px;
+  }
+
+  .admin-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .dji-product-grid,
+  .dji-contact-grid,
+  .admin-grid,
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dji-hero__actions,
+  .auth-actions,
+  .cart-product-card__actions,
+  .favorite-card__actions {
+    flex-direction: column;
+  }
+
+  .dji-detail__package-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-shell {
+    width: min(var(--container-max), calc(100% - 24px));
+  }
+}

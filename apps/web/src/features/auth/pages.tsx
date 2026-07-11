@@ -1,6 +1,6 @@
 import { Button, InputField } from '@bora/ui';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useI18n } from '../../app/providers/I18nProvider';
@@ -13,10 +13,17 @@ interface RegisterFieldErrors {
   password?: string;
 }
 
+function resolveAuthReturnPath(state: unknown) {
+  if (!state || typeof state !== 'object') return '/profil';
+  const from = 'from' in state ? state.from : null;
+  return typeof from === 'string' && from.length > 0 ? from : '/profil';
+}
+
 export function LoginPage() {
   const { login } = useSession();
   const { language } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('admin@borabilgicteknik.com');
   const [password, setPassword] = useState('Password123!');
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +33,7 @@ export function LoginPage() {
     setError(null);
     try {
       await login({ email, password });
-      navigate('/profil');
+      navigate(resolveAuthReturnPath(location.state), { replace: true });
     } catch (nextError) {
       setError((nextError as Error).message);
     }
@@ -56,7 +63,7 @@ export function LoginPage() {
             {error ? <p className="form-feedback form-feedback--error">{error}</p> : null}
             <div className="auth-actions" style={{ marginTop: '1.25rem' }}>
               <Button type="submit">{language === 'tr' ? 'Giris Yap' : 'Log In'}</Button>
-              <Link to="/kayit">
+              <Link state={location.state} to="/kayit">
                 <Button variant="secondary">{language === 'tr' ? 'Kayit Ol' : 'Register'}</Button>
               </Link>
             </div>
@@ -71,6 +78,7 @@ export function RegisterPage() {
   const { register } = useSession();
   const { language } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -87,7 +95,7 @@ export function RegisterPage() {
 
     try {
       await register(form);
-      navigate('/profil');
+      navigate(resolveAuthReturnPath(location.state), { replace: true });
     } catch (nextError) {
       if (nextError instanceof ApiError) {
         const nextFieldErrors = {
@@ -159,7 +167,7 @@ export function RegisterPage() {
             {error ? <p className="form-feedback form-feedback--error">{error}</p> : null}
             <div className="auth-actions" style={{ marginTop: '1.25rem' }}>
               <Button type="submit">{language === 'tr' ? 'Hesap Olustur' : 'Create Account'}</Button>
-              <Link to="/giris">
+              <Link state={location.state} to="/giris">
                 <Button variant="secondary">{language === 'tr' ? 'Giris' : 'Login'}</Button>
               </Link>
             </div>

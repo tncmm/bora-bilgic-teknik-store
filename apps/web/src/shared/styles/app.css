@@ -479,6 +479,15 @@
   border: 1px solid var(--border);
 }
 
+.product-card--interactive {
+  cursor: pointer;
+}
+
+.product-card--interactive:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 72%, white);
+  outline-offset: 3px;
+}
+
 :root[data-theme='light'] .product-card {
   background: var(--surface);
   box-shadow: none;

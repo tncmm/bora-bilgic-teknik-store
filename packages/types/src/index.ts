@@ -6,11 +6,20 @@ export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
 
 export type BrandName = 'DJI';
 
+export type CatalogSectionSlug = 'drone' | 'gimbal' | 'aksiyon-kamera' | 'aksesuar' | 'kurumsal';
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
   description: string;
+  heroTitle?: string | null;
+  heroDescription?: string | null;
+  heroImageUrl?: string | null;
+  sortOrder?: number;
+  productCount?: number;
+  series?: string[];
+  featureTags?: string[];
 }
 
 export interface ProductImage {
@@ -18,12 +27,31 @@ export interface ProductImage {
   url: string;
   alt: string;
   isPrimary: boolean;
+  kind?: 'image' | 'video';
+  thumbnailUrl?: string | null;
 }
 
 export interface ProductSpec {
   id: string;
   name: string;
   value: string;
+}
+
+export interface ProductPackageOption {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  isDefault?: boolean;
+}
+
+export interface ProductDetailSection {
+  id: string;
+  label: string;
+  heading?: string;
+  body?: string;
+  bullets?: string[];
+  imageUrl?: string | null;
 }
 
 export interface Product {
@@ -33,6 +61,8 @@ export interface Product {
   brand: BrandName;
   categoryId: string;
   category: Category;
+  section?: CatalogSectionSlug;
+  series?: string | null;
   shortDescription: string;
   description: string;
   price: number;
@@ -42,8 +72,39 @@ export interface Product {
   heroTag?: string | null;
   isPublished: boolean;
   isPurchasable: boolean;
+  ratingAverage?: number;
+  reviewCount?: number;
+  featureTags?: string[];
+  heroImageUrl?: string | null;
+  heroTitle?: string | null;
+  heroDescription?: string | null;
   images: ProductImage[];
   specs: ProductSpec[];
+  packageOptions?: ProductPackageOption[];
+  detailSections?: ProductDetailSection[];
+}
+
+export interface CatalogAvailableFilterOption {
+  value: string;
+  count: number;
+}
+
+export interface CatalogAvailableFilters {
+  series: CatalogAvailableFilterOption[];
+  features: CatalogAvailableFilterOption[];
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  sorts: string[];
+}
+
+export interface CatalogListResponse {
+  items: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  availableFilters: CatalogAvailableFilters;
 }
 
 export interface CartItem {
@@ -113,7 +174,15 @@ export interface AuthResponse {
 
 export interface ProductFilters {
   category?: string;
+  section?: string;
+  series?: string;
   search?: string;
   brand?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  features?: string;
+  sort?: string;
+  page?: string;
+  limit?: string;
   saleMode?: 'purchasable' | 'all';
 }

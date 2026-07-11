@@ -13,10 +13,26 @@ import { usersRoutes } from './modules/users/routes.js';
 
 export function createApp() {
   const app = express();
+  const allowedOrigins = new Set([
+    env.WEB_URL,
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5175',
+  ]);
 
   app.use(
     cors({
-      origin: env.WEB_URL,
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.has(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error('Origin not allowed by CORS'));
+      },
       credentials: true,
     }),
   );

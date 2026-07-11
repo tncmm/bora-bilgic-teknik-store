@@ -43,3 +43,10 @@ React + Vite + React Router frontend, Express + Prisma + PostgreSQL backend ve p
   - admin dashboard sifir olmayan satis ve stok metrikleri gosterir
   - bazi musteriler dolu sepet ve siparis gecmisi ile gelir
   - katalog ve admin ekranlari sadece DJI urun ailelerini gosterir
+
+## Deployment
+
+- Frontend production yayininda servis edilmesi gereken klasor: `apps/web/dist`
+- Frontend build komutu: `npm run build:web`
+- Render kullaniliyorsa kokteki `render.yaml` dosyasi static site'i dogrudan `apps/web/dist` klasorunden yayinlayacak sekilde hazirlandi.
+- Production ortaminda `src/main.tsx`, `src/**/*.tsx` veya Vite dev server ciktilari servis edilmemelidir. Aksi halde `$RefreshSig$ is not defined` benzeri Fast Refresh hatalari gorulebilir.

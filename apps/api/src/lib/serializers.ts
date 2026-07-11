@@ -1,8 +1,24 @@
-import { Product, Category, Cart, Order, User, DashboardMetrics, Wishlist } from '@bora/types';
+import type {
+  Cart,
+  Category,
+  DashboardMetrics,
+  Order,
+  Product,
+  ProductDetailSection,
+  ProductImage,
+  ProductPackageOption,
+  Wishlist,
+  User,
+} from '@bora/types';
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 
 export function decimalToNumber(value: Prisma.Decimal | number) {
   return Number(value);
+}
+
+function readJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
+  if (!Array.isArray(value)) return fallback;
+  return value as T[];
 }
 
 export function serializeCategory(category: {
@@ -10,11 +26,62 @@ export function serializeCategory(category: {
   name: string;
   slug: string;
   description: string;
+  heroTitle?: string | null;
+  heroDescription?: string | null;
+  heroImageUrl?: string | null;
+  sortOrder?: number;
+  products?: Array<{ series: string | null; featureTags: string[] }>;
 }): Category {
-  return category;
+  const products = category.products ?? [];
+  const series = [...new Set(products.map((product) => product.series).filter((item): item is string => Boolean(item)))];
+  const featureTags = [...new Set(products.flatMap((product) => product.featureTags ?? []))];
+
+  return {
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    description: category.description,
+    heroTitle: category.heroTitle ?? null,
+    heroDescription: category.heroDescription ?? null,
+    heroImageUrl: category.heroImageUrl ?? null,
+    sortOrder: category.sortOrder ?? 0,
+    productCount: products.length,
+    series,
+    featureTags,
+  };
 }
 
 export function serializeProduct(product: any): Product {
+  const images: ProductImage[] = product.images.map((image: any) => ({
+    id: image.id,
+    url: image.url,
+    alt: image.alt,
+    isPrimary: image.isPrimary,
+    kind: image.kind ?? 'image',
+    thumbnailUrl: image.thumbnailUrl ?? null,
+  }));
+
+  const fallbackPackageOptions: ProductPackageOption[] = [
+    {
+      id: 'standard',
+      name: 'Standart Paket',
+      price: decimalToNumber(product.price),
+      description: 'Temel urun paketi',
+      isDefault: true,
+    },
+  ];
+
+  const fallbackDetailSections: ProductDetailSection[] = [
+    {
+      id: 'aciklama',
+      label: 'Aciklama',
+      heading: product.name,
+      body: product.description,
+      bullets: product.specs.slice(0, 5).map((spec: any) => `${spec.name}: ${spec.value}`),
+      imageUrl: product.heroImageUrl ?? images[0]?.url ?? null,
+    },
+  ];
+
   return {
     id: product.id,
     name: product.name,
@@ -31,17 +98,22 @@ export function serializeProduct(product: any): Product {
     isPurchasable: product.isPurchasable,
     categoryId: product.categoryId,
     category: serializeCategory(product.category),
-    images: product.images.map((image: any) => ({
-      id: image.id,
-      url: image.url,
-      alt: image.alt,
-      isPrimary: image.isPrimary,
-    })),
+    section: product.category?.slug,
+    series: product.series ?? null,
+    ratingAverage: decimalToNumber(product.ratingAverage ?? 0),
+    reviewCount: product.reviewCount ?? 0,
+    featureTags: product.featureTags ?? [],
+    heroImageUrl: product.heroImageUrl ?? null,
+    heroTitle: product.heroTitle ?? null,
+    heroDescription: product.heroDescription ?? null,
+    images,
     specs: product.specs.map((spec: any) => ({
       id: spec.id,
       name: spec.name,
       value: spec.value,
     })),
+    packageOptions: readJsonArray<ProductPackageOption>(product.packageOptions, fallbackPackageOptions),
+    detailSections: readJsonArray<ProductDetailSection>(product.detailSections, fallbackDetailSections),
   };
 }
 

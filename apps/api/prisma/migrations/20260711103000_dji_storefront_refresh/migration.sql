@@ -1,0 +1,17 @@
+ALTER TABLE "Category"
+ADD COLUMN "heroTitle" TEXT,
+ADD COLUMN "heroDescription" TEXT,
+ADD COLUMN "heroImageUrl" TEXT,
+ADD COLUMN "sortOrder" INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE "Product"
+ADD COLUMN "series" TEXT,
+ADD COLUMN "featureTags" TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+ADD COLUMN "ratingAverage" DECIMAL(3,2) NOT NULL DEFAULT 0,
+ADD COLUMN "reviewCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "heroImageUrl" TEXT,
+ADD COLUMN "heroTitle" TEXT,
+ADD COLUMN "heroDescription" TEXT,
+ADD COLUMN "gallery" JSONB,
+ADD COLUMN "packageOptions" JSONB,
+ADD COLUMN "detailSections" JSONB;

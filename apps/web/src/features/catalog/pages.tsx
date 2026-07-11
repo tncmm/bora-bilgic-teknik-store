@@ -1,18 +1,55 @@
 import { Badge, Button, EmptyState } from '@bora/ui';
-import type { Category, Product } from '@bora/types';
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import type { CatalogListResponse, CatalogSectionSlug, Category, Product, ProductDetailSection, ProductPackageOption } from '@bora/types';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { useI18n } from '../../app/providers/I18nProvider';
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
-import { useI18n } from '../../app/providers/I18nProvider';
 import { api } from '../../shared/api/client';
-import { ProductCard } from '../../shared/components/ProductCard';
 import { formatCurrency } from '../../shared/lib/format';
+import { findSectionBySlug, mapLegacyCategoryToSection, storefrontSections } from '../../shared/lib/storefront';
 import { translateCategoryName } from '../../shared/lib/i18n';
 
-function useCatalogData(params?: Record<string, string>) {
-  const [products, setProducts] = useState<Product[]>([]);
+const serviceHighlights = [
+  { icon: 'verified_user', title: 'BORA BILGIÇ TEKNIK', description: 'Yetkili satici ve resmi urun akisi.' },
+  { icon: 'inventory_2', title: '%100 ORIJINAL', description: 'Tum urunler resmi dagitim kapsaminda.' },
+  { icon: 'local_shipping', title: 'HIZLI KARGO', description: 'Ayni gun cikis ve teknik hazirlik akisiyla.' },
+  { icon: 'support_agent', title: 'UZMAN DESTEK', description: '7/24 profesyonel teknik yonlendirme.' },
+];
+
+const listingRangePresets = [
+  { label: '0 - 10.000 TL', min: '', max: '10000' },
+  { label: '10.000 - 20.000 TL', min: '10000', max: '20000' },
+  { label: '20.000 - 30.000 TL', min: '20000', max: '30000' },
+  { label: '30.000 TL ve uzeri', min: '30000', max: '' },
+];
+
+const storefrontCurationOrder: Record<string, string[]> = {
+  drone: ['dji-mavic-3-pro', 'dji-air-3', 'dji-mini-4-pro', 'dji-avata-2', 'dji-inspire-3'],
+  gimbal: ['dji-rs-3-pro', 'dji-rs-3-mini', 'dji-osmo-mobile-6', 'dji-ronin-4d'],
+  'aksiyon-kamera': ['dji-osmo-pocket-3', 'dji-osmo-pocket-2', 'dji-osmo-action-4', 'dji-mic-2'],
+  aksesuar: ['intelligent-flight-battery', 'battery-charging-hub', 'dji-shoulder-bag', 'nd-filter-set', '128gb-microsd-card'],
+  kurumsal: ['dji-matrice-350-rtk'],
+};
+
+function getPrimaryImage(product?: Product) {
+  if (!product) return undefined;
+  return product.images.find((image) => image.isPrimary) ?? product.images[0];
+}
+
+function useCategories() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    void api.listCategories().then(setCategories).catch(() => undefined);
+  }, []);
+
+  return categories;
+}
+
+function useCatalogProducts(params: Record<string, string>) {
+  const [data, setData] = useState<CatalogListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +60,7 @@ function useCatalogData(params?: Record<string, string>) {
       .listProducts(params)
       .then((response) => {
         if (!mounted) return;
-        setProducts(response);
+        setData(response);
         setError(null);
       })
       .catch((nextError: Error) => {
@@ -40,630 +77,607 @@ function useCatalogData(params?: Record<string, string>) {
     };
   }, [JSON.stringify(params)]);
 
-  return { products, loading, error };
+  return { data, loading, error };
 }
 
-const collectionContent = {
-  'camera-drones': {
-    name: 'Camera Drones',
-    description: 'Mavic, Air, Mini, Avata ve Inspire ailesi ile DJI hava goruntuleme sistemleri.',
-  },
-  handheld: {
-    name: 'Handheld',
-    description: 'RS, Osmo ve Mic serileri ile DJI creator ve production ekosistemi.',
-  },
-  enterprise: {
-    name: 'Enterprise',
-    description: 'Matrice ve FlyCart platformlari ile saha, denetim ve operasyon gorevleri.',
-  },
-} as const;
-
-const visualLibrary = {
-  camera: [
-    'https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1524143986875-3b098d78b363?auto=format&fit=crop&w=1200&q=80',
-  ],
-  handheld: [
-    'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1520672106821-15c55e1a4a14?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
-  ],
-  enterprise: [
-    'https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1524143986875-3b098d78b363?auto=format&fit=crop&w=1200&q=80',
-  ],
-} as const;
-
-function getPrimaryImage(product?: Product) {
-  if (!product) return undefined;
-  return product.images.find((image) => image.isPrimary) ?? product.images[0];
-}
-
-function getGalleryImages(products: Product[], limit = 3) {
-  return products
-    .map((product) => {
-      const image = getPrimaryImage(product);
-      return image ? { src: image.url, alt: image.alt } : null;
-    })
-    .filter((image): image is { src: string; alt: string } => Boolean(image))
-    .slice(0, limit);
-}
-
-function CollectionShowcaseCard({
-  title,
-  description,
-  count,
-  imageUrl,
-  gallery,
-  eyebrow,
-  to,
-  countLabel,
-  footerLabel,
-  className = '',
-}: {
-  title: string;
-  description: string;
-  count: number;
-  imageUrl?: string;
-  gallery: Array<{ src: string; alt: string }>;
-  eyebrow: string;
-  to: string;
-  countLabel: string;
-  footerLabel: string;
-  className?: string;
-}) {
-  return (
-    <Link className={['collection-showcase', className].filter(Boolean).join(' ')} to={to}>
-      <div className="collection-showcase__media">
-        {imageUrl ? <img alt={title} src={imageUrl} /> : null}
-      </div>
-      <div className="collection-showcase__overlay" />
-      <div className="collection-showcase__body">
-        <div className="detail-chip-row">
-          <Badge>{eyebrow}</Badge>
-          <Badge>{count} {countLabel}</Badge>
-        </div>
-        <h3>{title}</h3>
-        <p>{description}</p>
-        {gallery.length > 0 ? (
-          <div className="collection-showcase__thumbs">
-            {gallery.map((image) => (
-              <div className="collection-showcase__thumb" key={`${title}-${image.src}`}>
-                <img alt={image.alt} src={image.src} />
-              </div>
-            ))}
-          </div>
-        ) : null}
-        <div className="collection-showcase__footer">
-          <span>{footerLabel}</span>
-          <strong>{count.toString().padStart(2, '0')}</strong>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function StoryPanel({
-  kicker,
-  title,
-  description,
-  imageUrl,
-  gallery,
-  stat,
-  className = '',
-}: {
-  kicker: string;
-  title: string;
-  description: string;
-  imageUrl?: string;
-  gallery: Array<{ src: string; alt: string }>;
-  stat?: string;
-  className?: string;
-}) {
-  return (
-    <div className={['feature-panel', className].filter(Boolean).join(' ')}>
-      <div className="feature-panel__media">{imageUrl ? <img alt={title} src={imageUrl} /> : null}</div>
-      <div className="feature-panel__body">
-        <div className="feature-panel__topline">
-          <div className="detail-chip">{kicker}</div>
-          {stat ? <div className="feature-panel__stat">{stat}</div> : null}
-        </div>
-        <h3>{title}</h3>
-        <p>{description}</p>
-        {gallery.length > 0 ? (
-          <div className="feature-panel__thumbs">
-            {gallery.map((image) => (
-              <div className="feature-panel__thumb" key={`${title}-${image.src}`}>
-                <img alt={image.alt} src={image.src} />
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function BentoCard({ product, featured = false }: { product: Product; featured?: boolean }) {
+function StorefrontProductCard({ product }: { product: Product }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useI18n();
-  const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
+  const { token, isAuthenticated, syncCart, toggleFavorite, isFavorite } = useSession();
+  const { showToast } = useToast();
+  const primaryImage = getPrimaryImage(product);
+  const favoriteActive = isFavorite(product.id);
+
+  async function handleAddToCart() {
+    if (!isAuthenticated || !token) {
+      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
+      return;
+    }
+
+    try {
+      await api.addToCart(token, {
+        productId: product.id,
+        quantity: 1,
+      });
+      await syncCart();
+      showToast({
+        tone: 'success',
+        title: language === 'tr' ? 'Urun sepete eklendi' : 'Product added to cart',
+        description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
+      });
+    } catch (error) {
+      showToast({
+        tone: 'error',
+        title: language === 'tr' ? 'Sepete eklenemedi' : 'Could not add to cart',
+        description: (error as Error).message,
+      });
+    }
+  }
+
+  async function handleFavoriteToggle() {
+    if (!isAuthenticated) {
+      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
+      return;
+    }
+
+    try {
+      const action = await toggleFavorite(product.id);
+      showToast({
+        tone: 'info',
+        title:
+          action === 'added'
+            ? language === 'tr'
+              ? 'Favorilere eklendi'
+              : 'Added to favorites'
+            : language === 'tr'
+              ? 'Favorilerden kaldirildi'
+              : 'Removed from favorites',
+      });
+    } catch (error) {
+      showToast({
+        tone: 'error',
+        title: language === 'tr' ? 'Favori islemi tamamlanamadi' : 'Favorite action failed',
+        description: (error as Error).message,
+      });
+    }
+  }
 
   return (
-    <Link className={`bento-card ${featured ? 'bento-card--featured' : 'bento-card--stack'}`} to={`/urun/${product.slug}`}>
-      <img alt={primaryImage?.alt ?? product.name} src={primaryImage?.url} />
-      <div className="bento-card__content">
-        <div className="detail-chip-row">
-          <Badge>{product.badge ?? product.brand}</Badge>
-          <Badge>{product.specs[0]?.value ?? product.category.name}</Badge>
+    <article className="dji-product-card">
+      <Link className="dji-product-card__link" to={`/urun/${product.slug}`}>
+        {product.badge ? <span className="dji-product-card__badge">{product.badge}</span> : null}
+        <div className="dji-product-card__image">
+          <img alt={primaryImage?.alt ?? product.name} src={primaryImage?.url} />
         </div>
-        <h3>{product.name}</h3>
-        <p>{product.shortDescription}</p>
-        <p className="price-text" style={{ marginTop: '1rem' }}>
-          {product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Tanitim Urunu' : 'Promo Product'}
-        </p>
+        <div className="dji-product-card__content">
+          <h3>{product.name}</h3>
+          <div className="dji-product-card__price">
+            {product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Teklif Uzerine' : 'Quote on Request'}
+          </div>
+        </div>
+      </Link>
+      <div className="dji-product-card__actions">
+        <button
+          aria-label={favoriteActive ? 'Favorilerden kaldir' : 'Favorilere ekle'}
+          className={`dji-icon-button ${favoriteActive ? 'is-active' : ''}`}
+          onClick={() => void handleFavoriteToggle()}
+          type="button"
+        >
+          <span className="material-symbols-outlined">{favoriteActive ? 'favorite' : 'favorite_border'}</span>
+        </button>
+        <button aria-label="Karsilastir" className="dji-icon-button" type="button">
+          <span className="material-symbols-outlined">compare_arrows</span>
+        </button>
+        <button
+          aria-label="Sepete ekle"
+          className="dji-icon-button dji-icon-button--accent"
+          disabled={!product.isPurchasable}
+          onClick={() => void handleAddToCart()}
+          type="button"
+        >
+          <span className="material-symbols-outlined">shopping_cart</span>
+        </button>
       </div>
-    </Link>
+    </article>
+  );
+}
+
+function ServiceBand({ overlay = false }: { overlay?: boolean }) {
+  return (
+    <section className={`dji-service-band ${overlay ? 'dji-service-band--overlay' : ''}`}>
+      <div className="ui-shell dji-service-band__grid">
+        {serviceHighlights.map((item) => (
+          <div className="dji-service-band__item" key={item.title}>
+            <span className="material-symbols-outlined">{item.icon}</span>
+            <div>
+              <strong>{item.title}</strong>
+              <p>{item.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function StoreFooter() {
+  return (
+    <footer className="dji-footer">
+      <div className="ui-shell dji-footer__top">
+        <div>
+          <div className="dji-wordmark dji-wordmark--footer">Bora Bilgiç Teknik</div>
+          <p>Bora Bilgiç Teknik, profesyonel goruntuleme teknolojileri ve creator ekipmanlarini tek vitrinde sunar.</p>
+          <div className="dji-footer__socials">
+            {['instagram', 'facebook', 'smart_display', 'slideshow'].map((icon) => (
+              <a href="/" key={icon}>
+                <span className="material-symbols-outlined">{icon}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h4>KURUMSAL</h4>
+          <nav>
+            <Link to="/kurumsal">Hakkimizda</Link>
+            <Link to="/kurumsal">Yetki Belgeleri</Link>
+            <Link to="/kurumsal">KVKK</Link>
+            <Link to="/iletisim">Iletisim</Link>
+          </nav>
+        </div>
+        <div>
+          <h4>MUSTERI HIZMETLERI</h4>
+          <nav>
+            <Link to="/iletisim">Kargo & Teslimat</Link>
+            <Link to="/iletisim">Iade & Degisim</Link>
+            <Link to="/iletisim">Garanti Sartlari</Link>
+            <Link to="/iletisim">Sikca Sorulan Sorular</Link>
+          </nav>
+        </div>
+        <div>
+          <h4>GUVENLI ALISVERIS</h4>
+          <p>256bit SSL ile bilgileriniz guvende.</p>
+          <div className="dji-footer__payments">
+            <span>VISA</span>
+            <span>Mastercard</span>
+            <span>Troy</span>
+          </div>
+        </div>
+      </div>
+      <div className="ui-shell dji-footer__bottom">
+        <span>© 2024 Bora Bilgiç Teknik. Tum haklari saklidir.</span>
+        <div>
+          <Link to="/iletisim">Kullanim Kosullari</Link>
+          <Link to="/iletisim">Gizlilik Politikasi</Link>
+          <Link to="/iletisim">Site Haritasi</Link>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function NewsletterBanner() {
+  return (
+    <section className="dji-newsletter">
+      <div className="ui-shell dji-newsletter__card">
+        <div>
+          <h2>BORA BILGIÇ TEKNIK BULTENI</h2>
+          <p>En yeni urunler, kampanyalar ve ilham verici icerik mailinize gelsin.</p>
+        </div>
+        <form className="dji-newsletter__form">
+          <input className="ui-input" placeholder="E-posta adresiniz" type="email" />
+          <Button type="submit">ABONE OL</Button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+function EditorialPanels() {
+  return (
+    <section className="dji-section">
+      <div className="ui-shell dji-editorial-grid">
+        <article className="dji-editorial-card dji-editorial-card--wide">
+          <div>
+            <div className="dji-kicker">AERIAL PRODUCTION</div>
+            <h3>Mavic, Air ve Mini ailesi ile cekim brief'lerinizi tek vitrinde netlestirin.</h3>
+            <p>Seyahat icerigi, reklam prodüksiyonu ve hizli creator deployment senaryolari icin tek akista karar verin.</p>
+          </div>
+          <img alt="Aerial production" src="/storefront/hero-drone.png" />
+        </article>
+        <article className="dji-editorial-card">
+          <div className="dji-kicker">CREATOR FLOW</div>
+          <h3>Gimbal, action ve pocket sistemleri ayni kurgu icinde ilerler.</h3>
+          <p>Run-and-gun ekipler, mobil prodüksiyonlar ve social-first icerikler icin hizli setup kombinasyonlari.</p>
+        </article>
+        <article className="dji-editorial-card">
+          <div className="dji-kicker">ENTERPRISE FIELD</div>
+          <h3>Kurumsal kesif, denetim ve kamu guvenligi akislarini ayrica ele alin.</h3>
+          <p>Quote odakli sistemleri e-ticaret urunlerinden ayrıştıran, karar destekli bir vitrin yapisi.</p>
+        </article>
+      </div>
+    </section>
   );
 }
 
 export function HomePage() {
   const { language } = useI18n();
-  const { products, loading } = useCatalogData();
-  const heroProduct = products[0];
-  const cameraDrones = useMemo(() => products.filter((product) => product.category.slug === 'camera-drones'), [products]);
-  const handheld = useMemo(() => products.filter((product) => product.category.slug === 'handheld'), [products]);
-  const enterprise = useMemo(() => products.filter((product) => product.category.slug === 'enterprise'), [products]);
-  const cameraLead = cameraDrones[0];
-  const handheldLead = handheld[0];
-  const enterpriseLead = enterprise[0];
-  const ui = language === 'tr'
-    ? {
-        heroBadge: 'DJI Resmi Odak',
-        heroTitle: 'DJI Ekosistemi.',
-        heroTitleAccent: 'Tek Bir Katalogda.',
-        heroDescription:
-          'Bora Bilgic Teknik artik yalnizca DJI urun ailelerine odaklanir. Kamera dronlari, handheld creator sistemleri ve enterprise platformlar tek akista listelenir.',
-        heroPrimary: 'Tum DJI Koleksiyonu',
-        heroSecondary: 'One Cikan Model',
-        newArrivals: 'Yeni Gelenler',
-        newArrivalsDesc: 'DJI katalogunun one cikan guncel urunleri.',
-        viewAll: 'Tumunu Gor',
-        loading: 'Urunler yukleniyor...',
-        emptyTitle: 'Katalog bos',
-        emptyDesc: 'Henuz yayinlanan urun bulunmuyor.',
-        collections: 'DJI Koleksiyonlari',
-        collectionsDesc: 'Hava, creator ve saha odakli DJI aileleri tek vitrinde gruplanir.',
-        countLabel: 'urun',
-        footerLabel: 'Koleksiyona git',
-        showcaseAerial: 'Aerial Core',
-        showcaseAerialDesc: 'Mavic, Air, Mini, Avata ve Inspire ailesi ile cekim akisini havadan kuran ana vitrin.',
-        showcaseCreator: 'Creator Rig',
-        showcaseCreatorDesc: 'RS, Osmo ve Mic serileri ile elde cekim, ses ve hareket kontrolunu tamamlayan hat.',
-        showcaseEnterprise: 'Mission Systems',
-        showcaseEnterpriseDesc: 'Matrice ve lojistik platformlari ile denetim, operasyon ve teklif odakli enterprise hat.',
-        excellence: 'The Standard of Excellence',
-        excellenceAerialTitle: 'Mavic, Air, Mini, Avata ve Inspire cekim hattinin tamami tek ailede.',
-        excellenceAerialDesc:
-          'Mavic 4 Pro, Air 3S, Mini 5 Pro, Avata 360 ve Inspire 3; kompakt creator cekimlerinden ileri seviye sinema produksiyonuna kadar tum hava senaryolarini ayni ailede toplar.',
-        excellenceAerialKicker: 'Aerial Flagship',
-        excellenceAerialStat: `${cameraDrones.length} Model`,
-        excellenceCreatorTitle: 'Elde cekim, aksiyon kamera ve ses zinciri ayni vitrine baglanir.',
-        excellenceCreatorDesc:
-          'RS 5, Osmo Action 6, Osmo Mobile 8P ve Mic 2; tek kisi cekimden hizli set kurulumuna kadar creator akisinin tum temel halkalarini kaplar.',
-        excellenceCreatorKicker: 'Creator Setup',
-        excellenceCreatorStat: 'RS / Osmo / Mic',
-        excellenceEnterpriseTitle: 'Matrice platformlari saha ve operasyon senaryolari icin ayri katmanda durur.',
-        excellenceEnterpriseDesc:
-          'Matrice serisi premium saha gorevleri, denetim ve kurumsal operasyonlarda teklif odakli ilerler; vitrin dili de buna gore ayrisir.',
-        excellenceEnterpriseKicker: 'Enterprise Missions',
-        excellenceEnterpriseStat: 'Quote Ready',
-        excellenceShoppingTitle: 'Hizli satin alma ile premium teklif akisi ayni showroom dili icinde ayrisir.',
-        excellenceShoppingDesc:
-          'Mini 5 Pro, Air 3S ve RS 5 gibi hizli karar verilen modeller dogrudan sepete gider; Inspire 3 ve Matrice gibi ust segment urunler ise inceleme ve teklif akisini korur.',
-        excellenceShoppingKicker: 'Shopping Flow',
-        excellenceShoppingStat: 'Cart + Quote',
-      }
-    : {
-        heroBadge: 'DJI Official Focus',
-        heroTitle: 'DJI Ecosystem.',
-        heroTitleAccent: 'In One Catalog.',
-        heroDescription:
-          'Bora Bilgic Teknik now focuses exclusively on DJI product families. Camera drones, handheld creator systems, and enterprise platforms are presented in a single flow.',
-        heroPrimary: 'Browse All DJI Collections',
-        heroSecondary: 'Featured Model',
-        newArrivals: 'New Arrivals',
-        newArrivalsDesc: 'Highlighted current products from the DJI catalog.',
-        viewAll: 'View All',
-        loading: 'Loading products...',
-        emptyTitle: 'Catalog is empty',
-        emptyDesc: 'There are no published products yet.',
-        collections: 'DJI Collections',
-        collectionsDesc: 'Aerial, creator, and field-focused DJI families are grouped into one storefront.',
-        countLabel: 'items',
-        footerLabel: 'Open collection',
-        showcaseAerial: 'Aerial Core',
-        showcaseAerialDesc: 'The main aerial showcase built around Mavic, Air, Mini, Avata, and Inspire families.',
-        showcaseCreator: 'Creator Rig',
-        showcaseCreatorDesc: 'A line that completes handheld shooting, audio, and motion control with RS, Osmo, and Mic series.',
-        showcaseEnterprise: 'Mission Systems',
-        showcaseEnterpriseDesc: 'Enterprise line for inspection, operations, and quote-driven workflows with Matrice and logistics platforms.',
-        excellence: 'The Standard of Excellence',
-        excellenceAerialTitle: 'The full Mavic, Air, Mini, Avata, and Inspire capture line in one family.',
-        excellenceAerialDesc:
-          'Mavic 4 Pro, Air 3S, Mini 5 Pro, Avata 360, and Inspire 3 cover every aerial scenario, from compact creator shoots to advanced cinema production.',
-        excellenceAerialKicker: 'Aerial Flagship',
-        excellenceAerialStat: `${cameraDrones.length} Models`,
-        excellenceCreatorTitle: 'Handheld shooting, action camera, and audio chain connect in one showcase.',
-        excellenceCreatorDesc:
-          'RS 5, Osmo Action 6, Osmo Mobile 8P, and Mic 2 cover the full creator workflow from solo capture to fast set builds.',
-        excellenceCreatorKicker: 'Creator Setup',
-        excellenceCreatorStat: 'RS / Osmo / Mic',
-        excellenceEnterpriseTitle: 'Matrice platforms stay separated for field and operational scenarios.',
-        excellenceEnterpriseDesc:
-          'The Matrice series moves through a quote-led flow for premium field missions, inspections, and enterprise operations.',
-        excellenceEnterpriseKicker: 'Enterprise Missions',
-        excellenceEnterpriseStat: 'Quote Ready',
-        excellenceShoppingTitle: 'Fast purchase and premium quote flow stay separated within the same showroom language.',
-        excellenceShoppingDesc:
-          'Quick-decision models like Mini 5 Pro, Air 3S, and RS 5 move straight to cart, while upper-tier systems like Inspire 3 and Matrice retain a review-and-quote flow.',
-        excellenceShoppingKicker: 'Shopping Flow',
-        excellenceShoppingStat: 'Cart + Quote',
-      };
-  const cameraGallery = getGalleryImages(cameraDrones).length ? getGalleryImages(cameraDrones) : visualLibrary.camera.map((src, index) => ({ src, alt: `Camera visual ${index + 1}` }));
-  const handheldGallery = getGalleryImages(handheld).length ? getGalleryImages(handheld) : visualLibrary.handheld.map((src, index) => ({ src, alt: `Handheld visual ${index + 1}` }));
-  const enterpriseGallery = getGalleryImages(enterprise).length ? getGalleryImages(enterprise) : visualLibrary.enterprise.map((src, index) => ({ src, alt: `Enterprise visual ${index + 1}` }));
+  const categories = useCategories();
+  const { data: heroData, loading: heroLoading } = useCatalogProducts({ section: 'drone', limit: '6' });
+  const { data: featuredData, loading: featuredLoading } = useCatalogProducts({ saleMode: 'purchasable', sort: 'rating', limit: '5' });
+  const heroProducts = heroData?.items ?? [];
+  const featuredProducts = featuredData?.items ?? [];
+  const heroProduct = heroProducts.find((product) => product.slug === 'dji-mavic-3-pro') ?? heroProducts[0];
+  const purchasable = featuredProducts.filter((product) => product.isPurchasable).slice(0, 5);
 
   return (
     <>
-      <section className="hero-stage">
-        <div className="hero-stage__background">
-          <img
-            alt="Professional precision"
-            src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=80"
-          />
+      <section className="dji-hero">
+        <div className="dji-hero__background">
+          <img alt={heroProduct?.name ?? 'Bora Bilgiç Teknik vitrini'} src={heroProduct?.heroImageUrl ?? getPrimaryImage(heroProduct)?.url} />
         </div>
-        <div className="ui-shell hero-stage__content">
-          <div className="hero-stage__eyebrow">
-            <Badge>{ui.heroBadge}</Badge>
-          </div>
-          <h1>
-            {ui.heroTitle}
-            <br />
-            <span>{ui.heroTitleAccent}</span>
-          </h1>
-          <p>{ui.heroDescription}</p>
-          <div className="hero-actions">
-            <Link to="/katalog">
-              <Button>{ui.heroPrimary}</Button>
-            </Link>
-            <Link to={heroProduct ? `/urun/${heroProduct.slug}` : '/katalog'}>
-              <Button variant="secondary">{ui.heroSecondary}</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="ui-shell">
-          <div className="section-header">
-            <div>
-              <h2>{ui.newArrivals}</h2>
-              <p>{ui.newArrivalsDesc}</p>
-            </div>
-            <Link className="section-link" to="/katalog">
-              {ui.viewAll}
-            </Link>
-          </div>
-
-          {loading ? (
-            <p className="text-muted">{ui.loading}</p>
-          ) : products.length === 0 ? (
-            <EmptyState description={ui.emptyDesc} title={ui.emptyTitle} />
-          ) : (
-            <div className="bento-grid">
-              {products[0] ? <BentoCard featured product={products[0]} /> : null}
-              {products.slice(1, 3).map((product) => (
-                <BentoCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="ui-shell">
-          <div className="section-header">
-            <div>
-              <h2>{ui.collections}</h2>
-              <p>{ui.collectionsDesc}</p>
+        <div className="ui-shell dji-hero__content">
+          <div className="dji-hero__copy">
+            <div className="dji-kicker">{heroProduct?.badge ?? 'YENI'}</div>
+            <h1>{heroProduct?.heroTitle ?? 'BORA BILGIÇ TEKNIK'}</h1>
+            <h2>{heroProduct?.heroTag ?? 'Ilham Veren Goruntuler'}</h2>
+            <p>{heroProduct?.heroDescription ?? heroProduct?.description}</p>
+            <div className="dji-hero__actions">
+              <Link to="/drone">
+                <Button>HEMEN KESFET</Button>
+              </Link>
+              {heroProduct ? (
+                <Link to={`/urun/${heroProduct.slug}`}>
+                  <Button variant="secondary">URUNU INCELE</Button>
+                </Link>
+              ) : null}
             </div>
           </div>
-          <div className="collection-showcase-grid">
-            <CollectionShowcaseCard
-              className="collection-showcase--hero"
-              count={cameraDrones.length}
-              countLabel={ui.countLabel}
-              description={ui.showcaseAerialDesc}
-              eyebrow={ui.showcaseAerial}
-              footerLabel={ui.footerLabel}
-              gallery={cameraGallery}
-              imageUrl={getPrimaryImage(cameraLead)?.url ?? visualLibrary.camera[0]}
-              title={translateCategoryName(language, 'camera-drones', 'Camera Drones')}
-              to="/katalog?category=camera-drones"
-            />
-            <CollectionShowcaseCard
-              className="collection-showcase--stack-top"
-              count={handheld.length}
-              countLabel={ui.countLabel}
-              description={ui.showcaseCreatorDesc}
-              eyebrow={ui.showcaseCreator}
-              footerLabel={ui.footerLabel}
-              gallery={handheldGallery}
-              imageUrl={getPrimaryImage(handheldLead)?.url ?? visualLibrary.handheld[0]}
-              title={translateCategoryName(language, 'handheld', 'Handheld')}
-              to="/katalog?category=handheld"
-            />
-            <CollectionShowcaseCard
-              className="collection-showcase--stack-bottom"
-              count={enterprise.length}
-              countLabel={ui.countLabel}
-              description={ui.showcaseEnterpriseDesc}
-              eyebrow={ui.showcaseEnterprise}
-              footerLabel={ui.footerLabel}
-              gallery={enterpriseGallery}
-              imageUrl={getPrimaryImage(enterpriseLead)?.url ?? visualLibrary.enterprise[0]}
-              title={translateCategoryName(language, 'enterprise', 'Enterprise')}
-              to="/katalog?category=enterprise"
-            />
+        </div>
+      </section>
+
+      <ServiceBand overlay />
+
+      <section className="dji-section">
+        <div className="ui-shell">
+          <div className="dji-section__heading">
+            <h2>KATEGORILER</h2>
+            <Link to="/katalog">TUM KATEGORILER</Link>
+          </div>
+          <div className="dji-category-grid">
+            {storefrontSections.slice(0, 4).map((section) => {
+              const category = categories.find((item) => item.slug === section.slug);
+              return (
+                <Link className="dji-category-card" key={section.slug} to={section.path}>
+                  <div className="dji-category-card__media">
+                    <img alt={section.label} src={category?.heroImageUrl ?? heroProduct?.heroImageUrl ?? getPrimaryImage(heroProduct)?.url} />
+                  </div>
+                  <div className="dji-category-card__content">
+                    <h3>{section.label}</h3>
+                    <p>{category?.description ?? translateCategoryName(language, section.slug, section.label)}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section className="page-section">
+      <section className="dji-section">
         <div className="ui-shell">
-          <h2 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.6rem)' }}>{ui.excellence}</h2>
-          <div className="standard-grid">
-            <StoryPanel
-              className="feature-panel--wide feature-panel--immersive"
-              description={ui.excellenceAerialDesc}
-              gallery={cameraGallery}
-              imageUrl={getPrimaryImage(cameraLead)?.url ?? visualLibrary.camera[0]}
-              kicker={ui.excellenceAerialKicker}
-              stat={ui.excellenceAerialStat}
-              title={ui.excellenceAerialTitle}
-            />
-            <StoryPanel
-              className="feature-panel--tall"
-              description={ui.excellenceCreatorDesc}
-              gallery={getGalleryImages(products.slice(0, 3)).length ? getGalleryImages(products.slice(0, 3)) : visualLibrary.camera.map((src, index) => ({ src, alt: `Product mix visual ${index + 1}` }))}
-              imageUrl={getPrimaryImage(handheldLead)?.url ?? visualLibrary.handheld[0]}
-              kicker={ui.excellenceCreatorKicker}
-              stat={ui.excellenceCreatorStat}
-              title={ui.excellenceCreatorTitle}
-            />
-            <StoryPanel
-              className="feature-panel--tall"
-              description={ui.excellenceEnterpriseDesc}
-              gallery={enterpriseGallery}
-              imageUrl={getPrimaryImage(enterpriseLead)?.url ?? visualLibrary.enterprise[0]}
-              kicker={ui.excellenceEnterpriseKicker}
-              stat={ui.excellenceEnterpriseStat}
-              title={ui.excellenceEnterpriseTitle}
-            />
-            <StoryPanel
-              className="feature-panel--wide"
-              description={ui.excellenceShoppingDesc}
-              gallery={handheldGallery}
-              imageUrl={getPrimaryImage(handheldLead)?.url ?? visualLibrary.handheld[0]}
-              kicker={ui.excellenceShoppingKicker}
-              stat={ui.excellenceShoppingStat}
-              title={ui.excellenceShoppingTitle}
-            />
+          <div className="dji-section__heading">
+            <h2>COK SATANLAR</h2>
+          </div>
+          {heroLoading || featuredLoading ? <p className="dji-muted">Urunler yukleniyor...</p> : null}
+          <div className="dji-product-grid">
+            {purchasable.map((product) => (
+              <StorefrontProductCard key={product.id} product={product} />
+            ))}
           </div>
         </div>
       </section>
+
+      <EditorialPanels />
+      <NewsletterBanner />
+      <StoreFooter />
     </>
   );
 }
 
-export function CatalogPage() {
-  const { language } = useI18n();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeCategorySlug = searchParams.get('category') ?? '';
-  const params = Object.fromEntries(
-    [
-      ['saleMode', searchParams.get('saleMode') ?? ''],
-      ['category', activeCategorySlug],
-    ].filter(([, value]) => value),
+function ListingSidebar({
+  activeSeries,
+  availableFeatures,
+  availableSeries,
+  minPrice,
+  maxPrice,
+  onSetSeries,
+  onToggleFeature,
+  selectedFeatures,
+  onSelectRange,
+  onClear,
+}: {
+  activeSeries: string;
+  availableFeatures: Array<{ value: string; count: number }>;
+  availableSeries: Array<{ value: string; count: number }>;
+  minPrice: string;
+  maxPrice: string;
+  onSetSeries: (value: string) => void;
+  onToggleFeature: (value: string) => void;
+  selectedFeatures: string[];
+  onSelectRange: (min: string, max: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <aside className="dji-sidebar">
+      <div className="dji-sidebar__group">
+        <h3>KATEGORILER</h3>
+        <button className={`dji-sidebar__link ${!activeSeries ? 'is-active' : ''}`} onClick={() => onSetSeries('')} type="button">
+          Tum Urunler
+        </button>
+        {availableSeries.map((series) => (
+          <button
+            className={`dji-sidebar__link ${activeSeries === series.value ? 'is-active' : ''}`}
+            key={series.value}
+            onClick={() => onSetSeries(series.value)}
+            type="button"
+          >
+            {series.value}
+          </button>
+        ))}
+      </div>
+
+      <div className="dji-sidebar__group">
+        <h3>FIYAT ARALIGI</h3>
+        <div className="dji-sidebar__range-list">
+          {listingRangePresets.map((range) => (
+            <button
+              className={`dji-range-chip ${minPrice === range.min && maxPrice === range.max ? 'is-active' : ''}`}
+              key={range.label}
+              onClick={() => onSelectRange(range.min, range.max)}
+              type="button"
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+        <div className="dji-price-fields">
+          <input className="ui-input" placeholder="Min" value={minPrice} onChange={() => undefined} readOnly />
+          <input className="ui-input" placeholder="Max" value={maxPrice} onChange={() => undefined} readOnly />
+        </div>
+      </div>
+
+      <div className="dji-sidebar__group">
+        <h3>ONE CIKAN OZELLIKLER</h3>
+        <div className="dji-sidebar__checks">
+          {availableFeatures.map((feature) => (
+            <label className="dji-check-row" key={feature.value}>
+              <input checked={selectedFeatures.includes(feature.value)} onChange={() => onToggleFeature(feature.value)} type="checkbox" />
+              <span>{feature.value}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <button className="dji-clear-button" onClick={onClear} type="button">
+        FILTRELERI TEMIZLE
+      </button>
+    </aside>
   );
-  const { products, error, loading } = useCatalogData(params);
-  const [categories, setCategories] = useState<Category[]>([]);
+}
 
-  useEffect(() => {
-    void api.listCategories().then(setCategories).catch(() => undefined);
-  }, []);
+function resolveListingSection(forcedSection?: CatalogSectionSlug, searchParams?: URLSearchParams) {
+  if (forcedSection) return forcedSection;
+  const section = searchParams?.get('section');
+  const legacyCategory = searchParams?.get('category');
+  return (section as CatalogSectionSlug | null) ?? mapLegacyCategoryToSection(legacyCategory) ?? undefined;
+}
 
-  const activeCategory = categories.find((category) => category.slug === activeCategorySlug);
-  const cameraProducts = useMemo(() => products.filter((product) => product.category.slug === 'camera-drones'), [products]);
-  const handheldProducts = useMemo(() => products.filter((product) => product.category.slug === 'handheld'), [products]);
-  const enterpriseProducts = useMemo(() => products.filter((product) => product.category.slug === 'enterprise'), [products]);
-  const activeCollection =
-    (activeCategorySlug && activeCategorySlug in collectionContent
-      ? collectionContent[activeCategorySlug as keyof typeof collectionContent]
-      : undefined) ?? null;
-  const heroTitle = activeCollection ? translateCategoryName(language, activeCategorySlug, activeCollection.name) : language === 'tr' ? 'DJI Katalogu' : 'DJI Catalog';
-  const heroDescription =
-    language === 'tr'
-      ? activeCollection?.description ?? 'Tum DJI urun ailelerini tek katalog akisi icinde kesfedin.'
-      : activeCategorySlug === 'camera-drones'
-        ? 'DJI aerial imaging systems built around the Mavic, Air, Mini, Avata, and Inspire families.'
-        : activeCategorySlug === 'handheld'
-          ? 'DJI creator and production ecosystem built around RS, Osmo, and Mic series.'
-          : activeCategorySlug === 'enterprise'
-            ? 'DJI field, inspection, and operational platforms built around Matrice and FlyCart systems.'
-            : 'Discover all DJI product families in one catalog flow.';
+export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionSlug } = {}) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categories = useCategories();
+  const sectionSlug = resolveListingSection(forcedSection, searchParams);
+  const section = findSectionBySlug(sectionSlug);
+  const params = Object.fromEntries(
+    Object.entries({
+      section: sectionSlug ?? '',
+      saleMode: searchParams.get('saleMode') ?? '',
+      series: searchParams.get('series') ?? '',
+      features: searchParams.get('features') ?? '',
+      minPrice: searchParams.get('minPrice') ?? '',
+      maxPrice: searchParams.get('maxPrice') ?? '',
+      sort: searchParams.get('sort') ?? 'newest',
+      page: searchParams.get('page') ?? '1',
+      limit: '6',
+    }).filter(([, value]) => value),
+  );
+  const { data, error, loading } = useCatalogProducts(params);
+  const activeCategory = categories.find((item) => item.slug === sectionSlug);
+  const selectedFeatures = searchParams.get('features')?.split(',').filter(Boolean) ?? [];
+
+  function updateParam(key: string, value: string) {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    if (key !== 'page') next.set('page', '1');
+    setSearchParams(next);
+  }
+
+  function toggleFeature(feature: string) {
+    const nextValues = selectedFeatures.includes(feature)
+      ? selectedFeatures.filter((item) => item !== feature)
+      : [...selectedFeatures, feature];
+    updateParam('features', nextValues.join(','));
+  }
+
+  function selectRange(min: string, max: string) {
+    const next = new URLSearchParams(searchParams);
+    if (min) next.set('minPrice', min);
+    else next.delete('minPrice');
+    if (max) next.set('maxPrice', max);
+    else next.delete('maxPrice');
+    next.set('page', '1');
+    setSearchParams(next);
+  }
+
+  function clearFilters() {
+    const next = new URLSearchParams();
+    if (sectionSlug) next.set('section', sectionSlug);
+    setSearchParams(next);
+  }
+
+  const items = data?.items ?? [];
+  const renderedItems =
+    (searchParams.get('sort') ?? 'newest') === 'newest' && sectionSlug
+      ? [...items].sort((left, right) => {
+          const order = storefrontCurationOrder[sectionSlug] ?? [];
+          const leftIndex = order.indexOf(left.slug);
+          const rightIndex = order.indexOf(right.slug);
+          return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex);
+        })
+      : items;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
 
   return (
     <>
-      <section className="catalog-hero">
-        <div className="catalog-hero__background">
-          <img
-            alt="Drone catalog"
-            src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=1600&q=80"
-          />
+      <section className="dji-listing-hero">
+        <div className="dji-listing-hero__background">
+          <img alt={section?.label ?? 'Bora Bilgiç Teknik katalog'} src={activeCategory?.heroImageUrl ?? items[0]?.heroImageUrl ?? getPrimaryImage(items[0])?.url} />
         </div>
-        <div className="ui-shell catalog-hero__content">
-          <h1>{heroTitle}</h1>
-          <p>{heroDescription}</p>
+        <div className="ui-shell dji-listing-hero__content">
+          <div className="dji-breadcrumbs">
+            <Link to="/">Anasayfa</Link>
+            <span>›</span>
+            <span>{activeCategory?.name ?? section?.label ?? 'Katalog'}</span>
+          </div>
+          <h1>{activeCategory?.heroTitle ?? section?.label?.toUpperCase() ?? 'KATALOG'}</h1>
+          <p>{activeCategory?.heroDescription ?? activeCategory?.description ?? 'Bora Bilgiç Teknik katalogunu teknik ve gorsel olarak tek akista kesfedin.'}</p>
         </div>
       </section>
 
-      <section className="page-section">
-        <div className="ui-shell catalog-layout">
-          <aside className="filter-sidebar">
-            <div className="filter-sidebar__group">
-              <h3>{language === 'tr' ? 'DJI Koleksiyonu' : 'DJI Collection'}</h3>
-              <div className="filter-sidebar__checks">
-                <label className="filter-checkbox">
-                  <input checked={!activeCategorySlug} onChange={() => setSearchParams(new URLSearchParams())} type="radio" />
-                  <span>{language === 'tr' ? 'Tum DJI Urunleri' : 'All DJI Products'}</span>
-                </label>
-                {categories.map((category) => (
-                  <label className="filter-checkbox" key={category.id}>
-                    <input
-                      checked={activeCategorySlug === category.slug}
-                      onChange={() => {
-                        const next = new URLSearchParams(searchParams);
-                        next.set('category', category.slug);
-                        setSearchParams(next);
-                      }}
-                      type="radio"
-                    />
-                    <span>{translateCategoryName(language, category.slug, category.name)}</span>
-                  </label>
+      <section className="dji-section dji-section--listing">
+        <div className="ui-shell">
+          <div className="dji-toolbar">
+            <div className="dji-toolbar__left">
+              <span>Filtrele:</span>
+              <select className="ui-select" onChange={(event) => updateParam('series', event.target.value)} value={searchParams.get('series') ?? ''}>
+                <option value="">Kategoriler</option>
+                {(data?.availableFilters.series ?? []).map((entry) => (
+                  <option key={entry.value} value={entry.value}>
+                    {entry.value}
+                  </option>
                 ))}
-              </div>
-            </div>
-
-            <div className="filter-sidebar__group">
-              <h3>{language === 'tr' ? 'Satis Durumu' : 'Sale Mode'}</h3>
-              <select
-                className="ui-select"
-                onChange={(event) => {
-                  const next = new URLSearchParams(searchParams);
-                  if (event.target.value) next.set('saleMode', event.target.value);
-                  else next.delete('saleMode');
-                  setSearchParams(next);
-                }}
-                value={searchParams.get('saleMode') ?? ''}
-              >
-                <option value="">{language === 'tr' ? 'Tum yayinlanan DJI urunleri' : 'All published DJI products'}</option>
-                <option value="purchasable">{language === 'tr' ? 'Sepete eklenebilenler' : 'Purchasable only'}</option>
+              </select>
+              <select className="ui-select" onChange={(event) => updateParam('minPrice', event.target.value)} value={searchParams.get('minPrice') ?? ''}>
+                <option value="">Fiyat Araligi</option>
+                {listingRangePresets.map((range) => (
+                  <option key={range.label} value={range.min}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+              <select className="ui-select" onChange={(event) => updateParam('saleMode', event.target.value)} value={searchParams.get('saleMode') ?? ''}>
+                <option value="">Tum urunler</option>
+                <option value="purchasable">Sepete eklenebilir</option>
               </select>
             </div>
-          </aside>
-
-          <div>
-            <div className="catalog-body__header">
-              <div>
-                <h2>{language === 'tr' ? `${products.length} DJI urunu listeleniyor` : `${products.length} DJI products listed`}</h2>
-                <p>
-                  {activeCategory
-                    ? language === 'tr'
-                      ? `${translateCategoryName(language, activeCategory.slug, activeCategory.name)} koleksiyonundaki yayindaki DJI urunleri gosteriliyor.`
-                      : `Published DJI products from the ${translateCategoryName(language, activeCategory.slug, activeCategory.name)} collection are shown.`
-                    : language === 'tr'
-                      ? 'Storefront yalnizca DJI urunlerini listeler.'
-                      : 'The storefront lists DJI products only.'}
-                </p>
-              </div>
-              <div className="catalog-sort">
-                <span>{language === 'tr' ? 'Odak:' : 'Focus:'}</span>
-                <strong>{activeCategory ? translateCategoryName(language, activeCategory.slug, activeCategory.name) : language === 'tr' ? 'Tum Koleksiyonlar' : 'All Collections'}</strong>
-              </div>
+            <div className="dji-toolbar__right">
+              <span>Siralama:</span>
+              <select className="ui-select" onChange={(event) => updateParam('sort', event.target.value)} value={searchParams.get('sort') ?? 'newest'}>
+                <option value="newest">En Yeniler</option>
+                <option value="price-asc">Fiyat Artan</option>
+                <option value="price-desc">Fiyat Azalan</option>
+                <option value="rating">En Yuksek Puan</option>
+              </select>
             </div>
+          </div>
 
-            {loading ? <p className="text-muted">{language === 'tr' ? 'Urunler yukleniyor...' : 'Loading products...'}</p> : null}
-            {error ? <p className="text-muted">{error}</p> : null}
-            {!loading && products.length === 0 ? (
-              <EmptyState description={language === 'tr' ? 'Filtreleri degistirerek tekrar deneyin.' : 'Try again by changing the filters.'} title={language === 'tr' ? 'Urun bulunamadi' : 'No products found'} />
-            ) : (
-              <div className="product-grid">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )}
+          <div className="dji-listing-layout">
+            <ListingSidebar
+              activeSeries={searchParams.get('series') ?? ''}
+              availableFeatures={data?.availableFilters.features ?? []}
+              availableSeries={data?.availableFilters.series ?? []}
+              maxPrice={searchParams.get('maxPrice') ?? ''}
+              minPrice={searchParams.get('minPrice') ?? ''}
+              onClear={clearFilters}
+              onSelectRange={selectRange}
+              onSetSeries={(value) => updateParam('series', value)}
+              onToggleFeature={toggleFeature}
+              selectedFeatures={selectedFeatures}
+            />
+
+            <div className="dji-listing-grid-shell">
+              {loading ? <p className="dji-muted">Urunler yukleniyor...</p> : null}
+              {error ? <p className="dji-muted">{error}</p> : null}
+              {!loading && renderedItems.length === 0 ? (
+                <EmptyState
+                  description="Filtreleri degistirerek tekrar deneyin."
+                  title="Urun bulunamadi"
+                />
+              ) : (
+                <>
+                  <div className="dji-product-grid">
+                    {renderedItems.map((product) => (
+                      <StorefrontProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                  <div className="dji-pagination">
+                    <span>
+                      {Math.min((Number(params.page ?? '1') - 1) * Number(params.limit ?? '6') + 1, data?.total ?? 0)} -{' '}
+                      {Math.min(Number(params.page ?? '1') * Number(params.limit ?? '6'), data?.total ?? 0)} / {data?.total ?? 0} urun gosteriliyor
+                    </span>
+                    <div className="dji-pagination__buttons">
+                      <button
+                        disabled={Number(params.page ?? '1') <= 1}
+                        onClick={() => updateParam('page', String(Math.max(1, Number(params.page ?? '1') - 1)))}
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined">chevron_left</span>
+                      </button>
+                      <strong>{params.page ?? '1'}</strong>
+                      <button
+                        disabled={Number(params.page ?? '1') >= totalPages}
+                        onClick={() => updateParam('page', String(Math.min(totalPages, Number(params.page ?? '1') + 1)))}
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined">chevron_right</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="page-section">
-        <div className="ui-shell">
-          <h2 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.4rem)' }}>{language === 'tr' ? 'The Standard of Excellence' : 'The Standard of Excellence'}</h2>
-          <div className="standard-grid">
-            <StoryPanel
-              className="feature-panel--wide feature-panel--immersive"
-              description="Mavic 4 Pro, Air 3S, Mini 5 Pro, Avata 360 ve Inspire 3 ayni kamera drone vitrini icinde; seyahat, creator ve sinema kullanimlari ayri segmentler olarak okunur."
-              gallery={getGalleryImages(cameraProducts).length ? getGalleryImages(cameraProducts) : visualLibrary.camera.map((src, index) => ({ src, alt: `Camera catalog visual ${index + 1}` }))}
-              imageUrl={getPrimaryImage(cameraProducts[0] ?? products[0])?.url ?? visualLibrary.camera[0]}
-              kicker={translateCategoryName(language, 'camera-drones', 'Camera Drones')}
-              stat={language === 'tr' ? `${cameraProducts.length} Urun` : `${cameraProducts.length} Products`}
-              title={
-                language === 'tr'
-                  ? 'Mavic, Air, Mini, Avata ve Inspire ailesi ayni hava vitrini icinde akar.'
-                  : 'Mavic, Air, Mini, Avata, and Inspire families flow through the same aerial showcase.'
-              }
-            />
-            <StoryPanel
-              className="feature-panel--tall"
-              description={
-                language === 'tr'
-                  ? 'RS 5, Osmo Action 6, Osmo Mobile 8P ve Mic 2; creator tarafinda hareket, aksiyon ve ses ekipmanlarini tek blokta toplar.'
-                  : 'RS 5, Osmo Action 6, Osmo Mobile 8P, and Mic 2 gather motion, action, and audio tools into one creator block.'
-              }
-              gallery={getGalleryImages(handheldProducts).length ? getGalleryImages(handheldProducts) : visualLibrary.handheld.map((src, index) => ({ src, alt: `Handheld catalog visual ${index + 1}` }))}
-              imageUrl={getPrimaryImage(handheldProducts[0])?.url ?? visualLibrary.handheld[0]}
-              kicker={translateCategoryName(language, 'handheld', 'Handheld')}
-              stat={language === 'tr' ? `${handheldProducts.length} Urun` : `${handheldProducts.length} Products`}
-              title={language === 'tr' ? 'RS, Osmo ve Mic serileri creator cekim zincirini tamamlar.' : 'RS, Osmo, and Mic series complete the creator capture chain.'}
-            />
-            <StoryPanel
-              className="feature-panel--tall"
-              description={
-                language === 'tr'
-                  ? 'Matrice ailesi ve saha sistemleri katalogtan kaybolmaz; satin alma yerine teklif ve kesif odakli bir karar akisi ile anlatilir.'
-                  : 'Matrice family and field systems do not disappear from the catalog; they are presented with a quote- and discovery-led decision flow.'
-              }
-              gallery={getGalleryImages(enterpriseProducts).length ? getGalleryImages(enterpriseProducts) : visualLibrary.enterprise.map((src, index) => ({ src, alt: `Enterprise catalog visual ${index + 1}` }))}
-              imageUrl={getPrimaryImage(enterpriseProducts[0])?.url ?? visualLibrary.enterprise[0]}
-              kicker={translateCategoryName(language, 'enterprise', 'Enterprise')}
-              stat={language === 'tr' ? `${enterpriseProducts.length} Urun` : `${enterpriseProducts.length} Products`}
-              title={language === 'tr' ? 'Matrice platformlari saha ve kurumsal operasyon vitrini olarak ayrisir.' : 'Matrice platforms separate into a field and enterprise operations showcase.'}
-            />
-            <StoryPanel
-              className="feature-panel--wide"
-              description={
-                language === 'tr'
-                  ? 'Sepete eklenebilen modeller fiyat ve stokla ilerler; premium ve operasyonel sistemler ise teklif veya inceleme odakli davranarak kullaniciyi yaniltmaz.'
-                  : 'Purchasable models move with price and stock, while premium and operational systems stay in quote or review-driven flows without misleading the user.'
-              }
-              gallery={getGalleryImages(products.slice(0, 3)).length ? getGalleryImages(products.slice(0, 3)) : visualLibrary.camera.map((src, index) => ({ src, alt: `Navigation visual ${index + 1}` }))}
-              imageUrl={getPrimaryImage(products[2])?.url ?? visualLibrary.camera[2]}
-              kicker={language === 'tr' ? 'Satin Alma Mantigi' : 'Purchase Logic'}
-              stat="Cart + Quote"
-              title={
-                language === 'tr'
-                  ? 'Satin alinabilen modeller ile teklif odakli sistemler ayni katalogta dogru sekilde ayrilir.'
-                  : 'Purchasable models and quote-driven systems are separated correctly inside the same catalog.'
-              }
-            />
-          </div>
-        </div>
-      </section>
+      <ServiceBand />
+      <StoreFooter />
     </>
+  );
+}
+
+function ProductTabContent({ section }: { section?: ProductDetailSection }) {
+  if (!section) return null;
+
+  return (
+    <div className="dji-detail-tabpanel">
+      <div>
+        {section.heading ? <h2>{section.heading}</h2> : null}
+        {section.body ? <p>{section.body}</p> : null}
+        {section.bullets?.length ? (
+          <ul>
+            {section.bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      {section.imageUrl ? (
+        <div className="dji-detail-tabpanel__media">
+          <img alt={section.heading ?? 'Bora Bilgiç Teknik visual'} src={section.imageUrl} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -672,20 +686,36 @@ export function ProductDetailPage() {
   const { language } = useI18n();
   const { token, isAuthenticated, syncCart, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedPackageId, setSelectedPackageId] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [activeTabId, setActiveTabId] = useState('aciklama');
 
   useEffect(() => {
     void api
       .getProduct(slug)
-      .then(setProduct)
+      .then((nextProduct) => {
+        setProduct(nextProduct);
+        setSelectedImageIndex(0);
+        setSelectedPackageId(nextProduct.packageOptions?.find((option) => option.isDefault)?.id ?? nextProduct.packageOptions?.[0]?.id ?? '');
+        setActiveTabId(nextProduct.detailSections?.[0]?.id ?? 'aciklama');
+      })
       .catch((nextError: Error) => setError(nextError.message));
   }, [slug]);
 
   async function handleAddToCart() {
-    if (!token || !product) return;
+    if (!product) return;
+    if (!isAuthenticated || !token) {
+      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
+      return;
+    }
+
     try {
-      await api.addToCart(token, { productId: product.id, quantity: 1 });
+      await api.addToCart(token, { productId: product.id, quantity });
       await syncCart();
       showToast({
         tone: 'success',
@@ -703,37 +733,13 @@ export function ProductDetailPage() {
 
   async function handleFavoriteToggle() {
     if (!product) return;
-
     if (!isAuthenticated) {
-      showToast({
-        tone: 'info',
-        title: language === 'tr' ? 'Giris gerekli' : 'Login required',
-        description: language === 'tr' ? 'Favorilere eklemek icin once giris yapmalisiniz.' : 'You need to log in before adding favorites.',
-      });
+      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
       return;
     }
 
     try {
-      const action = await toggleFavorite(product.id);
-      showToast({
-        tone: 'info',
-        title:
-          action === 'added'
-            ? language === 'tr'
-              ? 'Favorilere eklendi'
-              : 'Added to favorites'
-            : language === 'tr'
-              ? 'Favorilerden kaldirildi'
-              : 'Removed from favorites',
-        description:
-          action === 'added'
-            ? language === 'tr'
-              ? `${product.name} favorilerinize eklendi.`
-              : `${product.name} was added to your favorites.`
-            : language === 'tr'
-              ? `${product.name} favorilerinizden cikarildi.`
-              : `${product.name} was removed from your favorites.`,
-      });
+      await toggleFavorite(product.id);
     } catch (nextError) {
       showToast({
         tone: 'error',
@@ -747,7 +753,7 @@ export function ProductDetailPage() {
     return (
       <section className="page-section">
         <div className="ui-shell">
-          <EmptyState description={error} title={language === 'tr' ? 'Urun bulunamadi' : 'Product not found'} />
+          <EmptyState description={error} title="Urun bulunamadi" />
         </div>
       </section>
     );
@@ -757,65 +763,197 @@ export function ProductDetailPage() {
     return (
       <section className="page-section">
         <div className="ui-shell">
-          <p className="text-muted">{language === 'tr' ? 'Urun yukleniyor...' : 'Loading product...'}</p>
+          <p className="dji-muted">Urun yukleniyor...</p>
         </div>
       </section>
     );
   }
 
-  const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
+  const gallery: Array<{ id: string; url: string; alt: string; isPrimary: boolean; thumbnailUrl?: string | null }> =
+    product.images.length > 0
+      ? product.images
+      : product.packageOptions?.map((option) => ({
+          id: option.id,
+          url: product.heroImageUrl ?? '',
+          alt: option.name,
+          isPrimary: option.isDefault ?? false,
+          thumbnailUrl: product.heroImageUrl ?? null,
+        })) ?? [];
+  const selectedImage = gallery[selectedImageIndex] ?? gallery[0];
+  const packageOptions = product.packageOptions ?? [];
+  const activePackage =
+    packageOptions.find((option) => option.id === selectedPackageId) ??
+    packageOptions.find((option) => option.isDefault) ??
+    packageOptions[0];
+  const tabs = product.detailSections ?? [];
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
   const favoriteActive = isFavorite(product.id);
+  const stars = Math.round(product.ratingAverage ?? 0);
 
   return (
-    <section className="page-section" style={{ paddingTop: '140px' }}>
-      <div className="ui-shell product-detail">
-        <div className="product-detail__visual">
-          <img alt={primaryImage.alt} src={primaryImage.url} />
-        </div>
-        <div className="product-detail__copy">
-          <div className="detail-chip-row">
-            <Badge>{product.brand}</Badge>
-            <Badge>{product.badge ?? translateCategoryName(language, product.category.slug, product.category.name)}</Badge>
+    <>
+      <section className="dji-detail">
+        <div className="ui-shell">
+          <div className="dji-breadcrumbs">
+            <Link to="/">Anasayfa</Link>
+            <span>›</span>
+            <Link to={findSectionBySlug(product.section)?.path ?? '/katalog'}>{product.category.name}</Link>
+            {product.series ? (
+              <>
+                <span>›</span>
+                <span>{product.series}</span>
+              </>
+            ) : null}
+            <span>›</span>
+            <span>{product.name}</span>
           </div>
-          <h1>{product.name}</h1>
-          <p>{product.description}</p>
-          <div className="detail-cta-row" style={{ margin: '1.5rem 0' }}>
-            <div className="price-text">{product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Satisa Kapali' : 'Not for Direct Sale'}</div>
-            <div className="detail-chip">
-              {product.isPurchasable
-                ? language === 'tr'
-                  ? `${product.stock} adet stokta`
-                  : `${product.stock} units in stock`
-                : language === 'tr'
-                  ? 'Tanitim modunda yayinlaniyor'
-                  : 'Published in promo mode'}
+
+          <div className="dji-detail__grid">
+            <div className="dji-detail__gallery">
+              <div className="dji-detail__thumbs">
+                {gallery.map((image, index) => (
+                  <button
+                    className={index === selectedImageIndex ? 'is-active' : ''}
+                    key={image.id}
+                    onClick={() => setSelectedImageIndex(index)}
+                    type="button"
+                  >
+                    <img alt={image.alt} src={image.thumbnailUrl ?? image.url} />
+                  </button>
+                ))}
+              </div>
+              <div className="dji-detail__stage">
+                <img alt={selectedImage?.alt ?? product.name} src={selectedImage?.url} />
+              </div>
+            </div>
+
+            <div className="dji-detail__copy">
+              <h1>{product.name}</h1>
+              <p className="dji-detail__subtitle">{product.heroTag ?? product.shortDescription}</p>
+              <div className="dji-detail__rating">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <span className={`material-symbols-outlined ${index < stars ? 'is-filled' : ''}`} key={index}>
+                    star
+                  </span>
+                ))}
+                <span>
+                  {(product.ratingAverage ?? 0).toFixed(1)} ({product.reviewCount ?? 0})
+                </span>
+              </div>
+              <div className="dji-detail__price-row">
+                <strong>{formatCurrency(activePackage?.price ?? product.price, language)}</strong>
+                <span>{product.isPurchasable ? 'KDV dahil' : 'Teklif akisi'}</span>
+                <em>{product.stock > 0 ? 'Stokta var' : 'Stok bekleniyor'}</em>
+              </div>
+              <ul className="dji-detail__features">
+                {product.specs.map((spec) => (
+                  <li key={spec.id}>
+                    <span className="material-symbols-outlined">arrow_right_alt</span>
+                    {spec.value}
+                  </li>
+                ))}
+              </ul>
+
+              {packageOptions.length > 0 ? (
+                <div className="dji-detail__packages">
+                  <h3>Paket Secimi</h3>
+                  <div className="dji-detail__package-grid">
+                    {packageOptions.map((option: ProductPackageOption) => (
+                      <button
+                        className={option.id === activePackage?.id ? 'is-active' : ''}
+                        key={option.id}
+                        onClick={() => setSelectedPackageId(option.id)}
+                        type="button"
+                      >
+                        <strong>{option.name}</strong>
+                        <span>{formatCurrency(option.price, language)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="dji-detail__cta-row">
+                <div className="dji-stepper">
+                  <button onClick={() => setQuantity((value) => Math.max(1, value - 1))} type="button">
+                    -
+                  </button>
+                  <span>{quantity}</span>
+                  <button onClick={() => setQuantity((value) => Math.min(10, value + 1))} type="button">
+                    +
+                  </button>
+                </div>
+                <Button disabled={!product.isPurchasable} onClick={() => void handleAddToCart()}>
+                  SEPETE EKLE
+                </Button>
+                <button className={`dji-icon-button ${favoriteActive ? 'is-active' : ''}`} onClick={() => void handleFavoriteToggle()} type="button">
+                  <span className="material-symbols-outlined">{favoriteActive ? 'favorite' : 'favorite_border'}</span>
+                </button>
+              </div>
             </div>
           </div>
-          <div className="detail-cta-row">
-            {product.isPurchasable ? (
-              <Button disabled={!isAuthenticated} onClick={() => void handleAddToCart()}>
-                {isAuthenticated ? (language === 'tr' ? 'Sepete Ekle' : 'Add to Cart') : language === 'tr' ? 'Giris gerekli' : 'Login required'}
-              </Button>
-            ) : (
-              <Button variant="secondary">{language === 'tr' ? 'Teklif Iste' : 'Request Quote'}</Button>
-            )}
-            <Button onClick={() => void handleFavoriteToggle()} variant="secondary">
-              {favoriteActive ? (language === 'tr' ? 'Favorilerden Kaldir' : 'Remove from Favorites') : language === 'tr' ? 'Favorilere Ekle' : 'Add to Favorites'}
-            </Button>
-            <Link to="/katalog">
-              <Button variant="ghost">{language === 'tr' ? 'Kataloga Don' : 'Back to Catalog'}</Button>
-            </Link>
-          </div>
-          <div className="spec-grid">
-            {product.specs.map((spec) => (
-              <div key={spec.id}>
-                <span>{spec.name}</span>
-                <strong>{spec.value}</strong>
-              </div>
+        </div>
+      </section>
+
+      <ServiceBand />
+
+      <section className="dji-section dji-section--detail">
+        <div className="ui-shell">
+          <div className="dji-tabs">
+            {tabs.map((tab) => (
+              <button className={tab.id === activeTab?.id ? 'is-active' : ''} key={tab.id} onClick={() => setActiveTabId(tab.id)} type="button">
+                {tab.label}
+              </button>
             ))}
           </div>
+          <ProductTabContent section={activeTab} />
         </div>
-      </div>
-    </section>
+      </section>
+
+      <StoreFooter />
+    </>
+  );
+}
+
+export function ContactPage() {
+  return (
+    <>
+      <section className="dji-contact-hero">
+        <div className="ui-shell">
+          <div className="dji-breadcrumbs">
+            <Link to="/">Anasayfa</Link>
+            <span>›</span>
+            <span>Iletisim</span>
+          </div>
+          <h1>ILETISIM</h1>
+          <p>Kurumsal projeler, teknik kesif, stok teyidi ve satis sonrasi destek icin bizimle hizla iletisime gecin.</p>
+        </div>
+      </section>
+
+      <section className="dji-section">
+        <div className="ui-shell dji-contact-grid">
+          <div className="dji-contact-card">
+            <h2>Merkez Ofis</h2>
+            <p>Maslak Mah. Teknik Plaza No: 18 / Istanbul</p>
+            <p>+90 212 555 00 00</p>
+            <p>info@borabilgicteknik.com</p>
+          </div>
+          <div className="dji-contact-card">
+            <h2>Kurumsal Satis</h2>
+            <p>Drone filolari, inspection ihtiyaclari ve kurumsal demo akislari icin uzman ekip.</p>
+            <Badge>Enterprise Discovery</Badge>
+          </div>
+          <div className="dji-contact-card">
+            <h2>Destek Saatleri</h2>
+            <p>Pazartesi - Cumartesi</p>
+            <p>09:00 - 19:00</p>
+            <p>Uzaktan teknik destek: 7/24 kayit olusturma</p>
+          </div>
+        </div>
+      </section>
+
+      <ServiceBand />
+      <StoreFooter />
+    </>
   );
 }

@@ -83,7 +83,7 @@ export function ProfilePage() {
           <div className="section-header">
             <div>
               <h2>{language === 'tr' ? 'Favorilerim' : 'My Favorites'}</h2>
-              <p>{language === 'tr' ? 'Kaydedilen DJI urunlerini daha sonra hizla geri cagirabilirsiniz.' : 'Saved DJI products can be recalled quickly later.'}</p>
+              <p>{language === 'tr' ? 'Kaydedilen urunleri daha sonra hizla geri cagirabilirsiniz.' : 'Saved products can be recalled quickly later.'}</p>
             </div>
             <Link className="section-link" to="/favoriler">
               {language === 'tr' ? 'Tumunu gor' : 'View all'}
@@ -91,7 +91,7 @@ export function ProfilePage() {
           </div>
           {favoritePreview.length === 0 ? (
             <EmptyState
-              description={language === 'tr' ? 'Kalp ikonunu kullanarak DJI urunlerini favorilerinize ekleyin.' : 'Use the heart icon to add DJI products to your favorites.'}
+              description={language === 'tr' ? 'Kalp ikonunu kullanarak urunleri favorilerinize ekleyin.' : 'Use the heart icon to add products to your favorites.'}
               title={language === 'tr' ? 'Favori urun yok' : 'No favorite products yet'}
             />
           ) : (
@@ -206,7 +206,7 @@ export function FavoritesPage() {
         <div className="favorites-header">
           <div>
             <div className="detail-chip">{language === 'tr' ? 'Favoriler' : 'Favorites'}</div>
-            <h1>{language === 'tr' ? 'Kaydettiginiz DJI Secimleri' : 'Your Saved DJI Picks'}</h1>
+            <h1>{language === 'tr' ? 'Kaydettiginiz Secimler' : 'Your Saved Picks'}</h1>
             <p>
               {language === 'tr'
                 ? 'Favori listeniz hesabiniza baglidir. Local storage kullanilmaz; her cihazda ayni hesaptan geri gelir.'
@@ -225,7 +225,7 @@ export function FavoritesPage() {
 
         {!wishlist || wishlist.items.length === 0 ? (
           <EmptyState
-            description={language === 'tr' ? 'Bir DJI urununu favorilere ekleyerek kendi kisa listenizi olusturun.' : 'Create your own shortlist by adding a DJI product to favorites.'}
+            description={language === 'tr' ? 'Bir urunu favorilere ekleyerek kendi kisa listenizi olusturun.' : 'Create your own shortlist by adding a product to favorites.'}
             title={language === 'tr' ? 'Favori listeniz bos' : 'Your favorites list is empty'}
           />
         ) : (

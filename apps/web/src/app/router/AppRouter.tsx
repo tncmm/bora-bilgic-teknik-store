@@ -1,9 +1,9 @@
-import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 import { AdminDashboardPage, AdminOrdersPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
 import { LoginPage, RegisterPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
-import { CatalogPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
+import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
 import { FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
@@ -12,9 +12,11 @@ import { useSession } from '../providers/SessionProvider';
 
 function ProtectedRoute({ adminOnly = false }: { adminOnly?: boolean }) {
   const { isAuthenticated, isAdmin } = useSession();
+  const location = useLocation();
+  const from = `${location.pathname}${location.search}${location.hash}`;
 
   if (!isAuthenticated) {
-    return <Navigate replace to="/giris" />;
+    return <Navigate replace state={{ from }} to="/giris" />;
   }
 
   if (adminOnly && !isAdmin) {
@@ -42,8 +44,14 @@ export function AppRouter() {
       <Routes>
         <Route element={<SiteChrome />}>
           <Route element={<HomePage />} index />
+          <Route element={<CatalogPage forcedSection="drone" />} path="/drone" />
+          <Route element={<CatalogPage forcedSection="gimbal" />} path="/gimbal" />
+          <Route element={<CatalogPage forcedSection="aksiyon-kamera" />} path="/aksiyon-kamera" />
+          <Route element={<CatalogPage forcedSection="aksesuar" />} path="/aksesuar" />
+          <Route element={<CatalogPage forcedSection="kurumsal" />} path="/kurumsal" />
           <Route element={<CatalogPage />} path="/katalog" />
           <Route element={<ProductDetailPage />} path="/urun/:slug" />
+          <Route element={<ContactPage />} path="/iletisim" />
           <Route element={<LoginPage />} path="/giris" />
           <Route element={<RegisterPage />} path="/kayit" />
           <Route element={<ProtectedRoute />}>

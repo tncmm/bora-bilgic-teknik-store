@@ -23,8 +23,8 @@ export function CartPage() {
           <EmptyState
             description={
               language === 'tr'
-                ? 'Katalogdan bir DJI urunu secerek sepeti doldurabilir, kalp ikonuyla kendi favori listenizi de kurabilirsiniz.'
-                : 'Pick a DJI product from the catalog to fill your cart, and build a favorites list with the heart icon.'
+                ? 'Katalogdan bir urun secerek sepeti doldurabilir, kalp ikonuyla kendi favori listenizi de kurabilirsiniz.'
+                : 'Pick a product from the catalog to fill your cart, and build a favorites list with the heart icon.'
             }
             title={language === 'tr' ? 'Sepet bos' : 'Your cart is empty'}
           />

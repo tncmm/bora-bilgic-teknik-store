@@ -1,5 +1,16 @@
 import { appConfig } from '@bora/config';
-import type { AuthResponse, Cart, Category, DashboardMetrics, Order, Product, ThemeMode, User, Wishlist } from '@bora/types';
+import type {
+  AuthResponse,
+  Cart,
+  CatalogListResponse,
+  Category,
+  DashboardMetrics,
+  Order,
+  Product,
+  ThemeMode,
+  User,
+  Wishlist,
+} from '@bora/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? appConfig.apiBaseUrl;
 
@@ -46,7 +57,7 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 export const api = {
   listProducts(params?: Record<string, string>) {
     const search = new URLSearchParams(params);
-    return request<Product[]>(`/products${search.toString() ? `?${search.toString()}` : ''}`);
+    return request<CatalogListResponse>(`/products${search.toString() ? `?${search.toString()}` : ''}`);
   },
   getProduct(slug: string) {
     return request<Product>(`/products/${slug}`);
