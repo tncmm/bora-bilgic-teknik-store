@@ -5,6 +5,10 @@ services:
     rootDir: .
     buildCommand: npm install && npm run build:web
     staticPublishPath: ./apps/web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     pullRequestPreviewsEnabled: false
     envVars:
       - key: VITE_API_BASE_URL
