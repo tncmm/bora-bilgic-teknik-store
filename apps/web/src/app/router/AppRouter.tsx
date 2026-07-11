@@ -3,7 +3,7 @@ import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } fro
 import { AdminDashboardPage, AdminOrdersPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
 import { LoginPage, RegisterPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
-import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
+import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
 import { FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
@@ -52,11 +52,15 @@ export function AppRouter() {
           <Route element={<CatalogPage />} path="/katalog" />
           <Route element={<ProductDetailPage />} path="/urun/:slug" />
           <Route element={<ContactPage />} path="/iletisim" />
+          <Route element={<DeliveryPage />} path="/teslimat" />
+          <Route element={<ReturnPage />} path="/iade" />
+          <Route element={<DistanceSalesPage />} path="/mesafeli-satis" />
+          <Route element={<PrivacyPage />} path="/gizlilik" />
+          <Route element={<CartPage />} path="/sepet" />
+          <Route element={<CheckoutPage />} path="/checkout" />
           <Route element={<LoginPage />} path="/giris" />
           <Route element={<RegisterPage />} path="/kayit" />
           <Route element={<ProtectedRoute />}>
-            <Route element={<CartPage />} path="/sepet" />
-            <Route element={<CheckoutPage />} path="/checkout" />
             <Route element={<ProfilePage />} path="/profil" />
             <Route element={<FavoritesPage />} path="/favoriler" />
           </Route>

@@ -152,9 +152,13 @@ function StorefrontProductCard({ product }: { product: Product }) {
         </div>
         <div className="dji-product-card__content">
           <h3>{product.name}</h3>
+          <p className="dji-product-card__description">{product.shortDescription}</p>
           <div className="dji-product-card__price">
             {product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Teklif Uzerine' : 'Quote on Request'}
           </div>
+          <span className="dji-product-card__meta">
+            {product.isPurchasable ? `${product.stock} adet stokta` : 'Teklif ile satis'}
+          </span>
         </div>
       </Link>
       <div className="dji-product-card__actions">
@@ -221,15 +225,16 @@ function StoreFooter() {
           <nav>
             <Link to="/kurumsal">Hakkimizda</Link>
             <Link to="/kurumsal">Yetki Belgeleri</Link>
-            <Link to="/kurumsal">KVKK</Link>
+            <Link to="/gizlilik">KVKK / Gizlilik</Link>
             <Link to="/iletisim">Iletisim</Link>
           </nav>
         </div>
         <div>
           <h4>MUSTERI HIZMETLERI</h4>
           <nav>
-            <Link to="/iletisim">Kargo & Teslimat</Link>
-            <Link to="/iletisim">Iade & Degisim</Link>
+            <Link to="/teslimat">Kargo & Teslimat</Link>
+            <Link to="/iade">Iade & Degisim</Link>
+            <Link to="/mesafeli-satis">Mesafeli Satis</Link>
             <Link to="/iletisim">Garanti Sartlari</Link>
             <Link to="/iletisim">Sikca Sorulan Sorular</Link>
           </nav>
@@ -247,8 +252,10 @@ function StoreFooter() {
       <div className="ui-shell dji-footer__bottom">
         <span>© 2024 Bora Bilgiç Teknik. Tum haklari saklidir.</span>
         <div>
-          <Link to="/iletisim">Kullanim Kosullari</Link>
-          <Link to="/iletisim">Gizlilik Politikasi</Link>
+          <Link to="/mesafeli-satis">Mesafeli Satis</Link>
+          <Link to="/gizlilik">Gizlilik Politikasi</Link>
+          <Link to="/teslimat">Teslimat</Link>
+          <Link to="/iade">Iade</Link>
           <Link to="/iletisim">Site Haritasi</Link>
         </div>
       </div>
@@ -270,6 +277,120 @@ function NewsletterBanner() {
         </form>
       </div>
     </section>
+  );
+}
+
+function PurchaseJourneySection() {
+  const steps = [
+    {
+      title: '1. Urunu Secin',
+      description: 'Kategori veya urun detay sayfasindan teknik ozellikleri, fiyatlari ve stok bilgisini inceleyin.',
+    },
+    {
+      title: '2. Sepete Ekleyin',
+      description: 'Sepette urun adedi, ara toplam ve kargo bilgisi acikca gorunur.',
+    },
+    {
+      title: '3. Teslimat Bilgisi',
+      description: 'Checkout ekraninda ad, telefon, il, ilce ve acik adres bilgilerinizi doldurun.',
+    },
+    {
+      title: '4. Odeme Onayi',
+      description: 'Odeme oncesi toplam tutar, siparis ozeti ve teslimat bilgileri son kez kontrol edilir.',
+    },
+  ];
+
+  return (
+    <section className="dji-section">
+      <div className="ui-shell">
+        <div className="dji-section__heading">
+          <h2>SATIN ALMA SURECI</h2>
+          <Link to="/checkout">ODEME AKISINI GOR</Link>
+        </div>
+        <div className="dji-purchase-grid">
+          {steps.map((step) => (
+            <article className="dji-purchase-card" key={step.title}>
+              <div className="dji-kicker">{step.title}</div>
+              <p>{step.description}</p>
+            </article>
+          ))}
+        </div>
+        <div className="dji-compliance-banner">
+          <strong>Odeme, teslimat ve iade bilgilendirmesi siparis oncesinde acikca gosterilir.</strong>
+          <p>Stoktaki urunler icin fiyat ve teslim sureci, kurumsal urunlerde ise teklif ve termin akisi net sekilde belirtilir.</p>
+          <div className="dji-inline-links">
+            <Link to="/teslimat">Teslimat</Link>
+            <Link to="/iade">Iade</Link>
+            <Link to="/mesafeli-satis">Mesafeli Satis</Link>
+            <Link to="/gizlilik">Gizlilik</Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+interface InfoSection {
+  heading: string;
+  body?: string;
+  bullets?: string[];
+}
+
+interface InfoPageProps {
+  title: string;
+  summary: string;
+  pathLabel: string;
+  highlights: Array<{ title: string; description: string }>;
+  sections: InfoSection[];
+}
+
+function InfoPage({ title, summary, pathLabel, highlights, sections }: InfoPageProps) {
+  return (
+    <>
+      <section className="dji-contact-hero">
+        <div className="ui-shell">
+          <div className="dji-breadcrumbs">
+            <Link to="/">Anasayfa</Link>
+            <span>›</span>
+            <span>{pathLabel}</span>
+          </div>
+          <h1>{title}</h1>
+          <p>{summary}</p>
+        </div>
+      </section>
+
+      <section className="dji-section">
+        <div className="ui-shell">
+          <div className="dji-info-grid">
+            {highlights.map((item) => (
+              <article className="dji-info-card" key={item.title}>
+                <h2>{item.title}</h2>
+                <p>{item.description}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="dji-info-stack">
+            {sections.map((section) => (
+              <article className="dji-info-section" key={section.heading}>
+                <h2>{section.heading}</h2>
+                {section.body ? <p>{section.body}</p> : null}
+                {section.bullets?.length ? (
+                  <ul>
+                    {section.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <ServiceBand />
+      <StoreFooter />
+    </>
   );
 }
 
@@ -377,6 +498,7 @@ export function HomePage() {
         </div>
       </section>
 
+      <PurchaseJourneySection />
       <EditorialPanels />
       <NewsletterBanner />
       <StoreFooter />
@@ -845,6 +967,11 @@ export function ProductDetailPage() {
                 <span>{product.isPurchasable ? 'KDV dahil' : 'Teklif akisi'}</span>
                 <em>{product.stock > 0 ? 'Stokta var' : 'Stok bekleniyor'}</em>
               </div>
+              <p className="dji-detail__purchase-note">
+                {product.isPurchasable
+                  ? 'Sepet, teslimat formu ve odeme oncesi siparis ozeti adimlari ile satin alma sureci net olarak ilerler.'
+                  : 'Bu urun kurumsal teklif akisi ile satilir; termin ve fiyat bilgisi talep sonrasi netlestirilir.'}
+              </p>
               <ul className="dji-detail__features">
                 {product.specs.map((spec) => (
                   <li key={spec.id}>
@@ -955,5 +1082,173 @@ export function ContactPage() {
       <ServiceBand />
       <StoreFooter />
     </>
+  );
+}
+
+export function DeliveryPage() {
+  return (
+    <InfoPage
+      highlights={[
+        { title: 'Ayni Gun Isleme', description: 'Hafta ici mesai saatlerinde onaylanan stoklu siparisler ayni gun operasyon sirasina alinabilir.' },
+        { title: 'Turkiye Geneli Gonderim', description: 'Anlasmali kargo firmalari ile Turkiye geneline teslimat yapilir; kurumsal sevklerde ozel planlama sunulur.' },
+        { title: 'Takip Bilgisi', description: 'Kargo cikisi sonrasi takip numarasi musteriye iletilir ve teslimat sureci bilgi mesajlari ile desteklenir.' },
+      ]}
+      pathLabel="Teslimat"
+      sections={[
+        {
+          heading: 'Siparis Hazirlama',
+          body: 'Stokta bulunan urunler, odeme ve siparis onayi sonrasinda operasyon ekibi tarafindan paketlenir ve sevke hazir hale getirilir.',
+          bullets: [
+            'Hafta ici mesai saatlerinde onaylanan siparisler operasyon yogunluguna gore ayni gun veya ertesi is gunu kargoya verilir.',
+            'Kurumsal veya teklif ile satilan urunlerde sevk tarihi teklif ve termin bilgisi ile ayrica netlestirilir.',
+            'Kutu icerigi, aksesuar ve garanti durumu paketleme oncesi kontrol edilir.',
+          ],
+        },
+        {
+          heading: 'Teslimat Sureleri',
+          bullets: [
+            'Istanbul ici standart sevkiyatlar genellikle 1 is gunu icinde teslim edilir.',
+            'Sehir disi teslimatlar, kargo firmasinin operasyonuna bagli olarak 1-3 is gunu arasinda tamamlanir.',
+            'Resmi tatil, kampanya donemi veya olumsuz hava kosullarinda sureler uzayabilir.',
+          ],
+        },
+        {
+          heading: 'Teslimatta Kontrol',
+          bullets: [
+            'Kargo paketi teslim alinirken fiziksel hasar kontrol edilmelidir.',
+            'Hasarli paketlerde kargo gorevlisi ile tutanak tutulmasi ve urunun teslim alinmamasi onerilir.',
+            'Teslimat sonrasi fark edilen eksik veya hasarli durumlarda destek ekibi ile ayni gun icinde iletisime gecilmelidir.',
+          ],
+        },
+      ]}
+      summary="Siparis hazirlama, kargo cikisi ve teslimat adimlari burada acikca belirtilir. Stoklu urunlerde kisa termin, kurumsal urunlerde ise teklif bazli sevk planlamasi uygulanir."
+      title="TESLIMAT BILGILERI"
+    />
+  );
+}
+
+export function ReturnPage() {
+  return (
+    <InfoPage
+      highlights={[
+        { title: '14 Gun Cayma Hakki', description: 'Mesafeli satis kapsaminda, mevzuata uygun urunlerde teslimattan itibaren 14 gun icinde cayma hakki uygulanir.' },
+        { title: 'Hizli Inceleme', description: 'Iade talebi olusturulan urunler operasyon ve teknik ekip tarafindan en kisa surede incelenir.' },
+        { title: 'Destek Kaydi', description: 'Iade, degisim ve servis sureci icin info@borabilgicteknik.com veya telefon hatti uzerinden kayit acilabilir.' },
+      ]}
+      pathLabel="Iade"
+      sections={[
+        {
+          heading: 'Iade Kosullari',
+          bullets: [
+            'Urunun orijinal kutusu, aksesuar ve faturasi ile birlikte eksiksiz olarak gonderilmesi gerekir.',
+            'Kullanim izi, fiziksel zarar veya eksik aksesuar bulunan iadeler yeniden degerlendirmeye alinabilir.',
+            'Hijyen, lisans veya tekil aktivasyon gerektiren urunlerde ilgili mevzuat kapsamindaki istisnalar uygulanir.',
+          ],
+        },
+        {
+          heading: 'Iade Sureci',
+          bullets: [
+            'Musteri hizmetlerine siparis numarasi ile basvuru yapilir.',
+            'Onay sonrasinda urun anlasmali kargo ile geri gonderilir.',
+            'Kontrol tamamlandiginda uygun iadeler icin geri odeme sureci baslatilir.',
+          ],
+        },
+        {
+          heading: 'Degisim ve Teknik Durumlar',
+          body: 'Hasarli, yanlis gonderilen veya ilk kullanimda sorun olusturan urunler icin degisim ya da teknik inceleme sureci ayrica ele alinir.',
+          bullets: [
+            'Ilk 24 saat icinde bildirilen sevkiyat hatalari oncelikli olarak degerlendirilir.',
+            'Garanti kapsamindaki teknik sorunlarda yetkili servis sureci devreye alinabilir.',
+            'Kurumsal teklif urunlerinde degisim ve iade kosullari teklif dokumaniyla birlikte degerlendirilir.',
+          ],
+        },
+      ]}
+      summary="Iade, degisim ve cayma hakki surecinde hangi adimlarin izlenecegi, urunlerin hangi kosullarda kabul edilecegi ve destek kaydinin nasil acilacagi burada yer alir."
+      title="IADE VE DEGİSIM"
+    />
+  );
+}
+
+export function DistanceSalesPage() {
+  return (
+    <InfoPage
+      highlights={[
+        { title: 'Siparis Ozeti', description: 'Urun adi, fiyat, kargo ve toplam tutar siparis oncesi net bicimde gosterilir.' },
+        { title: 'Cayma Hakki', description: 'Mevzuat kapsamindaki urunlerde 14 gunluk cayma hakki ve iade sureci uygulanir.' },
+        { title: 'Satici Bilgileri', description: 'Bora Bilgiç Teknik iletisimi, teslimat ve destek bilgileri kamuya acik sekilde sunulur.' },
+      ]}
+      pathLabel="Mesafeli Satis"
+      sections={[
+        {
+          heading: 'Sozlesme Konusu',
+          body: 'Bu sayfa, elektronik ortamda verilen siparislerde satici ile alici arasindaki mesafeli satis iliskisine dair genel bilgilendirme metnidir.',
+          bullets: [
+            'Urunun temel nitelikleri, fiyati ve varsa teklif akisi satin alma oncesi gorunur.',
+            'Alici, siparisi onaylamadan once toplami, teslimat bilgisini ve siparis ozeti ekranini gorur.',
+            'Satici, siparisi stok ve operasyon kosullarina gore hazirlayarak sevk eder.',
+          ],
+        },
+        {
+          heading: 'Odeme ve Teslim',
+          bullets: [
+            'Odeme adiminda kart bilgileri guvenli odeme altyapisi uzerinden islenir.',
+            'Stoklu urunlerde teslimat bilgisi kargo sureci ile birlikte musterinin erisimine sunulur.',
+            'Teklif ile satilan urunlerde siparisin ticari kosullari ayrica teyit edilir.',
+          ],
+        },
+        {
+          heading: 'Iptal ve Cayma Hakki',
+          bullets: [
+            'Alici, kanunen istisna sayilmayan urunlerde teslimattan itibaren 14 gun icinde cayma hakkini kullanabilir.',
+            'Iade sureci, urunun eksiksiz ve yeniden satilabilir durumda olmasi sartiyla isletilir.',
+            'Ozel siparis, kurumsal proje veya lisans bazli urunlerde farkli ticari kosullar uygulanabilir.',
+          ],
+        },
+      ]}
+      summary="Mesafeli satis, siparis onayi, odeme, teslimat ve cayma hakki ile ilgili temel ticari kosullar bu sayfada kamuya acik sekilde ozetlenir."
+      title="MESAFELI SATIS"
+    />
+  );
+}
+
+export function PrivacyPage() {
+  return (
+    <InfoPage
+      highlights={[
+        { title: 'Veri Toplama', description: 'Siparis, iletisim ve destek sureclerinde gerekli olan temel kimlik ve iletisim bilgileri islenir.' },
+        { title: 'Kullanim Amaci', description: 'Toplanan veriler siparis yonetimi, teslimat, destek ve yasal yukumluluklerin yerine getirilmesi icin kullanilir.' },
+        { title: 'Koruma', description: 'Veri guvenligi icin teknik ve idari tedbirler uygulanir; odeme verileri guvenli odeme saglayicilari uzerinden islenir.' },
+      ]}
+      pathLabel="Gizlilik"
+      sections={[
+        {
+          heading: 'Islenen Veriler',
+          bullets: [
+            'Ad, soyad, e-posta, telefon, teslimat ve fatura adresi',
+            'Siparis icerigi, urun tercihleri ve destek kayitlari',
+            'Yasal zorunluluk halinde islem kayitlari ve finansal hareket ozetleri',
+          ],
+        },
+        {
+          heading: 'Kullanim Amaclari',
+          bullets: [
+            'Siparis alma, kargo planlama ve musteri hizmetleri sunma',
+            'Iade, degisim ve teknik destek surecini yurutme',
+            'Yasal, ticari ve mali yukumlulukleri yerine getirme',
+          ],
+        },
+        {
+          heading: 'Saklama ve Haklar',
+          body: 'Kisisel veriler, ilgili mevzuat ve ticari zorunluluklar cercevesinde gerekli oldugu sure kadar saklanir.',
+          bullets: [
+            'Kullanici, verilerine iliskin bilgi talep edebilir ve gerekli durumlarda guncelleme isteyebilir.',
+            'Mevzuata uygun hallerde silme, duzeltme veya itiraz basvurulari yapilabilir.',
+            'Basvurular info@borabilgicteknik.com uzerinden yazili olarak iletilebilir.',
+          ],
+        },
+      ]}
+      summary="Kisisel verilerin hangi kapsamda toplandigi, ne amacla kullanildigi ve hangi guvenlik tedbirleriyle korundugu bu sayfada acikca belirtilir."
+      title="GIZLILIK POLITIKASI"
+    />
   );
 }

@@ -9,8 +9,75 @@ import { formatCurrency } from '../../shared/lib/format';
 import { useI18n } from '../../app/providers/I18nProvider';
 import { translateCategoryName } from '../../shared/lib/i18n';
 
+function PurchaseProcessPanel({ showLoginStep = true }: { showLoginStep?: boolean }) {
+  const { language } = useI18n();
+
+  const steps = [
+    language === 'tr' ? 'Urunu secin ve detay sayfasindan sepete ekleyin.' : 'Select a product and add it to cart from the detail page.',
+    showLoginStep
+      ? language === 'tr'
+        ? 'Siparisi tamamlamak icin giris yapin veya yeni hesap olusturun.'
+        : 'Log in or create an account to complete the order.'
+      : language === 'tr'
+        ? 'Sepette adet ve urun kontrolunu tamamlayin.'
+        : 'Review quantities and products in the cart.',
+    language === 'tr'
+      ? 'Teslimat ve fatura bilgilerinizi checkout ekraninda doldurun.'
+      : 'Fill in delivery and billing details on the checkout screen.',
+    language === 'tr'
+      ? 'Odeme oncesi toplam tutar, kargo ve siparis ozeti net olarak gosterilir.'
+      : 'The total, shipping, and order summary are shown clearly before payment.',
+    language === 'tr'
+      ? 'Onay sonrasi siparisiniz kayda alinir ve surec profilinizden takip edilir.'
+      : 'After approval, the order is recorded and can be tracked from your profile.',
+  ];
+
+  return (
+    <div className="checkout-panel">
+      <div className="section-header">
+        <div>
+          <h2>{language === 'tr' ? 'Satin Alma Sureci' : 'Purchase Flow'}</h2>
+          <p>
+            {language === 'tr'
+              ? 'PayTR incelemesi icin urun seciminden siparis onayina kadar tum adimlar acikca listelenir.'
+              : 'For payment review, every step from product selection to order approval is listed clearly.'}
+          </p>
+        </div>
+      </div>
+
+      <ol className="purchase-steps">
+        {steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+
+      <div className="compliance-grid">
+        <div className="compliance-card">
+          <strong>{language === 'tr' ? 'Odeme' : 'Payment'}</strong>
+          <p>{language === 'tr' ? 'Kart ile guvenli odeme, siparis ozeti ve toplam tutar oncesinde acikca gosterilir.' : 'Secure card payment with a clear total and order summary before approval.'}</p>
+        </div>
+        <div className="compliance-card">
+          <strong>{language === 'tr' ? 'Teslimat' : 'Delivery'}</strong>
+          <p>{language === 'tr' ? 'Stoktaki urunlerde hizli kargo, kurumsal urunlerde teklif ve termin bilgilendirmesi sunulur.' : 'Fast shipping for in-stock items, quote and lead-time information for enterprise items.'}</p>
+        </div>
+        <div className="compliance-card">
+          <strong>{language === 'tr' ? 'Iade ve Destek' : 'Returns and Support'}</strong>
+          <p>{language === 'tr' ? 'Siparis sonrasi destek, iade ve degisim surecleri musteri hizmetleri ekibi tarafindan yonetilir.' : 'After-sales support, returns, and exchange flows are managed by customer service.'}</p>
+        </div>
+      </div>
+
+      <div className="dji-inline-links">
+        <Link to="/teslimat">{language === 'tr' ? 'Teslimat' : 'Delivery'}</Link>
+        <Link to="/iade">{language === 'tr' ? 'Iade' : 'Returns'}</Link>
+        <Link to="/mesafeli-satis">{language === 'tr' ? 'Mesafeli Satis' : 'Distance Sales'}</Link>
+        <Link to="/gizlilik">{language === 'tr' ? 'Gizlilik' : 'Privacy'}</Link>
+      </div>
+    </div>
+  );
+}
+
 export function CartPage() {
-  const { cart, token, syncCart, toggleFavorite, isFavorite } = useSession();
+  const { cart, token, syncCart, toggleFavorite, isFavorite, isAuthenticated } = useSession();
   const { showToast } = useToast();
   const { language } = useI18n();
   const subtotal = useMemo(() => cart?.subtotal ?? 0, [cart]);
@@ -19,7 +86,7 @@ export function CartPage() {
   if (!cart || cart.items.length === 0) {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
-        <div className="ui-shell">
+        <div className="ui-shell cart-empty-layout">
           <EmptyState
             description={
               language === 'tr'
@@ -28,6 +95,7 @@ export function CartPage() {
             }
             title={language === 'tr' ? 'Sepet bos' : 'Your cart is empty'}
           />
+          <PurchaseProcessPanel showLoginStep={!isAuthenticated} />
         </div>
       </section>
     );
@@ -245,8 +313,8 @@ export function CartPage() {
 
             <div className="cart-summary-note">
               {language === 'tr'
-                ? 'Demo checkout odeme almaz; siparis kaydi acilir ve profilinizde siparis gecmisi olarak gorunur.'
-                : 'Demo checkout does not take payment; it creates an order record and shows it in your profile history.'}
+                ? 'Odeme oncesinde urunler, toplam tutar, teslimat bilgileri ve siparis ozeti net bicimde gorunur.'
+                : 'Products, total price, delivery information, and the order summary are shown clearly before payment.'}
             </div>
 
             <Link to="/checkout">
@@ -260,7 +328,7 @@ export function CartPage() {
 }
 
 export function CheckoutPage() {
-  const { cart, token, syncCart } = useSession();
+  const { cart, token, syncCart, isAuthenticated } = useSession();
   const { showToast } = useToast();
   const { language } = useI18n();
   const navigate = useNavigate();
@@ -273,14 +341,29 @@ export function CheckoutPage() {
     notes: '',
   });
 
-  if (!cart || cart.items.length === 0 || !token) {
+  if (!isAuthenticated || !token) {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
-        <div className="ui-shell">
+        <div className="ui-shell cart-empty-layout">
           <EmptyState
-            description={language === 'tr' ? 'Checkout oncesi sepetinizde urun bulunmali.' : 'Your cart must contain items before checkout.'}
+            description={language === 'tr' ? 'Checkout ekranina gecmeden once giris yapmaniz gerekir. Bu adim sonrasinda teslimat ve siparis bilgileri formu acilir.' : 'You need to log in before entering checkout. After that, the delivery and order form becomes available.'}
+            title={language === 'tr' ? 'Giris gerekli' : 'Login required'}
+          />
+          <PurchaseProcessPanel />
+        </div>
+      </section>
+    );
+  }
+
+  if (!cart || cart.items.length === 0) {
+    return (
+      <section className="page-section" style={{ paddingTop: '140px' }}>
+        <div className="ui-shell cart-empty-layout">
+          <EmptyState
+            description={language === 'tr' ? 'Checkout oncesi sepetinizde en az bir urun bulunmalidir.' : 'Your cart must contain at least one item before checkout.'}
             title={language === 'tr' ? 'Checkout hazir degil' : 'Checkout is not ready'}
           />
+          <PurchaseProcessPanel showLoginStep={false} />
         </div>
       </section>
     );
@@ -317,8 +400,8 @@ export function CheckoutPage() {
         <form className="checkout-panel" onSubmit={handleSubmit}>
           <div className="section-header">
             <div>
-              <h2>{language === 'tr' ? 'Demo Checkout' : 'Demo Checkout'}</h2>
-              <p>{language === 'tr' ? 'Bu surumde odeme alinmaz, siparis kaydi olusturulur.' : 'This version does not collect payment; it creates an order record.'}</p>
+              <h2>{language === 'tr' ? 'Teslimat ve Siparis Bilgileri' : 'Delivery and Order Details'}</h2>
+              <p>{language === 'tr' ? 'Odeme adimina gecmeden once teslimat bilgileri, adres ve siparis notlari bu ekranda toplanir.' : 'Before payment, delivery details, address, and order notes are collected on this screen.'}</p>
             </div>
           </div>
           <div className="auth-form-grid">
@@ -370,8 +453,8 @@ export function CheckoutPage() {
         <div className="checkout-panel">
           <div className="section-header">
             <div>
-              <h2>{language === 'tr' ? 'Ozet' : 'Summary'}</h2>
-              <p>{language === 'tr' ? 'Secilen urunler' : 'Selected items'}</p>
+              <h2>{language === 'tr' ? 'Odeme Oncesi Ozet' : 'Pre-payment Summary'}</h2>
+              <p>{language === 'tr' ? 'Secilen urunler, toplam tutar ve teslim bilgisi bu alanda son kez gorunur.' : 'Selected items, total amount, and delivery info are shown one last time here.'}</p>
             </div>
           </div>
           {cart.items.map((item) => (
@@ -385,6 +468,11 @@ export function CheckoutPage() {
           <div className="summary-row summary-row--total">
             <span>{language === 'tr' ? 'Toplam' : 'Total'}</span>
             <strong>{formatCurrency(cart.subtotal, language)}</strong>
+          </div>
+          <div className="cart-summary-note">
+            {language === 'tr'
+              ? 'Gercek odeme entegrasyonunda bu adimdan sonra kart odemesi ve banka guvenlik onayi ekranina gecilir.'
+              : 'In the real payment integration, the next step leads to card payment and bank security approval.'}
           </div>
         </div>
       </div>
