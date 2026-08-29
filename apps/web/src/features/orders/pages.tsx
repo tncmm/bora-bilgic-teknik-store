@@ -1,3 +1,4 @@
+import { appConfig } from '@bora/config';
 import type { Order } from '@bora/types';
 import { Button, EmptyState } from '@bora/ui';
 import { useEffect, useState } from 'react';
@@ -332,6 +333,26 @@ export function OrderDetailPage() {
             ))}
           </div>
         </div>
+
+        {order.status === 'shipped' || order.status === 'delivered' ? (
+          <div className="profile-card profile-card--full">
+            <div className="section-header">
+              <div>
+                <h2>{language === 'tr' ? 'Kargo Takibi' : 'Shipment Tracking'}</h2>
+                <p>
+                  {language === 'tr'
+                    ? 'Siparisiniz Yurtici Kargo ile yola cikti. Takip numaraniz kargo firmasi tarafindan SMS ile gonderilir; asagidaki buton sizi kargo firmasinin takip sayfasina goturur.'
+                    : 'Your order has been handed to Yurtici Kargo. The tracking number is sent to you by SMS; the button below opens the carrier’s tracking page.'}
+                </p>
+              </div>
+            </div>
+            <a href={appConfig.cargoTrackingUrl} rel="noreferrer" target="_blank" style={{ display: 'inline-block', maxWidth: 320 }}>
+              <Button style={{ width: '100%' }}>
+                {language === 'tr' ? 'Kargoyu Takip Et' : 'Track Shipment'}
+              </Button>
+            </a>
+          </div>
+        ) : null}
 
         <div className="profile-card profile-card--full">
           <div className="order-kpi-grid">
