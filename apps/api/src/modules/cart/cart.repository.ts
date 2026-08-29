@@ -70,16 +70,16 @@ export class CartRepository {
     });
   }
 
-  updateItem(itemId: string, quantity: number) {
-    return prisma.cartItem.update({
-      where: { id: itemId },
+  updateItem(userId: string, itemId: string, quantity: number) {
+    return prisma.cartItem.updateMany({
+      where: { id: itemId, cart: { userId } },
       data: { quantity },
     });
   }
 
-  removeItem(itemId: string) {
-    return prisma.cartItem.delete({
-      where: { id: itemId },
+  removeItem(userId: string, itemId: string) {
+    return prisma.cartItem.deleteMany({
+      where: { id: itemId, cart: { userId } },
     });
   }
 }

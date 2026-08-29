@@ -46,14 +46,24 @@ export class CartService {
   async updateItem(userId: string, itemId: string, payload: unknown) {
     const data = updateItemSchema.parse(payload);
     await this.repository.ensureCart(userId);
-    await this.repository.updateItem(itemId, data.quantity);
+    const result = await this.repository.updateItem(userId, itemId, data.quantity);
+
+    if (result.count === 0) {
+      throw new AppError('Sepet kalemi bulunamadi.', 404);
+    }
+
     const updatedCart = await this.repository.findCart(userId);
     return serializeCart(updatedCart);
   }
 
   async removeItem(userId: string, itemId: string) {
     await this.repository.ensureCart(userId);
-    await this.repository.removeItem(itemId);
+    const result = await this.repository.removeItem(userId, itemId);
+
+    if (result.count === 0) {
+      throw new AppError('Sepet kalemi bulunamadi.', 404);
+    }
+
     const updatedCart = await this.repository.findCart(userId);
     return serializeCart(updatedCart);
   }
