@@ -46,7 +46,41 @@ model User {
   cart             Cart?
   wishlist         Wishlist?
   orders           Order[]
+  paymentAttempts  PaymentAttempt[]
   themePreference  ThemePreference?
+}
+
+enum AttemptStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+// A checkout in flight: holds the merchant_oid and the full order payload
+// while PayTR collects the card. An Order row is only created once the
+// callback confirms the money, so unpaid checkouts never become "orders".
+model PaymentAttempt {
+  id                 String        @id @default(cuid())
+  merchantOid        String        @unique
+  status             AttemptStatus @default(PENDING)
+  total              Decimal       @db.Decimal(10, 2)
+  currency           String        @default("TL")
+  shippingName       String
+  shippingPhone      String
+  shippingCity       String
+  shippingDistrict   String
+  shippingAddressLine String
+  notes              String?
+  items              Json
+  failureReason      String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  userId             String
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, createdAt])
 }
 
 model ThemePreference {

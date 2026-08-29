@@ -5,9 +5,9 @@ import { PaymentsService } from './payments.service.js';
 export class PaymentsController {
   constructor(private readonly service = new PaymentsService()) {}
 
-  createToken = async (req: Request, res: Response) => {
-    const result = await this.service.createPaymentToken(req.auth!.userId, req.body, req.ip ?? '');
-    res.json(result);
+  checkout = async (req: Request, res: Response) => {
+    const result = await this.service.createCheckout(req.auth!.userId, req.body, req.ip ?? '');
+    res.status(201).json(result);
   };
 
   callback = async (req: Request, res: Response) => {

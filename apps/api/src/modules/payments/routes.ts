@@ -6,7 +6,7 @@ import { PaymentsController } from './payments.controller.js';
 const router = Router();
 const controller = new PaymentsController();
 
-router.post('/paytr/token', requireAuth, controller.createToken);
+router.post('/paytr/checkout', requireAuth, controller.checkout);
 
 // Server-to-server notification: PayTR has no session cookie or bearer token,
 // authenticity comes from the HMAC hash verified inside the service. The body
