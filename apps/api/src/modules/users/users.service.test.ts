@@ -6,7 +6,7 @@ import { UsersService } from './users.service.js';
 describe('UsersService', () => {
   it('rejects adding a non-existent product to favorites', async () => {
     const repository = {
-      findPublishedDjiProduct: vi.fn().mockResolvedValue(null),
+      findPublishedProduct: vi.fn().mockResolvedValue(null),
       ensureWishlist: vi.fn(),
       addFavorite: vi.fn(),
       findWishlist: vi.fn(),

@@ -58,7 +58,8 @@ const optionalMimeTypeSchema = z.preprocess(emptyStringToNull, z.string().nullab
 
 const mediaSchema = z.object({
   url: mediaUrlSchema,
-  alt: z.string().min(1),
+  // Optional: storefront falls back to the product name when empty.
+  alt: z.string().trim().optional(),
   isPrimary: z.boolean().default(false),
   kind: z.enum(['image', 'video']).default('image'),
   thumbnailUrl: optionalMediaUrlSchema,
@@ -75,7 +76,7 @@ const uploadSchema = z.object({
 const productSchemaBase = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
-  brand: z.string().min(2).optional(),
+  brand: z.string().min(2),
   categoryId: z.string().min(1),
   shortDescription: z.string().min(5),
   description: z.string().min(10),
@@ -169,9 +170,8 @@ export class AdminService {
     const data = productSchema.parse(payload);
     const product = await this.repository.createProduct({
       ...data,
-      brand: 'DJI',
       images: {
-        create: data.images,
+        create: data.images.map((item) => ({ ...item, alt: item.alt || data.name })),
       },
       specs: {
         create: data.specs,
@@ -205,7 +205,7 @@ export class AdminService {
 
   async updateProduct(id: string, payload: unknown) {
     const data = updateProductSchema.parse(payload);
-    const nextData: Record<string, unknown> = { ...data, brand: 'DJI' };
+    const nextData: Record<string, unknown> = { ...data };
 
     if (data.images) {
       const existing = await this.repository.getProduct(id);
@@ -214,7 +214,7 @@ export class AdminService {
 
       nextData.images = {
         deleteMany: {},
-        create: data.images,
+        create: data.images.map((item) => ({ ...item, alt: item.alt || data.name || existing?.name || 'Urun gorseli' })),
       };
 
       const product = await this.repository.updateProduct(id, nextData);

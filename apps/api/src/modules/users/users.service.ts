@@ -87,7 +87,7 @@ export class UsersService {
 
   async addFavorite(userId: string, payload: unknown) {
     const data = favoriteSchema.parse(payload);
-    const product = await this.repository.findPublishedDjiProduct(data.productId);
+    const product = await this.repository.findPublishedProduct(data.productId);
 
     if (!product) {
       throw new AppError('Favorilere eklenmek istenen urun bulunamadi.', 404);

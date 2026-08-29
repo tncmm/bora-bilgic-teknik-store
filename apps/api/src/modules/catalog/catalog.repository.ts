@@ -44,7 +44,6 @@ export class CatalogRepository {
 
     return {
       isPublished: true,
-      brand: 'DJI',
       ...(sectionSlugs?.length ? { category: { slug: { in: sectionSlugs } } } : {}),
       ...(filters.series ? { series: filters.series } : {}),
       ...(filters.search
@@ -140,7 +139,7 @@ export class CatalogRepository {
 
   findProductBySlug(slug: string) {
     return prisma.product.findFirst({
-      where: { slug, isPublished: true, brand: 'DJI' },
+      where: { slug, isPublished: true },
       include: includeProduct,
     });
   }
@@ -151,7 +150,6 @@ export class CatalogRepository {
         products: {
           some: {
             isPublished: true,
-            brand: 'DJI',
           },
         },
       },
@@ -159,7 +157,6 @@ export class CatalogRepository {
         products: {
           where: {
             isPublished: true,
-            brand: 'DJI',
           },
           select: {
             series: true,

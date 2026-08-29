@@ -75,6 +75,7 @@ function parseSpecs(value: string) {
 
 const emptyForm = (categoryId: string) => ({
   name: '',
+  brand: 'DJI',
   slug: '',
   categoryId,
   shortDescription: '',
@@ -124,6 +125,7 @@ export function AdminProductFormPage() {
         setForm({
           name: found.name,
           slug: found.slug,
+          brand: found.brand,
           categoryId: found.categoryId,
           shortDescription: found.shortDescription,
           description: found.description,
@@ -217,7 +219,7 @@ export function AdminProductFormPage() {
 
   function buildProductPayload() {
     const normalizedMedia = form.media
-      .map((item) => ({ ...item, alt: item.alt.trim(), url: item.url.trim(), thumbnailUrl: item.thumbnailUrl?.trim() ?? '' }))
+      .map((item) => ({ ...item, alt: (item.alt ?? '').trim(), url: item.url.trim(), thumbnailUrl: item.thumbnailUrl?.trim() ?? '' }))
       .filter((item) => item.url);
 
     const images = normalizedMedia.filter((item) => item.kind === 'image');
@@ -226,11 +228,7 @@ export function AdminProductFormPage() {
       throw new Error('En az bir gorsel eklemelisiniz.');
     }
 
-    if (normalizedMedia.some((item) => !item.alt)) {
-      throw new Error('Tum medya kayitlari icin ALT metni zorunludur.');
-    }
-
-    if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl)) {
+if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl)) {
       throw new Error('Her video icin poster gorseli zorunludur.');
     }
 
@@ -239,6 +237,7 @@ export function AdminProductFormPage() {
     return {
       name: form.name,
       slug: form.slug,
+      brand: form.brand || 'DJI',
       categoryId: form.categoryId,
       shortDescription: form.shortDescription,
       description: form.description,
@@ -339,6 +338,7 @@ export function AdminProductFormPage() {
           </div>
           <div className="admin-form-grid">
             <InputField label="Urun Adi" onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} value={form.name} />
+            <InputField label="Marka" onChange={(event) => setForm((value) => ({ ...value, brand: event.target.value }))} value={form.brand} />
             <InputField label="Slug" onChange={(event) => setForm((value) => ({ ...value, slug: event.target.value }))} value={form.slug} />
             <SelectField label="Kategori" onChange={(event) => setForm((value) => ({ ...value, categoryId: event.target.value }))} value={form.categoryId}>
               {categories.map((category) => (
@@ -409,13 +409,6 @@ export function AdminProductFormPage() {
                       />
                     </div>
                   ) : null}
-                  <div className="full">
-                    <InputField
-                      label="ALT Metni (erisebilirlik)"
-                      onChange={(event) => updateMedia(media.id, (value) => ({ ...value, alt: event.target.value }))}
-                      value={media.alt}
-                    />
-                  </div>
                   <div className="full admin-upload-grid">
                     <label className="admin-upload-field">
                       <span>{media.kind === 'video' ? 'Video Yukle' : 'Gorsel Yukle'}</span>

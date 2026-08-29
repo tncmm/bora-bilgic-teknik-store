@@ -33,10 +33,10 @@ React + Vite + React Router frontend, Express + Prisma + PostgreSQL backend ve p
 
 ## Notlar
 
-- Storefront yalnizca DJI urunlerini listeler.
+- Storefront yayindaki tum urunleri listeler (marka kisitlamasi yok; marka urun formundan serbestce duzenlenebilir, varsayilan DJI'dir).
 - Kategori yapisi resmi DJI ailelerine gore sadeleştirildi: `Camera Drones`, `Handheld`, `Enterprise`.
 - Bazi DJI enterprise ve premium urunleri `satisa kapali` baslar; detay sayfasinda teklif odakli gorunur.
-- Admin panelinden urun bazinda satis ac/kapat yapilabilir, ancak marka sabit olarak DJI kabul edilir.
+- Admin panelinden urun bazinda satis ac/kapat yapilabilir; marka serbest metindir.
 - Checkout PayTR iFrame ile gercek odeme alir; siparis ancak odeme PayTR tarafindan onaylandiktan sonra olusur. PayTR anahtarlari tanimli degilse odeme adimi 503 ile net bir sekilde reddedilir (siparis olusmaz).
 
 ## Odeme (PayTR iFrame)

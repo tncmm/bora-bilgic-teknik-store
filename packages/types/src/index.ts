@@ -6,7 +6,8 @@ export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed';
 
-export type BrandName = 'DJI';
+/** Products are no longer DJI-only; the brand is a free-form label. */
+export type BrandName = string;
 
 export type CatalogSectionSlug = 'drone' | 'gimbal' | 'aksiyon-kamera' | 'aksesuar' | 'kurumsal';
 
@@ -26,7 +27,7 @@ export const PRODUCT_MEDIA_LIMITS = {
 
 export interface ProductMediaInput {
   url: string;
-  alt: string;
+  alt?: string;
   isPrimary: boolean;
   kind: ProductMediaKind;
   thumbnailUrl?: string | null;

@@ -9,14 +9,13 @@ export class AdminRepository {
     return Promise.all([
       prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: 'PAID' } }),
       prisma.order.count({ where: { status: OrderStatus.PENDING, paymentStatus: 'PAID' } }),
-      prisma.product.aggregate({ _sum: { stock: true }, where: { brand: 'DJI' } }),
-      prisma.product.count({ where: { brand: 'DJI', stock: { lte: 3 } } }),
+      prisma.product.aggregate({ _sum: { stock: true } }),
+      prisma.product.count({ where: { stock: { lte: 3 } } }),
     ]);
   }
 
   listProducts() {
     return prisma.product.findMany({
-      where: { brand: 'DJI' },
       include: { category: true, images: true, specs: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -33,9 +32,7 @@ export class AdminRepository {
     return prisma.category.findMany({
       where: {
         products: {
-          some: {
-            brand: 'DJI',
-          },
+          some: {},
         },
       },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],

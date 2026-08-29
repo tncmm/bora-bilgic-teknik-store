@@ -120,11 +120,10 @@ export class UsersRepository {
     });
   }
 
-  findPublishedDjiProduct(productId: string) {
+  findPublishedProduct(productId: string) {
     return prisma.product.findFirst({
       where: {
         id: productId,
-        brand: 'DJI',
         isPublished: true,
       },
       include: {

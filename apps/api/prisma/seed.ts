@@ -896,26 +896,12 @@ async function upsertCategories() {
   }
 }
 
+/**
+ * Custom (admin-created) products must survive a re-seed: the seed upserts
+ * its own fixtures and never deletes what it does not own.
+ */
 async function cleanupCatalog() {
-  const validProductSlugs = products.map((product) => product.slug);
-
-  const legacyProducts = await prisma.product.findMany({
-    where: {
-      OR: [{ brand: { not: 'DJI' } }, { slug: { notIn: validProductSlugs } }],
-    },
-    select: { id: true },
-  });
-
-  const legacyProductIds = legacyProducts.map((product) => product.id);
-
-  if (legacyProductIds.length > 0) {
-    await prisma.cartItem.deleteMany({ where: { productId: { in: legacyProductIds } } });
-    await prisma.orderItem.deleteMany({ where: { productId: { in: legacyProductIds } } });
-    await prisma.wishlistItem.deleteMany({ where: { productId: { in: legacyProductIds } } });
-    await prisma.productImage.deleteMany({ where: { productId: { in: legacyProductIds } } });
-    await prisma.productSpec.deleteMany({ where: { productId: { in: legacyProductIds } } });
-    await prisma.product.deleteMany({ where: { id: { in: legacyProductIds } } });
-  }
+  return;
 }
 
 async function cleanupCategories() {
