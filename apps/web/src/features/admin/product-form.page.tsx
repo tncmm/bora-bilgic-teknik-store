@@ -1,4 +1,4 @@
-import { Button, EmptyState, InputField, SelectField, TextareaField, Badge } from '@bora/ui';
+import { Button, EmptyState, InputField, SelectField, TextareaField } from '@bora/ui';
 import {
   PRODUCT_MEDIA_IMAGE_MIME_TYPES,
   PRODUCT_MEDIA_LIMITS,
@@ -19,6 +19,12 @@ interface AdminMediaDraft extends ProductMediaInput {
   id: string;
 }
 
+interface SpecDraft {
+  id: string;
+  name: string;
+  value: string;
+}
+
 function createEmptyMedia(kind: 'image' | 'video' = 'image'): AdminMediaDraft {
   return {
     id: crypto.randomUUID(),
@@ -33,6 +39,20 @@ function createEmptyMedia(kind: 'image' | 'video' = 'image'): AdminMediaDraft {
 
 function formatMegabytes(bytes: number) {
   return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
 }
 
 function validateMediaFile(file: File, kind: AdminUploadKind) {
@@ -61,18 +81,6 @@ async function readFileAsBase64(file: File) {
   return base64;
 }
 
-function parseSpecs(value: string) {
-  return value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, ...rest] = line.split(':');
-      return { name: name.trim(), value: rest.join(':').trim() };
-    })
-    .filter((item) => item.name && item.value);
-}
-
 const emptyForm = (categoryId: string) => ({
   name: '',
   brand: 'DJI',
@@ -87,8 +95,8 @@ const emptyForm = (categoryId: string) => ({
   stock: '1',
   isPublished: true,
   isPurchasable: true,
-  media: [createEmptyMedia('image')] as AdminMediaDraft[],
-  specsText: '',
+  media: [] as AdminMediaDraft[],
+  specs: [{ id: crypto.randomUUID(), name: '', value: '' }] as SpecDraft[],
 });
 
 export function AdminProductFormPage() {
@@ -100,8 +108,8 @@ export function AdminProductFormPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(Boolean(productId));
   const [form, setForm] = useState(emptyForm(''));
+  const [slugTouched, setSlugTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [uploadingMediaId, setUploadingMediaId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const isEdit = Boolean(productId);
@@ -122,6 +130,7 @@ export function AdminProductFormPage() {
       const found = products.find((item) => item.id === productId) ?? null;
       setProduct(found);
       if (found) {
+        setSlugTouched(true);
         setForm({
           name: found.name,
           slug: found.slug,
@@ -136,23 +145,31 @@ export function AdminProductFormPage() {
           stock: String(found.stock),
           isPublished: found.isPublished,
           isPurchasable: found.isPurchasable,
-          media:
-            found.images.length > 0
-              ? found.images.map((item) => ({
-                  id: item.id,
-                  url: item.url,
-                  alt: item.alt,
-                  isPrimary: item.isPrimary,
-                  kind: item.kind,
-                  thumbnailUrl: item.thumbnailUrl ?? '',
-                  mimeType: item.mimeType ?? '',
-                }))
-              : [createEmptyMedia('image')],
-          specsText: found.specs.map((spec) => `${spec.name}: ${spec.value}`).join('\n'),
+          media: found.images.map((item) => ({
+            id: item.id,
+            url: item.url,
+            alt: item.alt,
+            isPrimary: item.isPrimary,
+            kind: item.kind,
+            thumbnailUrl: item.thumbnailUrl ?? '',
+            mimeType: item.mimeType ?? '',
+          })),
+          specs:
+            found.specs.length > 0
+              ? found.specs.map((spec) => ({ id: spec.id, name: spec.name, value: spec.value }))
+              : [{ id: crypto.randomUUID(), name: '', value: '' }],
         });
       }
     })().finally(() => setLoading(false));
   }, [token, productId]);
+
+  function handleNameChange(nextName: string) {
+    setForm((value) => ({
+      ...value,
+      name: nextName,
+      slug: slugTouched ? value.slug : slugify(nextName),
+    }));
+  }
 
   function updateMedia(mediaId: string, updater: (media: AdminMediaDraft) => AdminMediaDraft) {
     setForm((value) => ({
@@ -181,7 +198,7 @@ export function AdminProductFormPage() {
         images[0].isPrimary = true;
       }
 
-      return { ...value, media: remaining.length > 0 ? remaining : [createEmptyMedia('image')] };
+      return { ...value, media: remaining };
     });
   }
 
@@ -201,11 +218,9 @@ export function AdminProductFormPage() {
 
         return {
           ...media,
-          kind: uploadKind === 'video' ? 'video' : 'image',
           url: uploaded.url,
           mimeType: uploaded.mimeType,
           thumbnailUrl: uploadKind === 'image' ? uploaded.url : media.thumbnailUrl,
-          isPrimary: uploadKind === 'image' ? media.isPrimary : false,
         };
       });
 
@@ -217,6 +232,21 @@ export function AdminProductFormPage() {
     }
   }
 
+  function updateSpec(specId: string, patch: Partial<SpecDraft>) {
+    setForm((value) => ({
+      ...value,
+      specs: value.specs.map((spec) => (spec.id === specId ? { ...spec, ...patch } : spec)),
+    }));
+  }
+
+  function addSpec() {
+    setForm((value) => ({ ...value, specs: [...value.specs, { id: crypto.randomUUID(), name: '', value: '' }] }));
+  }
+
+  function removeSpec(specId: string) {
+    setForm((value) => ({ ...value, specs: value.specs.filter((spec) => spec.id !== specId) }));
+  }
+
   function buildProductPayload() {
     const normalizedMedia = form.media
       .map((item) => ({ ...item, alt: (item.alt ?? '').trim(), url: item.url.trim(), thumbnailUrl: item.thumbnailUrl?.trim() ?? '' }))
@@ -225,11 +255,17 @@ export function AdminProductFormPage() {
     const images = normalizedMedia.filter((item) => item.kind === 'image');
 
     if (images.length === 0) {
-      throw new Error('En az bir gorsel eklemelisiniz.');
+      throw new Error('En az bir gorsel eklemelisiniz (yukleyin veya URL yapistirin).');
     }
 
-if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl)) {
-      throw new Error('Her video icin poster gorseli zorunludur.');
+    if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl)) {
+      throw new Error('Her video icin bir poster gorseli gereklidir.');
+    }
+
+    const specs = form.specs.filter((spec) => spec.name.trim() && spec.value.trim());
+
+    if (specs.length === 0) {
+      throw new Error('En az bir teknik ozellik girin.');
     }
 
     const primaryId = images.find((item) => item.isPrimary)?.id ?? images[0]?.id;
@@ -256,7 +292,7 @@ if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl))
         thumbnailUrl: item.kind === 'video' ? item.thumbnailUrl || null : item.thumbnailUrl || item.url,
         mimeType: item.mimeType || null,
       })),
-      specs: parseSpecs(form.specsText),
+      specs: specs.map((spec) => ({ name: spec.name.trim(), value: spec.value.trim() })),
     };
   }
 
@@ -266,7 +302,6 @@ if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl))
 
     setSubmitting(true);
     setFormError(null);
-    setFieldErrors({});
 
     try {
       const payload = buildProductPayload();
@@ -284,10 +319,9 @@ if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl))
       });
       navigate('/admin/urunler');
     } catch (error) {
-      if (error instanceof ApiError && error.fieldErrors) {
-        setFieldErrors(error.fieldErrors);
-      }
-      setFormError((error as Error).message);
+      const apiError = error instanceof ApiError && error.fieldErrors ? Object.values(error.fieldErrors).flat()[0] : null;
+      setFormError(apiError ?? (error as Error).message);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
     }
@@ -314,106 +348,154 @@ if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl))
     );
   }
 
-  const descriptionFieldError = fieldErrors.description?.[0] ?? fieldErrors.images?.[0] ?? null;
-
   return (
     <div className="admin-page">
       <div className="admin-headline">
         <div>
           <h1>{isEdit ? 'Urunu Duzenle' : 'Yeni Urun'}</h1>
-          <p>{isEdit ? `${product?.name ?? ''} urununun bilgilerini guncelleyin.` : 'Yeni bir DJI urununu kataloga ekleyin.'}</p>
-        </div>
-        <div className="admin-headline__actions">
-          <Link to="/admin/urunler">
-            <Button variant="secondary">Vazgec</Button>
-          </Link>
+          <p>{isEdit ? `${product?.name ?? ''} urununun bilgilerini guncelleyin.` : 'Kataloga yeni urun ekleyin.'}</p>
         </div>
       </div>
 
-      <form className="admin-form-stack" onSubmit={handleSubmit}>
-        <div className="admin-card">
-          <div className="admin-card__head">
-            <h2>Temel Bilgiler</h2>
-            <p>Urunun vitrinde gorunecek adi, kategorisi ve fiyat bilgileri.</p>
-          </div>
-          <div className="admin-form-grid">
-            <InputField label="Urun Adi" onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} value={form.name} />
-            <InputField label="Marka" onChange={(event) => setForm((value) => ({ ...value, brand: event.target.value }))} value={form.brand} />
-            <InputField label="Slug" onChange={(event) => setForm((value) => ({ ...value, slug: event.target.value }))} value={form.slug} />
-            <SelectField label="Kategori" onChange={(event) => setForm((value) => ({ ...value, categoryId: event.target.value }))} value={form.categoryId}>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </SelectField>
-            <InputField label="SKU" onChange={(event) => setForm((value) => ({ ...value, sku: event.target.value }))} value={form.sku} />
-            <InputField label="Fiyat (TL)" onChange={(event) => setForm((value) => ({ ...value, price: event.target.value }))} value={form.price} />
-            <InputField label="Stok Adedi" onChange={(event) => setForm((value) => ({ ...value, stock: event.target.value }))} value={form.stock} />
-            <InputField label="Rozet (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, badge: event.target.value }))} value={form.badge} />
-            <InputField label="Hero Etiketi (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, heroTag: event.target.value }))} value={form.heroTag} />
-            <div className="full">
-              <InputField
-                label="Kisa Aciklama"
-                onChange={(event) => setForm((value) => ({ ...value, shortDescription: event.target.value }))}
-                value={form.shortDescription}
-              />
-            </div>
-            <div className="full">
-              <TextareaField
-                label="Detayli Aciklama"
-                onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
-                value={form.description}
-              />
-            </div>
-          </div>
+      {formError ? (
+        <div className="admin-alert-error" role="alert">
+          {formError}
         </div>
+      ) : null}
 
-        <div className="admin-card">
-          <div className="admin-card__head">
-            <h2>Medya</h2>
-            <p>
-              Gorseller JPG/PNG/WEBP/AVIF (maks. {formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}), videolar MP4/WEBM (maks.{' '}
-              {formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}). Birden fazla medya ekleyebilirsiniz.
-            </p>
-          </div>
-          <div className="admin-media-stack">
-            {form.media.map((media, index) => (
-              <div className="admin-media-card" key={media.id}>
-                <div className="admin-media-card__head">
-                  <Badge>{media.kind === 'video' ? `Video ${index + 1}` : `Gorsel ${index + 1}`}</Badge>
-                  <Button onClick={() => removeMedia(media.id)} type="button" variant="ghost">
-                    Kaldir
-                  </Button>
+      <form className="admin-editor" onSubmit={handleSubmit}>
+        <div className="admin-editor__stack">
+          <div className="admin-card">
+            <div className="admin-card__head">
+              <h2>Temel Bilgiler</h2>
+            </div>
+            <div className="admin-form-grid">
+              <div className="full">
+                <InputField label="Urun Adi" onChange={(event) => handleNameChange(event.target.value)} value={form.name} />
+              </div>
+              <div>
+                <InputField
+                  label="Slug (URL)"
+                  onChange={(event) => {
+                    setSlugTouched(true);
+                    setForm((value) => ({ ...value, slug: event.target.value }));
+                  }}
+                  value={form.slug}
+                />
+                <p className="admin-field-hint">/urun/{form.slug || '...'} adresinde gorunur; ada gore otomatik uretilir.</p>
+              </div>
+              <div>
+                <InputField label="Marka" onChange={(event) => setForm((value) => ({ ...value, brand: event.target.value }))} value={form.brand} />
+              </div>
+              <div>
+                <SelectField label="Kategori" onChange={(event) => setForm((value) => ({ ...value, categoryId: event.target.value }))} value={form.categoryId}>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+              <div>
+                <InputField label="SKU" onChange={(event) => setForm((value) => ({ ...value, sku: event.target.value }))} value={form.sku} />
+              </div>
+              <div className="full admin-price-row">
+                <div>
+                  <InputField
+                    label="Fiyat (TL)"
+                    onChange={(event) => setForm((value) => ({ ...value, price: event.target.value }))}
+                    step="0.01"
+                    type="number"
+                    value={form.price}
+                  />
                 </div>
-                <div className="admin-form-grid">
-                  {media.kind === 'image' ? (
-                    <label className="admin-primary-toggle">
-                      <input checked={media.isPrimary} onChange={() => setPrimaryImage(media.id)} type="radio" />
-                      <span>Kapak gorseli olarak kullan</span>
-                    </label>
-                  ) : null}
-                  <div className="full">
-                    <InputField
-                      label="Medya URL"
+                <div>
+                  <InputField
+                    label="Stok"
+                    onChange={(event) => setForm((value) => ({ ...value, stock: event.target.value }))}
+                    min="0"
+                    type="number"
+                    value={form.stock}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="admin-card">
+            <div className="admin-card__head">
+              <h2>Aciklamalar</h2>
+            </div>
+            <div className="admin-form-grid">
+              <div className="full">
+                <InputField
+                  label="Kisa Aciklama"
+                  onChange={(event) => setForm((value) => ({ ...value, shortDescription: event.target.value }))}
+                  value={form.shortDescription}
+                />
+                <p className="admin-field-hint">Katalog kartlarinda gorunen tek satirlik ozet.</p>
+              </div>
+              <div className="full">
+                <TextareaField
+                  label="Detayli Aciklama"
+                  onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
+                  value={form.description}
+                />
+              </div>
+              <div>
+                <InputField label="Rozet (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, badge: event.target.value }))} placeholder="YENI, COK SATAN..." value={form.badge} />
+              </div>
+              <div>
+                <InputField label="Hero Etiketi (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, heroTag: event.target.value }))} value={form.heroTag} />
+              </div>
+            </div>
+          </div>
+
+          <div className="admin-card">
+            <div className="admin-card__head">
+              <h2>Medya</h2>
+              <p>
+                Gorseller en fazla {formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}, videolar {formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}. Ilk gorsel kapaktir;
+                yildizla degistirebilirsiniz.
+              </p>
+            </div>
+            <div className="media-grid">
+              {form.media.map((media) => (
+                <div className="media-tile" key={media.id}>
+                  <div className="media-tile__preview">
+                    {media.kind === 'image' && media.url ? (
+                      <img alt={form.name || 'Urun gorseli'} src={media.url} />
+                    ) : media.kind === 'video' && media.thumbnailUrl ? (
+                      <img alt="Video posteri" src={media.thumbnailUrl} />
+                    ) : (
+                      <span className="media-tile__placeholder">{media.kind === 'video' ? 'VIDEO' : 'Gorsel yok'}</span>
+                    )}
+                    <button className="media-tile__remove" onClick={() => removeMedia(media.id)} type="button" aria-label="Medyayi kaldir">
+                      ×
+                    </button>
+                    {media.kind === 'image' && media.url ? (
+                      <button
+                        className={['media-tile__cover', media.isPrimary ? 'is-active' : ''].filter(Boolean).join(' ')}
+                        onClick={() => setPrimaryImage(media.id)}
+                        title="Kapak gorseli yap"
+                        type="button"
+                      >
+                        ★
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="media-tile__body">
+                    <input
+                      className="ui-input media-tile__url"
                       onChange={(event) => updateMedia(media.id, (value) => ({ ...value, url: event.target.value }))}
+                      placeholder={media.kind === 'video' ? 'Video URL veya yukleyin' : 'Gorsel URL veya yukleyin'}
                       value={media.url}
                     />
-                  </div>
-                  {media.kind === 'video' ? (
-                    <div className="full">
-                      <InputField
-                        label="Poster URL"
-                        onChange={(event) => updateMedia(media.id, (value) => ({ ...value, thumbnailUrl: event.target.value }))}
-                        value={media.thumbnailUrl ?? ''}
-                      />
-                    </div>
-                  ) : null}
-                  <div className="full admin-upload-grid">
-                    <label className="admin-upload-field">
-                      <span>{media.kind === 'video' ? 'Video Yukle' : 'Gorsel Yukle'}</span>
+                    <label className="media-tile__upload">
+                      {uploadingMediaId === media.id ? 'Yukleniyor...' : media.kind === 'video' ? 'Video Yukle' : 'Gorsel Yukle'}
                       <input
                         accept={media.kind === 'video' ? PRODUCT_MEDIA_VIDEO_MIME_TYPES.join(',') : PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
+                        hidden
                         onChange={(event) => {
                           const file = event.target.files?.[0];
                           if (!file) return;
@@ -422,17 +504,21 @@ if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl))
                         }}
                         type="file"
                       />
-                      <small>
-                        {media.kind === 'video'
-                          ? `MP4 veya WEBM, maksimum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}`
-                          : `JPG, PNG, WEBP veya AVIF, maksimum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}`}
-                      </small>
                     </label>
-                    {media.kind === 'video' ? (
-                      <label className="admin-upload-field">
-                        <span>Poster Yukle</span>
+                  </div>
+                  {media.kind === 'video' ? (
+                    <div className="media-tile__body">
+                      <input
+                        className="ui-input media-tile__url"
+                        onChange={(event) => updateMedia(media.id, (value) => ({ ...value, thumbnailUrl: event.target.value }))}
+                        placeholder="Poster URL veya yukleyin"
+                        value={media.thumbnailUrl ?? ''}
+                      />
+                      <label className="media-tile__upload media-tile__upload--soft">
+                        Poster Yukle
                         <input
                           accept={PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
+                          hidden
                           onChange={(event) => {
                             const file = event.target.files?.[0];
                             if (!file) return;
@@ -441,65 +527,89 @@ if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl))
                           }}
                           type="file"
                         />
-                        <small>{`JPG, PNG, WEBP veya AVIF, maksimum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.posterBytes)}`}</small>
                       </label>
-                    ) : null}
-                  </div>
-                  {uploadingMediaId === media.id ? <p className="text-muted full">Yukleme suruyor...</p> : null}
+                    </div>
+                  ) : null}
                 </div>
+              ))}
+
+              <div className="media-tile media-tile--add">
+                <button className="media-tile__add" onClick={() => addMedia('image')} type="button">
+                  + Gorsel
+                </button>
+                <button className="media-tile__add" onClick={() => addMedia('video')} type="button">
+                  + Video
+                </button>
               </div>
-            ))}
-            <div className="auth-actions">
-              <Button onClick={() => addMedia('image')} type="button" variant="secondary">
-                + Gorsel Ekle
-              </Button>
-              <Button onClick={() => addMedia('video')} type="button" variant="ghost">
-                + Video Ekle
-              </Button>
             </div>
           </div>
+
+          <div className="admin-card">
+            <div className="admin-card__head">
+              <h2>Teknik Ozellikler</h2>
+              <p>Satir satir "ozellik / deger" ciftleri ekleyin (ornegin: Sensor / 1 inch CMOS).</p>
+            </div>
+            <div className="spec-list">
+              {form.specs.map((spec) => (
+                <div className="spec-row" key={spec.id}>
+                  <input
+                    className="ui-input"
+                    onChange={(event) => updateSpec(spec.id, { name: event.target.value })}
+                    placeholder="Ozellik (Sensor)"
+                    value={spec.name}
+                  />
+                  <input
+                    className="ui-input"
+                    onChange={(event) => updateSpec(spec.id, { value: event.target.value })}
+                    placeholder="Deger (1 inch CMOS)"
+                    value={spec.value}
+                  />
+                  <button className="spec-row__remove" onClick={() => removeSpec(spec.id)} type="button" aria-label="Ozellik satirini sil">
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <Button onClick={addSpec} style={{ marginTop: '0.75rem' }} type="button" variant="secondary">
+              + Ozellik Ekle
+            </Button>
+          </div>
         </div>
 
-        <div className="admin-card">
-          <div className="admin-card__head">
-            <h2>Teknik Ozellikler</h2>
-            <p>Her satira &quot;Ozellik: Deger&quot; formatinda bir teknik ozellik yazin.</p>
-          </div>
-          <TextareaField
-            label={'Ornek:\nSensor: 1 inch CMOS\nVideo: 4K/120fps'}
-            onChange={(event) => setForm((value) => ({ ...value, specsText: event.target.value }))}
-            value={form.specsText}
-          />
-        </div>
-
-        <div className="admin-card">
-          <div className="admin-card__head">
-            <h2>Yayin Durumu</h2>
-            <p>Urunun magazada nasil gorunecegini belirleyin.</p>
-          </div>
-          <div className="admin-toggle-row">
-            <label className="admin-primary-toggle">
+        <aside className="admin-editor__aside">
+          <div className="admin-card">
+            <div className="admin-card__head">
+              <h2>Yayin</h2>
+            </div>
+            <label className="admin-switch-row">
               <input checked={form.isPublished} onChange={(event) => setForm((value) => ({ ...value, isPublished: event.target.checked }))} type="checkbox" />
-              <span>Vitrinde yayinda</span>
+              <span className="admin-switch" aria-hidden="true" />
+              <span>
+                <strong>Vitrinde yayinda</strong>
+                <small>Kapaliysa urun katalogda hic gorunmez.</small>
+              </span>
             </label>
-            <label className="admin-primary-toggle">
+            <label className="admin-switch-row">
               <input checked={form.isPurchasable} onChange={(event) => setForm((value) => ({ ...value, isPurchasable: event.target.checked }))} type="checkbox" />
-              <span>Satin alinabilir (kapaliysa teklif modunda gorunur)</span>
+              <span className="admin-switch" aria-hidden="true" />
+              <span>
+                <strong>Satin alinabilir</strong>
+                <small>Kapaliysa urun teklif modunda gorunur, sepete eklenemez.</small>
+              </span>
             </label>
           </div>
-        </div>
 
-        {descriptionFieldError ? <p className="form-feedback form-feedback--error">{descriptionFieldError}</p> : null}
-        {formError && !descriptionFieldError ? <p className="form-feedback form-feedback--error">{formError}</p> : null}
-
-        <div className="auth-actions">
-          <Button disabled={submitting} type="submit">
-            {submitting ? 'Kaydediliyor...' : isEdit ? 'Degisiklikleri Kaydet' : 'Urunu Olustur'}
-          </Button>
-          <Link to="/admin/urunler">
-            <Button variant="secondary">Vazgec</Button>
-          </Link>
-        </div>
+          <div className="admin-card admin-save-card">
+            <Button disabled={submitting} style={{ width: '100%' }} type="submit">
+              {submitting ? 'Kaydediliyor...' : isEdit ? 'Degisiklikleri Kaydet' : 'Urunu Olustur'}
+            </Button>
+            <Link to="/admin/urunler" style={{ width: '100%' }}>
+              <Button style={{ width: '100%' }} variant="secondary">
+                Vazgec
+              </Button>
+            </Link>
+          </div>
+        </aside>
       </form>
     </div>
   );
