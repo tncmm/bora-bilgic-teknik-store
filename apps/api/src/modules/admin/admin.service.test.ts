@@ -116,4 +116,37 @@ describe('AdminService', () => {
       }),
     ).rejects.toThrow();
   });
+  it('rejects duplicate category slugs with 409', async () => {
+    const repository = {
+      findCategoryBySlug: vi.fn().mockResolvedValue({ id: 'category-1' }),
+      createCategory: vi.fn(),
+    };
+    const service = new AdminService(repository as any);
+
+    await expect(service.createCategory({ name: 'Aksesuar', slug: 'aksesuar' })).rejects.toMatchObject({ statusCode: 409 });
+    expect(repository.createCategory).not.toHaveBeenCalled();
+  });
+
+  it('refuses to delete a category that still has products', async () => {
+    const repository = {
+      countCategoryProducts: vi.fn().mockResolvedValue(3),
+      deleteCategory: vi.fn(),
+    };
+    const service = new AdminService(repository as any);
+
+    await expect(service.deleteCategory('category-1')).rejects.toMatchObject({ statusCode: 409 });
+    expect(repository.deleteCategory).not.toHaveBeenCalled();
+  });
+
+  it('renames a brand across all of its products', async () => {
+    const repository = {
+      renameBrand: vi.fn().mockResolvedValue({ count: 4 }),
+    };
+    const service = new AdminService(repository as any);
+
+    const result = await service.renameBrand({ from: 'GoPro', to: 'DJI' });
+
+    expect(result.updated).toBe(4);
+    expect(repository.renameBrand).toHaveBeenCalledWith('GoPro', 'DJI');
+  });
 });

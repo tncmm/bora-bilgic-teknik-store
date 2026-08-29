@@ -1,3 +1,5 @@
+export { AdminBrandsPage } from './brands.page';
+export { AdminCategoriesPage } from './categories.page';
 export { AdminDashboardPage } from './dashboard.page';
 export { AdminOrdersPage } from './orders.page';
 export { AdminProductFormPage } from './product-form.page';

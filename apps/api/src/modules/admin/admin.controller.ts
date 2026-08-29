@@ -20,6 +20,31 @@ export class AdminController {
     res.json(categories);
   };
 
+  createCategory = async (req: Request, res: Response) => {
+    const category = await this.service.createCategory(req.body);
+    res.status(201).json(category);
+  };
+
+  updateCategory = async (req: Request, res: Response) => {
+    const category = await this.service.updateCategory(String(req.params.id), req.body);
+    res.json(category);
+  };
+
+  deleteCategory = async (req: Request, res: Response) => {
+    await this.service.deleteCategory(String(req.params.id));
+    res.status(204).send();
+  };
+
+  listBrands = async (_req: Request, res: Response) => {
+    const brands = await this.service.listBrands();
+    res.json(brands);
+  };
+
+  renameBrand = async (req: Request, res: Response) => {
+    const result = await this.service.renameBrand(req.body);
+    res.json(result);
+  };
+
   createProduct = async (req: Request, res: Response) => {
     const product = await this.service.createProduct(req.body);
     res.status(201).json(product);

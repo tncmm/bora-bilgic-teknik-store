@@ -12,6 +12,11 @@ router.use(requireAuth, requireAdmin);
 router.get('/dashboard', controller.dashboard);
 router.get('/products', controller.listProducts);
 router.get('/categories', controller.listCategories);
+router.post('/categories', controller.createCategory);
+router.patch('/categories/:id', controller.updateCategory);
+router.delete('/categories/:id', controller.deleteCategory);
+router.get('/brands', controller.listBrands);
+router.post('/brands/rename', controller.renameBrand);
 // Mounted after requireAuth/requireAdmin on purpose: the large body limit is
 // only ever reachable by an authenticated admin.
 router.post('/media/upload', largeJsonBody, controller.uploadMedia);

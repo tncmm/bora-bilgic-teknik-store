@@ -139,6 +139,24 @@ const saleStatusSchema = z.object({
   isPurchasable: z.boolean(),
 });
 
+const categorySchema = z.object({
+  name: z.string().trim().min(2),
+  slug: z
+    .string()
+    .trim()
+    .min(2)
+    .regex(/^[a-z0-9-]+$/, 'Slug yalnizca kucuk harf, rakam ve tire icerebilir.'),
+  description: z.string().trim().optional().default(''),
+  heroTitle: z.preprocess(emptyStringToNull, z.string().trim().nullable().optional()),
+  heroDescription: z.preprocess(emptyStringToNull, z.string().trim().nullable().optional()),
+  sortOrder: z.number().int().min(0).optional().default(0),
+});
+
+const renameBrandSchema = z.object({
+  from: z.string().trim().min(2),
+  to: z.string().trim().min(2),
+});
+
 const orderStatusSchema = z.object({
   status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED']),
 });
@@ -164,6 +182,52 @@ export class AdminService {
 
   async listCategories() {
     return this.repository.listCategories();
+  }
+
+  async createCategory(payload: unknown) {
+    const data = categorySchema.parse(payload);
+    const existing = await this.repository.findCategoryBySlug(data.slug);
+
+    if (existing) {
+      throw new AppError('Bu slug baska bir kategori tarafindan kullaniliyor.', 409);
+    }
+
+    return this.repository.createCategory(data);
+  }
+
+  async updateCategory(id: string, payload: unknown) {
+    const data = categorySchema.partial().parse(payload);
+
+    if (data.slug) {
+      const existing = await this.repository.findCategoryBySlug(data.slug);
+
+      if (existing && existing.id !== id) {
+        throw new AppError('Bu slug baska bir kategori tarafindan kullaniliyor.', 409);
+      }
+    }
+
+    return this.repository.updateCategory(id, data);
+  }
+
+  async deleteCategory(id: string) {
+    const productCount = await this.repository.countCategoryProducts(id);
+
+    if (productCount > 0) {
+      throw new AppError('Bu kategoriye bagli urunler var; once onlari baska bir kategoriye tasiyin.', 409);
+    }
+
+    await this.repository.deleteCategory(id);
+  }
+
+  async listBrands() {
+    const groups = await this.repository.listBrandSummaries();
+    return groups.map((group) => ({ brand: group.brand, productCount: group._count._all }));
+  }
+
+  async renameBrand(payload: unknown) {
+    const data = renameBrandSchema.parse(payload);
+    const result = await this.repository.renameBrand(data.from, data.to);
+    return { updated: result.count };
   }
 
   async createProduct(payload: unknown) {

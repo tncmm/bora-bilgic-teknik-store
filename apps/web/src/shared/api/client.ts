@@ -25,6 +25,8 @@ interface AdminMediaUploadResponse {
   size: number;
 }
 
+export type AdminCategory = Category & { _count?: { products: number } };
+
 interface ApiErrorPayload {
   message?: string;
   fieldErrors?: Record<string, string[]>;
@@ -167,7 +169,31 @@ export const api = {
     return request<Product[]>('/admin/products', {}, token);
   },
   getAdminCategories(token: string) {
-    return request<Category[]>('/admin/categories', {}, token);
+    return request<AdminCategory[]>('/admin/categories', {}, token);
+  },
+  createAdminCategory(token: string, payload: { name: string; slug: string; description?: string; sortOrder?: number }) {
+    return request<Category>('/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
+  },
+  updateAdminCategory(token: string, categoryId: string, payload: { name?: string; slug?: string; description?: string; sortOrder?: number }) {
+    return request<Category>(`/admin/categories/${categoryId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }, token);
+  },
+  deleteAdminCategory(token: string, categoryId: string) {
+    return request<void>(`/admin/categories/${categoryId}`, { method: 'DELETE' }, token);
+  },
+  getAdminBrands(token: string) {
+    return request<Array<{ brand: string; productCount: number }>>('/admin/brands', {}, token);
+  },
+  renameAdminBrand(token: string, payload: { from: string; to: string }) {
+    return request<{ updated: number }>('/admin/brands/rename', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
   },
   uploadAdminMedia(token: string, payload: { kind: AdminUploadKind; fileName: string; mimeType: string; base64: string }) {
     return request<AdminMediaUploadResponse>('/admin/media/upload', {

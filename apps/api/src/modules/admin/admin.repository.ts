@@ -30,12 +30,50 @@ export class AdminRepository {
 
   listCategories() {
     return prisma.category.findMany({
-      where: {
-        products: {
-          some: {},
+      include: {
+        _count: {
+          select: { products: true },
         },
       },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  findCategoryBySlug(slug: string) {
+    return prisma.category.findUnique({ where: { slug } });
+  }
+
+  createCategory(data: { name: string; slug: string; description: string; heroTitle?: string | null; heroDescription?: string | null; sortOrder: number }) {
+    return prisma.category.create({ data });
+  }
+
+  updateCategory(
+    id: string,
+    data: { name?: string; slug?: string; description?: string; heroTitle?: string | null; heroDescription?: string | null; sortOrder?: number },
+  ) {
+    return prisma.category.update({ where: { id }, data });
+  }
+
+  countCategoryProducts(id: string) {
+    return prisma.product.count({ where: { categoryId: id } });
+  }
+
+  deleteCategory(id: string) {
+    return prisma.category.delete({ where: { id } });
+  }
+
+  listBrandSummaries() {
+    return prisma.product.groupBy({
+      by: ['brand'],
+      _count: { _all: true },
+      orderBy: { _count: { brand: 'desc' } },
+    });
+  }
+
+  renameBrand(from: string, to: string) {
+    return prisma.product.updateMany({
+      where: { brand: from },
+      data: { brand: to },
     });
   }
 
