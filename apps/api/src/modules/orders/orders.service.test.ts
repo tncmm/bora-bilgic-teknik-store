@@ -22,6 +22,7 @@ describe('OrdersService', () => {
       }),
       createOrder: vi.fn(),
       listOrdersForUser: vi.fn(),
+      findOrderForUser: vi.fn(),
     };
 
     const service = new OrdersService(repository as any);
@@ -35,5 +36,18 @@ describe('OrdersService', () => {
         shippingAddressLine: 'Moda Caddesi',
       }),
     ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it('returns not found for a missing order detail', async () => {
+    const repository = {
+      findCart: vi.fn(),
+      createOrder: vi.fn(),
+      listOrdersForUser: vi.fn(),
+      findOrderForUser: vi.fn().mockResolvedValue(null),
+    };
+
+    const service = new OrdersService(repository as any);
+
+    await expect(service.getOrderForUser('user-1', 'missing-order')).rejects.toBeInstanceOf(AppError);
   });
 });

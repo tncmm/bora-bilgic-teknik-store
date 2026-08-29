@@ -9,5 +9,6 @@ const controller = new OrdersController();
 router.use(requireAuth);
 router.post('/', controller.createOrder);
 router.get('/me', controller.listMyOrders);
+router.get('/me/:orderId', controller.getMyOrder);
 
 export { router as ordersRoutes };

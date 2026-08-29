@@ -80,4 +80,14 @@ export class OrdersRepository {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  findOrderForUser(userId: string, orderId: string) {
+    return prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId,
+      },
+      include: { items: true },
+    });
+  }
 }
