@@ -6,7 +6,7 @@ import { CartPage, CheckoutPage } from '../../features/cart/pages';
 import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
 import { OrderDetailPage, OrdersPage } from '../../features/orders/pages';
 import { PaymentFailPage, PaymentSuccessPage } from '../../features/orders/payment-pages';
-import { FavoritesPage, ProfilePage } from '../../features/profile/pages';
+import { AddressFormPage, AddressesPage, FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
 import { useI18n } from '../providers/I18nProvider';
@@ -67,6 +67,9 @@ export function AppRouter() {
           <Route element={<RegisterPage />} path="/kayit" />
           <Route element={<ProtectedRoute />}>
             <Route element={<ProfilePage />} path="/profil" />
+            <Route element={<AddressesPage />} path="/profil/adresler" />
+            <Route element={<AddressFormPage />} path="/profil/adresler/ekle" />
+            <Route element={<AddressFormPage />} path="/profil/adresler/:addressId/duzenle" />
             <Route element={<FavoritesPage />} path="/favoriler" />
             <Route element={<OrdersPage />} path="/siparislerim" />
             <Route element={<OrderDetailPage />} path="/siparislerim/:orderId" />

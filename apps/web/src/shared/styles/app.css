@@ -515,15 +515,6 @@
   z-index: 1;
   padding: 1rem 1rem 1.2rem;
 }
-
-.product-card__meta,
-.spec-grid,
-.profile-facts,
-
-.product-card__meta {
-  gap: 8px;
-}
-
 .product-card__body h3 {
   color: var(--text-strong);
   font-size: 1.55rem;
@@ -936,18 +927,6 @@
   position: sticky;
   top: 112px;
 }
-
-.cart-items-stack,
-.favorites-preview-list,
-.favorites-grid,
-.favorite-card__body,
-.cart-product-card__body,
-.cart-product-card__meta,
-.cart-mini-list {
-  display: grid;
-  gap: 18px;
-}
-
 .cart-product-card {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -1133,23 +1112,6 @@
   display: grid;
   gap: 0.4rem;
 }
-
-.profile-facts {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 1.4rem;
-}
-
-.profile-facts div {
-  border-top: 1px solid var(--border);
-  padding-top: 0.8rem;
-}
-
-.profile-facts span {
-  display: block;
-  color: var(--text-soft);
-  font-size: 0.86rem;
-}
-
 .order-badge {
   display: inline-flex;
   align-items: center;
@@ -1158,11 +1120,6 @@
   border-radius: 999px;
   color: var(--text-soft);
 }
-
-.profile-layout--wide {
-  grid-template-columns: 0.9fr 1.1fr;
-}
-
 .profile-card--full {
   grid-column: 1 / -1;
 }
@@ -1870,5 +1827,161 @@
   .admin-editor__aside {
     position: static;
     grid-row: 1;
+  }
+}
+
+/* --- Hesap alani (profil v2) ------------------------------------------- */
+.account-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+}
+
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.account-hero__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--primary, #ff6a1a) 18%, transparent);
+  color: var(--primary, #ff6a1a);
+  font-weight: 700;
+  font-size: 1.2rem;
+  flex: none;
+}
+
+.account-hero__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-hero__body h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.account-hero__body p {
+  margin: 0.25rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.account-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.account-stat {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+.account-stat strong {
+  display: block;
+  font-size: 1.6rem;
+}
+
+.account-stat span {
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.account-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.account-nav-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.account-nav-card:hover {
+  border-color: var(--primary, #ff6a1a);
+  transform: translateY(-1px);
+}
+
+.account-nav-card__icon {
+  color: var(--primary, #ff6a1a);
+  font-size: 1.4rem;
+}
+
+.account-nav-card strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.account-nav-card p {
+  margin: 0.15rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.account-nav-card__arrow {
+  margin-left: auto;
+  color: var(--text-soft);
+}
+
+.account-address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.account-address-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.account-address-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.account-address-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.account-address-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 780px) {
+  .account-stats,
+  .account-nav-grid,
+  .account-address-grid {
+    grid-template-columns: 1fr;
   }
 }

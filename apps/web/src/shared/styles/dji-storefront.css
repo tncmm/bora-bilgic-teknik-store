@@ -1464,59 +1464,10 @@ body {
   justify-content: space-between;
   gap: 1rem;
 }
-
-.address-book-layout,
-.checkout-choice-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.address-book-layout {
-  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
-  align-items: start;
-}
-
-.address-form,
-.address-empty,
-.address-card,
-.checkout-step-card,
-.checkout-empty-note,
-.checkout-summary-box,
-.order-list-card,
-.order-spotlight-card {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: rgba(7, 11, 16, 0.62);
-}
-
-.address-form,
-.address-empty,
-.address-card,
-.checkout-step-card,
-.checkout-summary-box,
-.order-spotlight-card {
-  padding: 1rem;
-}
-
 .address-list {
   display: grid;
   gap: 0.8rem;
 }
-
-.address-empty p,
-.address-card p,
-.checkout-empty-note p,
-.checkout-step-card__head p,
-.checkout-choice-card span,
-.checkout-summary-box p,
-.order-list-card p,
-.order-spotlight-card p {
-  margin: 0.35rem 0 0;
-  color: var(--text-soft);
-  font-size: 0.92rem;
-  line-height: 1.55;
-}
-
 .address-card__head {
   display: flex;
   justify-content: space-between;
@@ -1529,17 +1480,6 @@ body {
   display: grid;
   gap: 0.2rem;
 }
-
-.address-card strong,
-.checkout-step-card strong,
-.checkout-choice-card strong,
-.checkout-summary-box strong,
-.order-list-card strong,
-.order-spotlight-card strong {
-  color: #fff;
-  font-size: 0.98rem;
-}
-
 .address-card span {
   color: var(--text-soft);
   font-size: 0.86rem;
@@ -1642,18 +1582,6 @@ body {
 .order-list-card--static:hover {
   transform: none;
 }
-
-.order-spotlight-card {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.order-spotlight-card span {
-  color: var(--primary-strong);
-  font-size: 0.92rem;
-  font-weight: 700;
-}
-
 .order-success-card {
   background:
     radial-gradient(circle at top right, rgba(255, 106, 26, 0.14), transparent 34%),
@@ -1893,18 +1821,7 @@ body {
   .dji-info-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .dji-detail__grid,
-  .admin-stat-grid,
-  .checkout-layout,
-  .cart-layout,
-  .profile-layout,
-  .address-book-layout,
-  .orders-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-upload-grid {
+.admin-upload-grid {
     grid-template-columns: 1fr;
   }
 
