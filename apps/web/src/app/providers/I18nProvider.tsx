@@ -1,35 +1,29 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 
-import { getDefaultLanguage, getIntlLocale, LANGUAGE_STORAGE_KEY, type Language } from '../../shared/lib/i18n';
+import { getIntlLocale, type Language } from '../../shared/lib/i18n';
 
 interface I18nContextValue {
   language: Language;
   locale: string;
-  setLanguage: (language: Language) => void;
-  toggleLanguage: () => void;
 }
+
+/**
+ * The storefront is Turkish-only by product decision. The context still hands
+ * out `language`/`locale` so call sites (`language === 'tr'` fallbacks, date
+ * and currency formatting) keep working unchanged.
+ */
+const SITE_LANGUAGE: Language = 'tr';
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
-    return stored === 'tr' || stored === 'en' ? stored : getDefaultLanguage();
-  });
-
   useEffect(() => {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-    document.documentElement.lang = getIntlLocale(language);
-  }, [language]);
+    document.documentElement.lang = getIntlLocale(SITE_LANGUAGE);
+  }, []);
 
   const value = useMemo<I18nContextValue>(
-    () => ({
-      language,
-      locale: getIntlLocale(language),
-      setLanguage: setLanguageState,
-      toggleLanguage: () => setLanguageState((current) => (current === 'tr' ? 'en' : 'tr')),
-    }),
-    [language],
+    () => ({ language: SITE_LANGUAGE, locale: getIntlLocale(SITE_LANGUAGE) }),
+    [],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

@@ -24,8 +24,6 @@ vi.mock('../../app/providers/I18nProvider', () => ({
   useI18n: () => ({
     language: 'tr',
     locale: 'tr-TR',
-    setLanguage: vi.fn(),
-    toggleLanguage: vi.fn(),
   }),
 }));
 

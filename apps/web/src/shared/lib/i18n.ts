@@ -1,17 +1,7 @@
 export type Language = 'tr' | 'en';
 
-export const LANGUAGE_STORAGE_KEY = 'bora-language';
-
-export function getLanguageLabel(language: Language) {
-  return language === 'tr' ? 'TR' : 'EN';
-}
-
 export function getIntlLocale(language: Language) {
   return language === 'tr' ? 'tr-TR' : 'en-US';
-}
-
-export function getDefaultLanguage(): Language {
-  return window.navigator.language.toLowerCase().startsWith('tr') ? 'tr' : 'en';
 }
 
 export function translateCategoryName(language: Language, slug?: string, fallback?: string) {
