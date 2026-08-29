@@ -1,6 +1,7 @@
 import { OrderStatus } from '@prisma/client';
 import { z } from 'zod';
 
+import { AppError } from '../../lib/app-error.js';
 import { serializeDashboardMetrics, serializeOrder, serializeProduct, serializeUser } from '../../lib/serializers.js';
 import { deleteManyMediaFromR2, extractR2KeyFromUrl, uploadMediaToR2 } from '../../lib/r2.js';
 import { AdminRepository } from './admin.repository.js';
@@ -266,6 +267,21 @@ export class AdminService {
 
   async updateOrderStatus(id: string, payload: unknown) {
     const data = orderStatusSchema.parse(payload);
+
+    // Fulfilment must never start before money is in the till: moving an
+    // order past PENDING requires a successful PayTR payment first.
+    if (data.status !== 'PENDING') {
+      const order = await this.repository.getOrder(id);
+
+      if (!order) {
+        throw new AppError('Siparis bulunamadi.', 404);
+      }
+
+      if (order.paymentStatus !== 'PAID') {
+        throw new AppError('Odeme tamamlanmadan siparis isleme alinamaz veya kargolanamaz.', 409);
+      }
+    }
+
     const order = await this.repository.updateOrderStatus(id, data.status as OrderStatus);
     return serializeOrder(order);
   }

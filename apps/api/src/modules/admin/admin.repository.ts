@@ -4,9 +4,11 @@ import { prisma } from '../../db/prisma.js';
 
 export class AdminRepository {
   countDashboardMetrics() {
+    // Unpaid orders are payment attempts, not sales: they never reach the
+    // dashboard totals.
     return Promise.all([
-      prisma.order.aggregate({ _sum: { total: true } }),
-      prisma.order.count({ where: { status: OrderStatus.PENDING } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: 'PAID' } }),
+      prisma.order.count({ where: { status: OrderStatus.PENDING, paymentStatus: 'PAID' } }),
       prisma.product.aggregate({ _sum: { stock: true }, where: { brand: 'DJI' } }),
       prisma.product.count({ where: { brand: 'DJI', stock: { lte: 3 } } }),
     ]);
@@ -62,12 +64,22 @@ export class AdminRepository {
   }
 
   listOrders() {
+    // Operations only ever deal with paid orders. Pending-payment attempts
+    // expire on their own and failed ones are kept for the customer's sake.
     return prisma.order.findMany({
+      where: { paymentStatus: 'PAID' },
       include: {
         items: true,
         user: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  getOrder(id: string) {
+    return prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
     });
   }
 

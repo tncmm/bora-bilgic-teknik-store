@@ -1,8 +1,51 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { AppError } from '../../lib/app-error.js';
 import { AdminService } from './admin.service.js';
 
 describe('AdminService', () => {
+  it('blocks fulfilment transitions while payment is pending', async () => {
+    const repository = {
+      getOrder: vi.fn().mockResolvedValue({ id: 'order-1', paymentStatus: 'PENDING' }),
+      updateOrderStatus: vi.fn(),
+    };
+
+    const service = new AdminService(repository as any);
+
+    await expect(service.updateOrderStatus('order-1', { status: 'SHIPPED' })).rejects.toBeInstanceOf(AppError);
+    await expect(service.updateOrderStatus('order-1', { status: 'SHIPPED' })).rejects.toMatchObject({ statusCode: 409 });
+    expect(repository.updateOrderStatus).not.toHaveBeenCalled();
+  });
+
+  it('allows fulfilment transitions once the order is paid', async () => {
+    const paidOrder = {
+      id: 'order-1',
+      orderNumber: 'BBT-TEST',
+      status: 'SHIPPED',
+      paymentStatus: 'PAID',
+      createdAt: new Date(),
+      paidAt: new Date(),
+      total: 100,
+      shippingName: 'Demo',
+      shippingPhone: '555',
+      shippingCity: 'Istanbul',
+      shippingDistrict: 'Kadikoy',
+      shippingAddressLine: 'Adres',
+      notes: null,
+      items: [],
+    };
+    const repository = {
+      getOrder: vi.fn().mockResolvedValue({ id: 'order-1', paymentStatus: 'PAID' }),
+      updateOrderStatus: vi.fn().mockResolvedValue(paidOrder),
+    };
+
+    const service = new AdminService(repository as any);
+
+    const result = await service.updateOrderStatus('order-1', { status: 'SHIPPED' });
+    expect(repository.updateOrderStatus).toHaveBeenCalledWith('order-1', 'SHIPPED');
+    expect(result.status).toBe('shipped');
+  });
+
   it('rejects products that only contain video media', async () => {
     const repository = {
       createProduct: vi.fn(),

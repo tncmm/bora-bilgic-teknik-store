@@ -1154,6 +1154,15 @@ async function seedOrders() {
         orderNumber: scenario.orderNumber,
         status: scenario.status,
         total,
+        // Demo orders represent completed sales: they must appear in the
+        // paid-only admin queue and dashboard totals.
+        paymentStatus: 'PAID',
+        paymentAmount: total,
+        paymentCurrency: 'TL',
+        paymentMethod: 'card',
+        paymentType: 'card',
+        paidAt: scenario.createdAt,
+        paymentNotifiedAt: scenario.createdAt,
         shippingName: scenario.shippingName,
         shippingPhone: scenario.shippingPhone,
         shippingCity: scenario.shippingCity,
