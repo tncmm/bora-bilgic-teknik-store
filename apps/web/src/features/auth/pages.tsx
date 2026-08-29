@@ -43,7 +43,7 @@ export function LoginPage() {
     <section className="auth-shell">
       <div className="ui-shell">
         <div className="auth-card">
-          <div className="detail-chip">System Access</div>
+          <div className="detail-chip">Hesap Girisi</div>
           <h1>{language === 'tr' ? 'Teknik kontrol katmanina giris yapin.' : 'Log in to the technical control layer.'}</h1>
           <p>{language === 'tr' ? 'Demo admin: admin@borabilgicteknik.com / Password123!' : 'Demo admin: admin@borabilgicteknik.com / Password123!'}</p>
           <form onSubmit={handleSubmit}>
