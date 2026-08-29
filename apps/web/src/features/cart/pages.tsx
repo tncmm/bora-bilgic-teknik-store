@@ -375,10 +375,12 @@ export function CheckoutPage() {
   useEffect(() => {
     if (!user) return;
 
-    setForm((value) => ({
-      ...value,
-      shippingName: value.shippingName || `${user.firstName} ${user.lastName}`,
-    }));
+    void Promise.resolve().then(() => {
+      setForm((value) => ({
+        ...value,
+        shippingName: value.shippingName || `${user.firstName} ${user.lastName}`,
+      }));
+    });
   }, [user]);
 
   useEffect(() => {

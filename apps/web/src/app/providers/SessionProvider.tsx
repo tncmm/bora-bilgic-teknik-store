@@ -66,12 +66,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [themeMode]);
 
   useEffect(() => {
-    if (token) {
-      void Promise.all([refreshProfileInternal(token), syncCartInternal(token), syncWishlistInternal(token)]);
-    } else {
-      setCart(null);
-      setWishlist(null);
-    }
+    if (!token) return;
+
+    void Promise.all([refreshProfileInternal(token), syncCartInternal(token), syncWishlistInternal(token)]);
   }, [token]);
 
   async function refreshProfileInternal(nextToken: string) {
@@ -192,6 +189,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSession() {
   const context = useContext(SessionContext);
 

@@ -55,7 +55,9 @@ function useCatalogProducts(params: Record<string, string>) {
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
+    void Promise.resolve().then(() => {
+      if (mounted) setLoading(true);
+    });
     api
       .listProducts(params)
       .then((response) => {

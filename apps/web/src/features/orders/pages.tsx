@@ -145,7 +145,7 @@ export function OrderDetailPage() {
   useEffect(() => {
     if (!token || !orderId) return;
 
-    setError(null);
+    void Promise.resolve().then(() => setError(null));
     void api.getMyOrder(token, orderId).then(setOrder).catch((nextError: Error) => {
       setError(nextError.message);
     });

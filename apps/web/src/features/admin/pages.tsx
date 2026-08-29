@@ -5,9 +5,11 @@ import {
   PRODUCT_MEDIA_VIDEO_MIME_TYPES,
   type AdminUploadKind,
   type Category,
+  type Order,
   type Product,
   type ProductImage,
   type ProductMediaInput,
+  type User,
 } from '@bora/types';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -210,12 +212,15 @@ export function AdminProductsPage() {
   }
 
   useEffect(() => {
-    void loadData();
+    void Promise.resolve().then(() => loadData());
   }, [token]);
 
   useEffect(() => {
     if (!categories.length || form.categoryId) return;
-    setForm((value) => ({ ...value, categoryId: categories[0]?.id ?? '' }));
+
+    void Promise.resolve().then(() => {
+      setForm((value) => ({ ...value, categoryId: categories[0]?.id ?? '' }));
+    });
   }, [categories, form.categoryId]);
 
   const title = useMemo(
@@ -706,7 +711,7 @@ export function AdminProductsPage() {
 export function AdminOrdersPage() {
   const { token } = useSession();
   const { language } = useI18n();
-  const [orders, setOrders] = useState<Array<any>>([]);
+  const [orders, setOrders] = useState<Array<Order & { customer: string; email: string }>>([]);
 
   async function loadOrders() {
     if (!token) return;
@@ -715,7 +720,7 @@ export function AdminOrdersPage() {
   }
 
   useEffect(() => {
-    void loadOrders();
+    void Promise.resolve().then(() => loadOrders());
   }, [token]);
 
   return (
@@ -782,7 +787,7 @@ export function AdminOrdersPage() {
 export function AdminUsersPage() {
   const { token } = useSession();
   const { language } = useI18n();
-  const [users, setUsers] = useState<Array<any>>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     if (!token) return;
