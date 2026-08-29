@@ -891,7 +891,15 @@ export function ProductDetailPage() {
     );
   }
 
-  const gallery: Array<{ id: string; url: string; alt: string; isPrimary: boolean; thumbnailUrl?: string | null }> =
+  const gallery: Array<{
+    id: string;
+    url: string;
+    alt: string;
+    isPrimary: boolean;
+    thumbnailUrl?: string | null;
+    kind: 'image' | 'video';
+    mimeType?: string | null;
+  }> =
     product.images.length > 0
       ? product.images
       : product.packageOptions?.map((option) => ({
@@ -899,6 +907,7 @@ export function ProductDetailPage() {
           url: product.heroImageUrl ?? '',
           alt: option.name,
           isPrimary: option.isDefault ?? false,
+          kind: 'image',
           thumbnailUrl: product.heroImageUrl ?? null,
         })) ?? [];
   const selectedImage = gallery[selectedImageIndex] ?? gallery[0];
@@ -940,12 +949,28 @@ export function ProductDetailPage() {
                     onClick={() => setSelectedImageIndex(index)}
                     type="button"
                   >
-                    <img alt={image.alt} src={image.thumbnailUrl ?? image.url} />
+                    <img alt={image.alt} src={image.thumbnailUrl ?? image.url} loading="lazy" decoding="async" />
+                    {image.kind === 'video' ? (
+                      <span className="dji-detail__thumb-badge material-symbols-outlined">play_circle</span>
+                    ) : null}
                   </button>
                 ))}
               </div>
               <div className="dji-detail__stage">
-                <img alt={selectedImage?.alt ?? product.name} src={selectedImage?.url} />
+                {/* The stage image is eager on purpose: it is the page's largest contentful paint. */}
+                {selectedImage?.kind === 'video' ? (
+                  <video controls playsInline poster={selectedImage.thumbnailUrl ?? undefined} preload="metadata">
+                    <source src={selectedImage.url} type={selectedImage.mimeType ?? undefined} />
+                  </video>
+                ) : (
+                  <img
+                    alt={selectedImage?.alt ?? product.name}
+                    src={selectedImage?.url}
+                    decoding="async"
+                    width={1200}
+                    height={1200}
+                  />
+                )}
               </div>
             </div>
 

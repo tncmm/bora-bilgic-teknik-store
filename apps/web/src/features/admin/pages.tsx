@@ -1,9 +1,19 @@
 import { Button, EmptyState, InputField, SelectField, StatCard, TextareaField } from '@bora/ui';
-import type { Category, Product } from '@bora/types';
+import {
+  PRODUCT_MEDIA_IMAGE_MIME_TYPES,
+  PRODUCT_MEDIA_LIMITS,
+  PRODUCT_MEDIA_VIDEO_MIME_TYPES,
+  type AdminUploadKind,
+  type Category,
+  type Product,
+  type ProductImage,
+  type ProductMediaInput,
+} from '@bora/types';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useI18n } from '../../app/providers/I18nProvider';
 import { useSession } from '../../app/providers/SessionProvider';
+import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
 import { formatCurrency, formatDate } from '../../shared/lib/format';
 import { translateCategoryName, translateOrderStatus } from '../../shared/lib/i18n';
@@ -21,6 +31,72 @@ function parseSpecs(value: string) {
       };
     })
     .filter((item) => item.name && item.value);
+}
+
+interface AdminMediaDraft extends ProductMediaInput {
+  id: string;
+}
+
+function formatMegabytes(bytes: number) {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
+function createEmptyMedia(kind: 'image' | 'video' = 'image'): AdminMediaDraft {
+  return {
+    id: crypto.randomUUID(),
+    url: '',
+    alt: '',
+    isPrimary: false,
+    kind,
+    thumbnailUrl: '',
+    mimeType: '',
+  };
+}
+
+function buildMediaValidationMessage(language: 'tr' | 'en', kind: AdminUploadKind) {
+  if (kind === 'video') {
+    return language === 'tr' ? 'Yalnizca MP4 veya WEBM yukleyebilirsiniz' : 'Only MP4 or WEBM files are allowed';
+  }
+
+  return language === 'tr' ? 'Yalnizca JPG, PNG, WEBP veya AVIF yukleyebilirsiniz' : 'Only JPG, PNG, WEBP, or AVIF files are allowed';
+}
+
+function buildMediaSizeMessage(language: 'tr' | 'en', kind: AdminUploadKind) {
+  if (kind === 'video') {
+    return language === 'tr' ? 'Video boyutu 100 MB sinirini asamaz' : 'Video size cannot exceed 100 MB';
+  }
+
+  if (kind === 'poster') {
+    return language === 'tr' ? 'Poster boyutu 3 MB sinirini asamaz' : 'Poster size cannot exceed 3 MB';
+  }
+
+  return language === 'tr' ? 'Gorsel boyutu 5 MB sinirini asamaz' : 'Image size cannot exceed 5 MB';
+}
+
+function validateMediaFile(file: File, kind: AdminUploadKind, language: 'tr' | 'en') {
+  const allowedMimeTypes = kind === 'video' ? [...PRODUCT_MEDIA_VIDEO_MIME_TYPES] : [...PRODUCT_MEDIA_IMAGE_MIME_TYPES];
+  const maxSize =
+    kind === 'video' ? PRODUCT_MEDIA_LIMITS.videoBytes : kind === 'poster' ? PRODUCT_MEDIA_LIMITS.posterBytes : PRODUCT_MEDIA_LIMITS.imageBytes;
+
+  if (!allowedMimeTypes.includes(file.type as never)) {
+    throw new Error(buildMediaValidationMessage(language, kind));
+  }
+
+  if (file.size > maxSize) {
+    throw new Error(buildMediaSizeMessage(language, kind));
+  }
+}
+
+async function readFileAsBase64(file: File) {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.onerror = () => reject(new Error('Dosya okunamadi.'));
+    reader.readAsDataURL(file);
+  });
+
+  const [, base64 = ''] = dataUrl.split(',');
+  return base64;
 }
 
 export function AdminDashboardPage() {
@@ -99,9 +175,12 @@ export function AdminDashboardPage() {
 export function AdminProductsPage() {
   const { token } = useSession();
   const { language } = useI18n();
+  const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [uploadingMediaId, setUploadingMediaId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '',
     slug: '',
@@ -116,8 +195,7 @@ export function AdminProductsPage() {
     stock: '0',
     isPublished: true,
     isPurchasable: false,
-    imageUrl: '',
-    imageAlt: '',
+    media: [createEmptyMedia('image')] as AdminMediaDraft[],
     specsText: 'Sensor: Full Frame\nFlight Time: 20 dakika',
   });
 
@@ -135,10 +213,37 @@ export function AdminProductsPage() {
     void loadData();
   }, [token]);
 
+  useEffect(() => {
+    if (!categories.length || form.categoryId) return;
+    setForm((value) => ({ ...value, categoryId: categories[0]?.id ?? '' }));
+  }, [categories, form.categoryId]);
+
   const title = useMemo(
     () => (editingProduct ? (language === 'tr' ? 'Urunu Guncelle' : 'Update Product') : language === 'tr' ? 'Urun Ekle' : 'Add Product'),
     [editingProduct, language],
   );
+
+  function resetForm() {
+    setEditingProduct(null);
+    setForm({
+      name: '',
+      slug: '',
+      brand: 'DJI',
+      categoryId: categories[0]?.id ?? '',
+      shortDescription: '',
+      description: '',
+      sku: '',
+      badge: '',
+      heroTag: '',
+      price: '0',
+      stock: '0',
+      isPublished: true,
+      isPurchasable: false,
+      media: [createEmptyMedia('image')],
+      specsText: 'Sensor: Full Frame\nFlight Time: 20 dakika',
+    });
+    setFormError(null);
+  }
 
   function fillForm(product: Product) {
     setEditingProduct(product);
@@ -156,17 +261,139 @@ export function AdminProductsPage() {
       stock: String(product.stock),
       isPublished: product.isPublished,
       isPurchasable: product.isPurchasable,
-      imageUrl: product.images[0]?.url ?? '',
-      imageAlt: product.images[0]?.alt ?? product.name,
+      media:
+        product.images.length > 0
+          ? product.images.map((item) => ({
+              id: item.id,
+              url: item.url,
+              alt: item.alt,
+              isPrimary: item.isPrimary,
+              kind: item.kind,
+              thumbnailUrl: item.thumbnailUrl ?? '',
+              mimeType: item.mimeType ?? '',
+            }))
+          : [createEmptyMedia('image')],
       specsText: product.specs.map((spec) => `${spec.name}: ${spec.value}`).join('\n'),
+    });
+    setFormError(null);
+  }
+
+  function updateMedia(mediaId: string, updater: (media: AdminMediaDraft) => AdminMediaDraft) {
+    setForm((value) => ({
+      ...value,
+      media: value.media.map((item) => (item.id === mediaId ? updater(item) : item)),
+    }));
+  }
+
+  function setPrimaryImage(mediaId: string) {
+    setForm((value) => ({
+      ...value,
+      media: value.media.map((item) => ({
+        ...item,
+        isPrimary: item.kind === 'image' && item.id === mediaId,
+      })),
+    }));
+  }
+
+  function addMedia(kind: 'image' | 'video') {
+    setForm((value) => ({
+      ...value,
+      media: [...value.media, createEmptyMedia(kind)],
+    }));
+  }
+
+  function removeMedia(mediaId: string) {
+    setForm((value) => {
+      const nextMedia = value.media.filter((item) => item.id !== mediaId);
+      const remainingImages = nextMedia.filter((item) => item.kind === 'image');
+
+      if (remainingImages.length > 0 && !remainingImages.some((item) => item.isPrimary)) {
+        remainingImages[0].isPrimary = true;
+      }
+
+      return {
+        ...value,
+        media: nextMedia.length > 0 ? nextMedia : [createEmptyMedia('image')],
+      };
     });
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleMediaUpload(mediaId: string, uploadKind: AdminUploadKind, file: File) {
     if (!token) return;
 
-    const payload = {
+    try {
+      validateMediaFile(file, uploadKind, language);
+      setUploadingMediaId(mediaId);
+      const base64 = await readFileAsBase64(file);
+      const uploaded = await api.uploadAdminMedia(token, {
+        kind: uploadKind,
+        fileName: file.name,
+        mimeType: file.type,
+        base64,
+      });
+
+      updateMedia(mediaId, (media) => {
+        if (uploadKind === 'poster') {
+          return {
+            ...media,
+            thumbnailUrl: uploaded.url,
+          };
+        }
+
+        return {
+          ...media,
+          kind: uploadKind === 'video' ? 'video' : 'image',
+          url: uploaded.url,
+          mimeType: uploaded.mimeType,
+          thumbnailUrl: uploadKind === 'image' ? uploaded.url : media.thumbnailUrl,
+          isPrimary: uploadKind === 'image' ? media.isPrimary : false,
+        };
+      });
+
+      showToast({
+        tone: 'success',
+        title: language === 'tr' ? 'Medya yuklendi' : 'Media uploaded',
+        description: language === 'tr' ? 'Dosya Cloudflare R2 uzerine yuklendi.' : 'The file was uploaded to Cloudflare R2.',
+      });
+    } catch (error) {
+      showToast({
+        tone: 'error',
+        title: language === 'tr' ? 'Yukleme basarisiz' : 'Upload failed',
+        description: (error as Error).message,
+      });
+    } finally {
+      setUploadingMediaId(null);
+    }
+  }
+
+  function buildProductPayload() {
+    const normalizedMedia = form.media
+      .map((item) => ({
+        ...item,
+        alt: item.alt.trim(),
+        url: item.url.trim(),
+        thumbnailUrl: item.thumbnailUrl?.trim() ?? '',
+      }))
+      .filter((item) => item.url);
+
+    const imageMedia = normalizedMedia.filter((item) => item.kind === 'image');
+
+    if (imageMedia.length === 0) {
+      throw new Error(language === 'tr' ? 'En az bir gorsel medyasi eklemelisiniz.' : 'Add at least one image media item.');
+    }
+
+    if (normalizedMedia.some((item) => !item.alt)) {
+      throw new Error(language === 'tr' ? 'Tum medya kayitlari icin ALT metni zorunludur.' : 'ALT text is required for every media item.');
+    }
+
+    const videoWithoutPoster = normalizedMedia.find((item) => item.kind === 'video' && !item.thumbnailUrl);
+    if (videoWithoutPoster) {
+      throw new Error(language === 'tr' ? 'Video icin poster gorseli zorunludur.' : 'Poster image is required for videos.');
+    }
+
+    const primaryImageId = imageMedia.find((item) => item.isPrimary)?.id ?? imageMedia[0]?.id;
+
+    return {
       name: form.name,
       slug: form.slug,
       brand: form.brand,
@@ -180,43 +407,55 @@ export function AdminProductsPage() {
       stock: Number(form.stock),
       isPublished: form.isPublished,
       isPurchasable: form.isPurchasable,
-      images: [
-        {
-          url: form.imageUrl,
-          alt: form.imageAlt || form.name,
-          isPrimary: true,
-        },
-      ],
+      images: normalizedMedia.map((item) => ({
+        url: item.url,
+        alt: item.alt || form.name,
+        isPrimary: item.kind === 'image' && item.id === primaryImageId,
+        kind: item.kind,
+        thumbnailUrl: item.kind === 'video' ? item.thumbnailUrl || null : item.thumbnailUrl || item.url,
+        mimeType: item.mimeType || null,
+      })),
       specs: parseSpecs(form.specsText),
     };
-
-    if (editingProduct) {
-      await api.updateAdminProduct(token, editingProduct.id, payload);
-    } else {
-      await api.createAdminProduct(token, payload);
-    }
-
-    setEditingProduct(null);
-    setForm({
-      name: '',
-      slug: '',
-      brand: 'DJI',
-      categoryId: categories[0]?.id ?? '',
-      shortDescription: '',
-      description: '',
-      sku: '',
-      badge: '',
-      heroTag: '',
-      price: '0',
-      stock: '0',
-      isPublished: true,
-      isPurchasable: false,
-      imageUrl: '',
-      imageAlt: '',
-      specsText: 'Sensor: Full Frame\nFlight Time: 20 dakika',
-    });
-    await loadData();
   }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token) return;
+
+    try {
+      setFormError(null);
+      const payload = buildProductPayload();
+
+      if (editingProduct) {
+        await api.updateAdminProduct(token, editingProduct.id, payload);
+      } else {
+        await api.createAdminProduct(token, payload);
+      }
+
+      showToast({
+        tone: 'success',
+        title: language === 'tr' ? 'Urun kaydedildi' : 'Product saved',
+        description: language === 'tr' ? 'Medya ve urun bilgileri guncellendi.' : 'The product and media information were updated.',
+      });
+      resetForm();
+      await loadData();
+    } catch (error) {
+      setFormError((error as Error).message);
+    }
+  }
+
+  const mediaGuide = [
+    language === 'tr'
+      ? `Gorsel: JPG, PNG, WEBP, AVIF - maksimum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}`
+      : `Image: JPG, PNG, WEBP, AVIF - maximum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}`,
+    language === 'tr'
+      ? `Poster: JPG, PNG, WEBP, AVIF - maksimum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.posterBytes)}`
+      : `Poster: JPG, PNG, WEBP, AVIF - maximum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.posterBytes)}`,
+    language === 'tr'
+      ? `Video: MP4, WEBM - maksimum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}`
+      : `Video: MP4, WEBM - maximum ${formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}`,
+  ];
 
   return (
     <div>
@@ -309,18 +548,124 @@ export function AdminProductsPage() {
             <InputField label={language === 'tr' ? 'Fiyat' : 'Price'} onChange={(event) => setForm((value) => ({ ...value, price: event.target.value }))} value={form.price} />
             <InputField label={language === 'tr' ? 'Stok' : 'Stock'} onChange={(event) => setForm((value) => ({ ...value, stock: event.target.value }))} value={form.stock} />
             <div className="full">
-              <InputField
-                label={language === 'tr' ? 'Gorsel URL' : 'Image URL'}
-                onChange={(event) => setForm((value) => ({ ...value, imageUrl: event.target.value }))}
-                value={form.imageUrl}
-              />
+              <div className="admin-media-guide">
+                <strong>{language === 'tr' ? 'Medya Yuku Kurallari' : 'Media Upload Rules'}</strong>
+                {mediaGuide.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
             </div>
-            <div className="full">
-              <InputField
-                label={language === 'tr' ? 'Gorsel ALT' : 'Image ALT'}
-                onChange={(event) => setForm((value) => ({ ...value, imageAlt: event.target.value }))}
-                value={form.imageAlt}
-              />
+            <div className="full admin-media-stack">
+              {form.media.map((media, index) => (
+                <div className="admin-media-card" key={media.id}>
+                  <div className="admin-media-card__head">
+                    <strong>
+                      {language === 'tr' ? 'Medya' : 'Media'} {index + 1}
+                    </strong>
+                    <div className="admin-table__actions">
+                      <Button onClick={() => removeMedia(media.id)} type="button" variant="ghost">
+                        {language === 'tr' ? 'Kaldir' : 'Remove'}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="admin-form-grid">
+                    <SelectField
+                      label={language === 'tr' ? 'Tur' : 'Type'}
+                      onChange={(event) =>
+                        updateMedia(media.id, (value) => ({
+                          ...value,
+                          kind: event.target.value as ProductImage['kind'],
+                          isPrimary: event.target.value === 'video' ? false : value.isPrimary,
+                          thumbnailUrl: event.target.value === 'image' ? value.url : value.thumbnailUrl,
+                        }))
+                      }
+                      value={media.kind}
+                    >
+                      <option value="image">{language === 'tr' ? 'Gorsel' : 'Image'}</option>
+                      <option value="video">{language === 'tr' ? 'Video' : 'Video'}</option>
+                    </SelectField>
+                    <InputField
+                      label={language === 'tr' ? 'ALT Metni' : 'ALT Text'}
+                      onChange={(event) => updateMedia(media.id, (value) => ({ ...value, alt: event.target.value }))}
+                      value={media.alt}
+                    />
+                    <div className="full">
+                      <InputField
+                        label={language === 'tr' ? 'Medya URL' : 'Media URL'}
+                        onChange={(event) => updateMedia(media.id, (value) => ({ ...value, url: event.target.value }))}
+                        value={media.url}
+                      />
+                    </div>
+                    {media.kind === 'video' ? (
+                      <div className="full">
+                        <InputField
+                          label={language === 'tr' ? 'Poster URL' : 'Poster URL'}
+                          onChange={(event) => updateMedia(media.id, (value) => ({ ...value, thumbnailUrl: event.target.value }))}
+                          value={media.thumbnailUrl ?? ''}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="full admin-upload-grid">
+                      <label className="admin-upload-field">
+                        <span>{media.kind === 'video' ? (language === 'tr' ? 'Video Yukle' : 'Upload Video') : language === 'tr' ? 'Gorsel Yukle' : 'Upload Image'}</span>
+                        <input
+                          accept={media.kind === 'video' ? PRODUCT_MEDIA_VIDEO_MIME_TYPES.join(',') : PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            void handleMediaUpload(media.id, media.kind === 'video' ? 'video' : 'image', file);
+                            event.currentTarget.value = '';
+                          }}
+                          type="file"
+                        />
+                        <small>
+                          {media.kind === 'video'
+                            ? language === 'tr'
+                              ? 'MP4 veya WEBM, maksimum 100 MB'
+                              : 'MP4 or WEBM, maximum 100 MB'
+                            : language === 'tr'
+                              ? 'JPG, PNG, WEBP veya AVIF, maksimum 5 MB'
+                              : 'JPG, PNG, WEBP, or AVIF, maximum 5 MB'}
+                        </small>
+                      </label>
+                      {media.kind === 'video' ? (
+                        <label className="admin-upload-field">
+                          <span>{language === 'tr' ? 'Poster Yukle' : 'Upload Poster'}</span>
+                          <input
+                            accept={PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (!file) return;
+                              void handleMediaUpload(media.id, 'poster', file);
+                              event.currentTarget.value = '';
+                            }}
+                            type="file"
+                          />
+                          <small>{language === 'tr' ? 'JPG, PNG, WEBP veya AVIF, maksimum 3 MB' : 'JPG, PNG, WEBP, or AVIF, maximum 3 MB'}</small>
+                        </label>
+                      ) : (
+                        <label className="admin-primary-toggle">
+                          <input checked={media.isPrimary} onChange={() => setPrimaryImage(media.id)} type="radio" />
+                          <span>{language === 'tr' ? 'Birincil gorsel olarak kullan' : 'Use as primary image'}</span>
+                        </label>
+                      )}
+                    </div>
+                    {uploadingMediaId === media.id ? (
+                      <div className="full">
+                        <p className="text-muted">{language === 'tr' ? 'Yukleme suruyor...' : 'Upload in progress...'}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+              <div className="auth-actions">
+                <Button onClick={() => addMedia('image')} type="button" variant="secondary">
+                  + {language === 'tr' ? 'Gorsel Ekle' : 'Add Image'}
+                </Button>
+                <Button onClick={() => addMedia('video')} type="button" variant="ghost">
+                  + {language === 'tr' ? 'Video Ekle' : 'Add Video'}
+                </Button>
+              </div>
             </div>
             <div className="full">
               <TextareaField
@@ -348,6 +693,7 @@ export function AdminProductsPage() {
               {language === 'tr' ? 'Satin Alinabilir' : 'Purchasable'}
             </label>
           </div>
+          {formError ? <p className="form-feedback form-feedback--error">{formError}</p> : null}
           <Button style={{ marginTop: '1rem' }} type="submit">
             {editingProduct ? (language === 'tr' ? 'Guncelle' : 'Update') : language === 'tr' ? 'Olustur' : 'Create'}
           </Button>

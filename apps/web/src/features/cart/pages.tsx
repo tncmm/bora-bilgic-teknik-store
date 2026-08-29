@@ -1,5 +1,6 @@
+import type { Address } from '@bora/types';
 import { Button, EmptyState, InputField, TextareaField } from '@bora/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
@@ -8,6 +9,33 @@ import { api } from '../../shared/api/client';
 import { formatCurrency } from '../../shared/lib/format';
 import { useI18n } from '../../app/providers/I18nProvider';
 import { translateCategoryName } from '../../shared/lib/i18n';
+
+const paymentMethods = [
+  {
+    id: 'card',
+    titleTr: 'Kart ile Odeme',
+    titleEn: 'Card Payment',
+    descriptionTr: 'PayTR iframe odeme altyapisi sonraki asamada bu alana baglanacak.',
+    descriptionEn: 'The PayTR iframe payment flow will be connected here in the next phase.',
+  },
+  {
+    id: 'bank-transfer',
+    titleTr: 'Havale / EFT',
+    titleEn: 'Bank Transfer',
+    descriptionTr: 'Kurumsal veya teklifli siparislerde manuel onay icin hazir tutulur.',
+    descriptionEn: 'Kept ready for manual approval on corporate or quote-based orders.',
+  },
+] as const;
+
+function mapAddressToCheckoutForm(address: Address, shippingName: string) {
+  return {
+    shippingName,
+    shippingPhone: address.phone,
+    shippingCity: address.city,
+    shippingDistrict: address.district,
+    shippingAddressLine: address.line1,
+  };
+}
 
 function PurchaseProcessPanel({ showLoginStep = true }: { showLoginStep?: boolean }) {
   const { language } = useI18n();
@@ -328,10 +356,13 @@ export function CartPage() {
 }
 
 export function CheckoutPage() {
-  const { cart, token, syncCart, isAuthenticated } = useSession();
+  const { cart, token, syncCart, isAuthenticated, user } = useSession();
   const { showToast } = useToast();
   const { language } = useI18n();
   const navigate = useNavigate();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethods)[number]['id']>('card');
   const [form, setForm] = useState({
     shippingName: '',
     shippingPhone: '',
@@ -340,6 +371,40 @@ export function CheckoutPage() {
     shippingAddressLine: '',
     notes: '',
   });
+
+  useEffect(() => {
+    if (!user) return;
+
+    setForm((value) => ({
+      ...value,
+      shippingName: value.shippingName || `${user.firstName} ${user.lastName}`,
+    }));
+  }, [user]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    void api.listAddresses(token).then((items) => {
+      setAddresses(items);
+
+      const firstAddress = items[0];
+      if (!firstAddress) return;
+
+      setSelectedAddressId((value) => value || firstAddress.id);
+      setForm((value) => ({
+        ...value,
+        ...mapAddressToCheckoutForm(firstAddress, value.shippingName || (user ? `${user.firstName} ${user.lastName}` : '')),
+      }));
+    }).catch(() => undefined);
+  }, [token, user]);
+
+  function handleSelectAddress(address: Address) {
+    setSelectedAddressId(address.id);
+    setForm((value) => ({
+      ...value,
+      ...mapAddressToCheckoutForm(address, value.shippingName),
+    }));
+  }
 
   if (!isAuthenticated || !token) {
     return (
@@ -374,17 +439,17 @@ export function CheckoutPage() {
     if (!token) return;
 
     try {
-      await api.createOrder(token, form);
+      const order = await api.createOrder(token, form);
       await syncCart();
       showToast({
         tone: 'success',
         title: language === 'tr' ? 'Siparis olusturuldu' : 'Order created',
         description:
           language === 'tr'
-            ? 'Demo siparisiniz kaydedildi ve profil gecmisine eklendi.'
-            : 'Your demo order was saved and added to your profile history.',
+            ? 'Siparisiniz kaydedildi. Odeme entegrasyonu eklendiginde bu adim tahsilata baglanacak.'
+            : 'Your order was saved. Once payment integration is added, this step will connect to collection.',
       });
-      navigate('/profil');
+      navigate(`/siparislerim/${order.id}`, { state: { justPlaced: true } });
     } catch (error) {
       showToast({
         tone: 'error',
@@ -400,10 +465,46 @@ export function CheckoutPage() {
         <form className="checkout-panel" onSubmit={handleSubmit}>
           <div className="section-header">
             <div>
-              <h2>{language === 'tr' ? 'Teslimat ve Siparis Bilgileri' : 'Delivery and Order Details'}</h2>
-              <p>{language === 'tr' ? 'Odeme adimina gecmeden once teslimat bilgileri, adres ve siparis notlari bu ekranda toplanir.' : 'Before payment, delivery details, address, and order notes are collected on this screen.'}</p>
+              <div className="detail-chip">{language === 'tr' ? 'Checkout' : 'Checkout'}</div>
+              <h2>{language === 'tr' ? 'Teslimat ve Odeme' : 'Delivery and Payment'}</h2>
+              <p>{language === 'tr' ? 'Kayitli adresinizi secin, odeme tercihine bakip siparisi onaylayin.' : 'Select a saved address, review payment preference, and confirm the order.'}</p>
             </div>
           </div>
+
+          <div className="checkout-step-card">
+            <div className="checkout-step-card__head">
+              <span>1</span>
+              <div>
+                <strong>{language === 'tr' ? 'Teslimat Adresi' : 'Delivery Address'}</strong>
+                <p>{language === 'tr' ? 'Profilinizdeki adresleri burada hizlica kullanabilirsiniz.' : 'You can quickly use addresses from your profile here.'}</p>
+              </div>
+            </div>
+
+            {addresses.length === 0 ? (
+              <div className="checkout-empty-note">
+                <strong>{language === 'tr' ? 'Kayitli adresiniz yok' : 'No saved address yet'}</strong>
+                <p>{language === 'tr' ? 'Asagidaki alanlari doldurarak devam edebilirsiniz. Kalici adres eklemek icin Profil > Adreslerim bolumunu kullanin.' : 'You can continue by filling the fields below. Use Profile > My Addresses to add a permanent address.'}</p>
+              </div>
+            ) : (
+              <div className="checkout-choice-grid">
+                {addresses.map((address) => (
+                  <button
+                    className={['checkout-choice-card', selectedAddressId === address.id ? 'checkout-choice-card--active' : ''].filter(Boolean).join(' ')}
+                    key={address.id}
+                    onClick={() => handleSelectAddress(address)}
+                    type="button"
+                  >
+                    <strong>{address.title}</strong>
+                    <span>{address.line1}</span>
+                    <small>
+                      {address.district} / {address.city}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="auth-form-grid">
             <InputField
               label={language === 'tr' ? 'Ad Soyad' : 'Full Name'}
@@ -445,8 +546,32 @@ export function CheckoutPage() {
               />
             </div>
           </div>
-          <Button style={{ marginTop: '1.25rem' }} type="submit">
-            {language === 'tr' ? 'Siparis Olustur' : 'Create Order'}
+
+          <div className="checkout-step-card checkout-step-card--compact">
+            <div className="checkout-step-card__head">
+              <span>2</span>
+              <div>
+                <strong>{language === 'tr' ? 'Odeme Tercihi' : 'Payment Preference'}</strong>
+                <p>{language === 'tr' ? 'Bu bolum su an tahsilat yapmaz; PayTR iframe sonraki asamada buraya eklenecek.' : 'This area does not collect payment yet; PayTR iframe will be added here next.'}</p>
+              </div>
+            </div>
+            <div className="checkout-choice-grid checkout-choice-grid--payment">
+              {paymentMethods.map((method) => (
+                <button
+                  className={['checkout-choice-card', paymentMethod === method.id ? 'checkout-choice-card--active' : ''].filter(Boolean).join(' ')}
+                  key={method.id}
+                  onClick={() => setPaymentMethod(method.id)}
+                  type="button"
+                >
+                  <strong>{language === 'tr' ? method.titleTr : method.titleEn}</strong>
+                  <span>{language === 'tr' ? method.descriptionTr : method.descriptionEn}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button style={{ marginTop: '1.25rem', width: '100%' }} type="submit">
+            {language === 'tr' ? 'Siparisi Onayla' : 'Confirm Order'}
           </Button>
         </form>
 
@@ -454,7 +579,7 @@ export function CheckoutPage() {
           <div className="section-header">
             <div>
               <h2>{language === 'tr' ? 'Odeme Oncesi Ozet' : 'Pre-payment Summary'}</h2>
-              <p>{language === 'tr' ? 'Secilen urunler, toplam tutar ve teslim bilgisi bu alanda son kez gorunur.' : 'Selected items, total amount, and delivery info are shown one last time here.'}</p>
+              <p>{language === 'tr' ? 'Urunler, teslimat adresi ve odeme tercihi son kez burada gorunur.' : 'Products, delivery address, and payment preference are shown one last time here.'}</p>
             </div>
           </div>
           {cart.items.map((item) => (
@@ -469,10 +594,28 @@ export function CheckoutPage() {
             <span>{language === 'tr' ? 'Toplam' : 'Total'}</span>
             <strong>{formatCurrency(cart.subtotal, language)}</strong>
           </div>
+          <div className="checkout-summary-box">
+            <strong>{language === 'tr' ? 'Teslimat' : 'Delivery'}</strong>
+            <p>
+              {form.shippingAddressLine
+                ? `${form.shippingAddressLine}, ${form.shippingDistrict} / ${form.shippingCity}`
+                : language === 'tr'
+                  ? 'Adres secimi bekleniyor.'
+                  : 'Address selection pending.'}
+            </p>
+          </div>
+          <div className="checkout-summary-box">
+            <strong>{language === 'tr' ? 'Odeme' : 'Payment'}</strong>
+            <p>
+              {language === 'tr'
+                ? paymentMethods.find((method) => method.id === paymentMethod)?.titleTr
+                : paymentMethods.find((method) => method.id === paymentMethod)?.titleEn}
+            </p>
+          </div>
           <div className="cart-summary-note">
             {language === 'tr'
-              ? 'Gercek odeme entegrasyonunda bu adimdan sonra kart odemesi ve banka guvenlik onayi ekranina gecilir.'
-              : 'In the real payment integration, the next step leads to card payment and bank security approval.'}
+              ? 'Odeme altyapisi henuz tahsilat yapmaz. Siparis kaydi olusur, PayTR iframe entegrasyonu sonraki asamada bu karta baglanir.'
+              : 'Payment infrastructure does not collect funds yet. The order is recorded, and PayTR iframe integration will connect to this card next.'}
           </div>
         </div>
       </div>

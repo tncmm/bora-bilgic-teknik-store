@@ -113,7 +113,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
       tabIndex={0}
     >
       <div className="product-card__media">
-        <img alt={primaryImage?.alt ?? product.name} src={primaryImage?.url} />
+        <img alt={primaryImage?.alt ?? product.name} src={primaryImage?.url} loading="lazy" decoding="async" />
       </div>
       <button
         aria-label={favoriteActive ? (language === 'tr' ? 'Favorilerden kaldir' : 'Remove from favorites') : language === 'tr' ? 'Favorilere ekle' : 'Add to favorites'}

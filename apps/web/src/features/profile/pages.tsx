@@ -1,4 +1,5 @@
-import { Button, EmptyState } from '@bora/ui';
+import type { Address, AddressPayload, Order } from '@bora/types';
+import { Button, EmptyState, InputField, TextareaField } from '@bora/ui';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -6,17 +7,32 @@ import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { useI18n } from '../../app/providers/I18nProvider';
 import { api } from '../../shared/api/client';
-import { formatCurrency, formatDate } from '../../shared/lib/format';
-import { translateCategoryName, translateOrderStatus, translateRole } from '../../shared/lib/i18n';
+import { formatCurrency } from '../../shared/lib/format';
+import { translateCategoryName, translateRole } from '../../shared/lib/i18n';
+
+const emptyAddressForm: AddressPayload = {
+  title: 'Ev',
+  line1: '',
+  city: '',
+  district: '',
+  postalCode: '',
+  country: 'Turkey',
+  phone: '',
+};
 
 export function ProfilePage() {
   const { isAdmin, token, user, wishlist, favoritesCount } = useSession();
   const { language } = useI18n();
-  const [orders, setOrders] = useState<Array<{ id: string; orderNumber: string; createdAt: string; total: number; status: string }>>([]);
+  const { showToast } = useToast();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressForm, setAddressForm] = useState<AddressPayload>(emptyAddressForm);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   useEffect(() => {
     if (!token) return;
     void api.getMyOrders(token).then(setOrders).catch(() => undefined);
+    void api.listAddresses(token).then(setAddresses).catch(() => undefined);
   }, [token]);
 
   if (!user) {
@@ -33,6 +49,51 @@ export function ProfilePage() {
   }
 
   const favoritePreview = wishlist?.items.slice(0, 2) ?? [];
+
+  async function handleCreateAddress(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token) return;
+
+    try {
+      setIsSavingAddress(true);
+      const createdAddress = await api.createAddress(token, addressForm);
+      setAddresses((value) => [createdAddress, ...value]);
+      setAddressForm(emptyAddressForm);
+      showToast({
+        tone: 'success',
+        title: language === 'tr' ? 'Adres kaydedildi' : 'Address saved',
+        description: language === 'tr' ? 'Teslimat adresiniz checkout ekraninda secilebilir.' : 'Your delivery address can now be selected at checkout.',
+      });
+    } catch (error) {
+      showToast({
+        tone: 'error',
+        title: language === 'tr' ? 'Adres kaydedilemedi' : 'Address could not be saved',
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsSavingAddress(false);
+    }
+  }
+
+  async function handleDeleteAddress(addressId: string) {
+    if (!token) return;
+
+    try {
+      await api.deleteAddress(token, addressId);
+      setAddresses((value) => value.filter((address) => address.id !== addressId));
+      showToast({
+        tone: 'info',
+        title: language === 'tr' ? 'Adres silindi' : 'Address deleted',
+        description: language === 'tr' ? 'Adres defteriniz guncellendi.' : 'Your address book has been updated.',
+      });
+    } catch (error) {
+      showToast({
+        tone: 'error',
+        title: language === 'tr' ? 'Adres silinemedi' : 'Address could not be deleted',
+        description: (error as Error).message,
+      });
+    }
+  }
 
   return (
     <section className="page-section" style={{ paddingTop: '140px' }}>
@@ -70,6 +131,9 @@ export function ProfilePage() {
             </Link>
             <Link to="/sepet">
               <Button variant="secondary">{language === 'tr' ? 'Sepete Git' : 'Go to Cart'}</Button>
+            </Link>
+            <Link to="/siparislerim">
+              <Button variant="secondary">{language === 'tr' ? 'Siparislerim' : 'My Orders'}</Button>
             </Link>
             {isAdmin ? (
               <Link to="/admin">
@@ -117,9 +181,102 @@ export function ProfilePage() {
         <div className="profile-card profile-card--full">
           <div className="section-header">
             <div>
-              <h2>{language === 'tr' ? 'Siparis Gecmisi' : 'Order History'}</h2>
-              <p>{language === 'tr' ? 'Seed edilmis siparisler burada gorunur.' : 'Seeded orders appear here.'}</p>
+              <h2>{language === 'tr' ? 'Adreslerim' : 'My Addresses'}</h2>
+              <p>{language === 'tr' ? 'Teslimat adreslerinizi kaydedin; checkout ekraninda tek tikla secin.' : 'Save delivery addresses and select them with one click at checkout.'}</p>
             </div>
+          </div>
+
+          <div className="address-book-layout">
+            <form className="address-form" onSubmit={handleCreateAddress}>
+              <div className="auth-form-grid">
+                <InputField
+                  label={language === 'tr' ? 'Adres Basligi' : 'Address Title'}
+                  onChange={(event) => setAddressForm((value) => ({ ...value, title: event.target.value }))}
+                  required
+                  value={addressForm.title}
+                />
+                <InputField
+                  label={language === 'tr' ? 'Telefon' : 'Phone'}
+                  onChange={(event) => setAddressForm((value) => ({ ...value, phone: event.target.value }))}
+                  required
+                  value={addressForm.phone}
+                />
+                <InputField
+                  label={language === 'tr' ? 'Sehir' : 'City'}
+                  onChange={(event) => setAddressForm((value) => ({ ...value, city: event.target.value }))}
+                  required
+                  value={addressForm.city}
+                />
+                <InputField
+                  label={language === 'tr' ? 'Ilce' : 'District'}
+                  onChange={(event) => setAddressForm((value) => ({ ...value, district: event.target.value }))}
+                  required
+                  value={addressForm.district}
+                />
+                <InputField
+                  label={language === 'tr' ? 'Posta Kodu' : 'Postal Code'}
+                  onChange={(event) => setAddressForm((value) => ({ ...value, postalCode: event.target.value }))}
+                  value={addressForm.postalCode}
+                />
+                <InputField
+                  label={language === 'tr' ? 'Ulke' : 'Country'}
+                  onChange={(event) => setAddressForm((value) => ({ ...value, country: event.target.value }))}
+                  required
+                  value={addressForm.country}
+                />
+                <div className="full">
+                  <TextareaField
+                    label={language === 'tr' ? 'Acik Adres' : 'Full Address'}
+                    onChange={(event) => setAddressForm((value) => ({ ...value, line1: event.target.value }))}
+                    required
+                    value={addressForm.line1}
+                  />
+                </div>
+              </div>
+              <Button disabled={isSavingAddress} style={{ marginTop: '1rem' }} type="submit">
+                {isSavingAddress ? (language === 'tr' ? 'Kaydediliyor' : 'Saving') : language === 'tr' ? 'Adresi Kaydet' : 'Save Address'}
+              </Button>
+            </form>
+
+            <div className="address-list">
+              {addresses.length === 0 ? (
+                <div className="address-empty">
+                  <strong>{language === 'tr' ? 'Kayitli adres yok' : 'No saved address'}</strong>
+                  <p>{language === 'tr' ? 'Ilk teslimat adresinizi ekleyerek checkout surecini hizlandirin.' : 'Add your first delivery address to make checkout faster.'}</p>
+                </div>
+              ) : (
+                addresses.map((address) => (
+                  <article className="address-card" key={address.id}>
+                    <div className="address-card__head">
+                      <div>
+                        <strong>{address.title}</strong>
+                        <span>{address.phone}</span>
+                      </div>
+                      <Button onClick={() => void handleDeleteAddress(address.id)} type="button" variant="ghost">
+                        {language === 'tr' ? 'Sil' : 'Delete'}
+                      </Button>
+                    </div>
+                    <p>{address.line1}</p>
+                    <span>
+                      {address.district} / {address.city}
+                      {address.postalCode ? ` - ${address.postalCode}` : ''}
+                    </span>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-card">
+          <div className="section-header">
+            <div>
+              <h2>{language === 'tr' ? 'Siparislerim' : 'My Orders'}</h2>
+              <p>{language === 'tr' ? 'Tum siparis gecmisinizi daha rahat takip etmek icin ayri bir sayfaya tasidik.' : 'We moved your full order history to a separate page so it is easier to track.'}</p>
+            </div>
+            <Link className="section-link" to="/siparislerim">
+              {language === 'tr' ? 'Siparislere git' : 'Go to orders'}
+            </Link>
           </div>
           {orders.length === 0 ? (
             <EmptyState
@@ -127,16 +284,15 @@ export function ProfilePage() {
               title={language === 'tr' ? 'Siparis bulunamadi' : 'No orders found'}
             />
           ) : (
-            orders.map((order) => (
-              <div className="order-history-row" key={order.id}>
-                <div>
-                  <strong>{order.orderNumber}</strong>
-                </div>
-                <span>{formatDate(order.createdAt, language)}</span>
-                <span className="order-badge">{translateOrderStatus(language, order.status)}</span>
-                <strong>{formatCurrency(order.total, language)}</strong>
-              </div>
-            ))
+            <div className="order-spotlight-card">
+              <strong>{orders[0]?.orderNumber}</strong>
+              <p>
+                {language === 'tr'
+                  ? 'Son siparisinizin detaylari, tum urun satirlari ve teslimat bilgileri artik ayri siparis ekraninda.'
+                  : 'Your latest order details, item lines, and delivery info are now on a separate orders screen.'}
+              </p>
+              <span>{formatCurrency(orders[0]?.total ?? 0, language)}</span>
+            </div>
           )}
         </div>
       </div>

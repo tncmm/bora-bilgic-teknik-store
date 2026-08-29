@@ -1,5 +1,8 @@
 import { appConfig } from '@bora/config';
 import type {
+  Address,
+  AddressPayload,
+  AdminUploadKind,
   AuthResponse,
   Cart,
   CatalogListResponse,
@@ -13,6 +16,13 @@ import type {
 } from '@bora/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? appConfig.apiBaseUrl;
+
+interface AdminMediaUploadResponse {
+  url: string;
+  key: string;
+  mimeType: string;
+  size: number;
+}
 
 interface ApiErrorPayload {
   message?: string;
@@ -89,6 +99,24 @@ export const api = {
       body: JSON.stringify({ mode }),
     }, token);
   },
+  listAddresses(token: string) {
+    return request<Address[]>('/users/addresses', {}, token);
+  },
+  createAddress(token: string, payload: AddressPayload) {
+    return request<Address>('/users/addresses', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
+  },
+  updateAddress(token: string, addressId: string, payload: Partial<AddressPayload>) {
+    return request<Address>(`/users/addresses/${addressId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }, token);
+  },
+  deleteAddress(token: string, addressId: string) {
+    return request<void>(`/users/addresses/${addressId}`, { method: 'DELETE' }, token);
+  },
   getCart(token: string) {
     return request<Cart>('/cart', {}, token);
   },
@@ -128,6 +156,9 @@ export const api = {
   getMyOrders(token: string) {
     return request<Order[]>('/orders/me', {}, token);
   },
+  getMyOrder(token: string, orderId: string) {
+    return request<Order>(`/orders/me/${orderId}`, {}, token);
+  },
   getAdminDashboard(token: string) {
     return request<DashboardMetrics>('/admin/dashboard', {}, token);
   },
@@ -136,6 +167,12 @@ export const api = {
   },
   getAdminCategories(token: string) {
     return request<Category[]>('/admin/categories', {}, token);
+  },
+  uploadAdminMedia(token: string, payload: { kind: AdminUploadKind; fileName: string; mimeType: string; base64: string }) {
+    return request<AdminMediaUploadResponse>('/admin/media/upload', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
   },
   createAdminProduct(token: string, payload: Record<string, unknown>) {
     return request<Product>('/admin/products', {

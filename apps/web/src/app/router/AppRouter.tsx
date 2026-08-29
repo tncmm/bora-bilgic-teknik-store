@@ -4,6 +4,7 @@ import { AdminDashboardPage, AdminOrdersPage, AdminProductsPage, AdminUsersPage 
 import { LoginPage, RegisterPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
 import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
+import { OrderDetailPage, OrdersPage } from '../../features/orders/pages';
 import { FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
@@ -63,6 +64,8 @@ export function AppRouter() {
           <Route element={<ProtectedRoute />}>
             <Route element={<ProfilePage />} path="/profil" />
             <Route element={<FavoritesPage />} path="/favoriler" />
+            <Route element={<OrdersPage />} path="/siparislerim" />
+            <Route element={<OrderDetailPage />} path="/siparislerim/:orderId" />
           </Route>
         </Route>
 
