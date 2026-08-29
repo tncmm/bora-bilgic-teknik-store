@@ -11,23 +11,6 @@ import { formatCurrency } from '../../shared/lib/format';
 import { useI18n } from '../../app/providers/I18nProvider';
 import { translateCategoryName } from '../../shared/lib/i18n';
 
-const paymentMethods = [
-  {
-    id: 'card',
-    titleTr: 'Kart ile Odeme',
-    titleEn: 'Card Payment',
-    descriptionTr: 'PayTR iframe odeme altyapisi sonraki asamada bu alana baglanacak.',
-    descriptionEn: 'The PayTR iframe payment flow will be connected here in the next phase.',
-  },
-  {
-    id: 'bank-transfer',
-    titleTr: 'Havale / EFT',
-    titleEn: 'Bank Transfer',
-    descriptionTr: 'Kurumsal veya teklifli siparislerde manuel onay icin hazir tutulur.',
-    descriptionEn: 'Kept ready for manual approval on corporate or quote-based orders.',
-  },
-] as const;
-
 function mapAddressToCheckoutForm(address: Address, shippingName: string) {
   return {
     shippingName,
@@ -362,7 +345,6 @@ export function CheckoutPage() {
   const { language } = useI18n();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethods)[number]['id']>('card');
   const [iframeToken, setIframeToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -574,22 +556,13 @@ export function CheckoutPage() {
             <div className="checkout-step-card__head">
               <span>2</span>
               <div>
-                <strong>{language === 'tr' ? 'Odeme Tercihi' : 'Payment Preference'}</strong>
-                <p>{language === 'tr' ? 'Onay sonrasi odeme PayTR guvenli cercevesinde alinir.' : 'After confirmation, payment is collected inside PayTR’s secure frame.'}</p>
+                <strong>{language === 'tr' ? 'Odeme' : 'Payment'}</strong>
+                <p>
+                  {language === 'tr'
+                    ? 'Odeme yalnizca kart ile, PayTR guvenli cercevesinde alinir. Onayladiginizda PayTR odeme ekrani acilir.'
+                    : 'Payment is taken by card only, inside PayTR’s secure frame. Confirming opens the PayTR payment screen.'}
+                </p>
               </div>
-            </div>
-            <div className="checkout-choice-grid checkout-choice-grid--payment">
-              {paymentMethods.map((method) => (
-                <button
-                  className={['checkout-choice-card', paymentMethod === method.id ? 'checkout-choice-card--active' : ''].filter(Boolean).join(' ')}
-                  key={method.id}
-                  onClick={() => setPaymentMethod(method.id)}
-                  type="button"
-                >
-                  <strong>{language === 'tr' ? method.titleTr : method.titleEn}</strong>
-                  <span>{language === 'tr' ? method.descriptionTr : method.descriptionEn}</span>
-                </button>
-              ))}
             </div>
           </div>
 
@@ -635,11 +608,7 @@ export function CheckoutPage() {
           </div>
           <div className="checkout-summary-box">
             <strong>{language === 'tr' ? 'Odeme' : 'Payment'}</strong>
-            <p>
-              {language === 'tr'
-                ? paymentMethods.find((method) => method.id === paymentMethod)?.titleTr
-                : paymentMethods.find((method) => method.id === paymentMethod)?.titleEn}
-            </p>
+            <p>{language === 'tr' ? 'Kart ile (PayTR guvenli odeme)' : 'By card (PayTR secure checkout)'}</p>
           </div>
           <div className="cart-summary-note">
             {language === 'tr'
