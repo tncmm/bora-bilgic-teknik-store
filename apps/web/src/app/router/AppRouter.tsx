@@ -1,6 +1,6 @@
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
-import { AdminDashboardPage, AdminOrdersPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
+import { AdminDashboardPage, AdminOrdersPage, AdminProductFormPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
 import { LoginPage, RegisterPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
 import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
@@ -76,6 +76,8 @@ export function AppRouter() {
           <Route element={<AdminChrome />}>
             <Route element={<AdminDashboardPage />} path="/admin" />
             <Route element={<AdminProductsPage />} path="/admin/urunler" />
+            <Route element={<AdminProductFormPage />} path="/admin/urunler/yeni" />
+            <Route element={<AdminProductFormPage />} path="/admin/urunler/:productId" />
             <Route element={<AdminOrdersPage />} path="/admin/siparisler" />
             <Route element={<AdminUsersPage />} path="/admin/kullanicilar" />
           </Route>
