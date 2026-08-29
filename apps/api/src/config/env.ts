@@ -27,6 +27,14 @@ const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: optionalText,
   R2_BUCKET_NAME: optionalText,
   R2_PUBLIC_BASE_URL: optionalUrl,
+  // PayTR credentials stay optional so the storefront keeps working without
+  // payments; the payments module refuses to operate until all three are set.
+  PAYTR_MERCHANT_ID: optionalText,
+  PAYTR_MERCHANT_KEY: optionalText,
+  PAYTR_MERCHANT_SALT: optionalText,
+  // Anything but '0' means test mode: a misconfigured deploy must never
+  // silently start charging real cards.
+  PAYTR_TEST_MODE: z.preprocess(blankToUndefined, z.enum(['0', '1']).optional()),
 });
 
 export const env = envSchema.parse(process.env);

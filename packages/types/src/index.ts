@@ -4,6 +4,8 @@ export type UserRole = 'customer' | 'admin';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
 
+export type PaymentStatus = 'pending' | 'paid' | 'failed';
+
 export type BrandName = 'DJI';
 
 export type CatalogSectionSlug = 'drone' | 'gimbal' | 'aksiyon-kamera' | 'aksesuar' | 'kurumsal';
@@ -186,7 +188,9 @@ export interface Order {
   id: string;
   orderNumber: string;
   status: OrderStatus;
+  paymentStatus: PaymentStatus;
   createdAt: string;
+  paidAt: string | null;
   total: number;
   shippingName: string;
   shippingPhone: string;
@@ -195,6 +199,11 @@ export interface Order {
   shippingAddressLine: string;
   notes?: string | null;
   items: OrderItem[];
+}
+
+export interface PaytrTokenResponse {
+  iframeToken: string;
+  merchantOid: string;
 }
 
 export interface User {

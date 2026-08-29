@@ -67,6 +67,7 @@ describe('OrdersService', () => {
           },
         ],
       }),
+      expireStalePendingOrders: vi.fn(),
       createOrder: vi.fn(),
       listOrdersForUser: vi.fn(),
       findOrderForUser: vi.fn(),
@@ -88,6 +89,7 @@ describe('OrdersService', () => {
   it('returns not found for a missing order detail', async () => {
     const repository = {
       findCart: vi.fn(),
+      expireStalePendingOrders: vi.fn(),
       createOrder: vi.fn(),
       listOrdersForUser: vi.fn(),
       findOrderForUser: vi.fn().mockResolvedValue(null),
@@ -104,6 +106,7 @@ describe('OrdersService', () => {
     const stockLevels: Record<string, number> = { 'product-1': 0 };
     const repository = {
       findCart: vi.fn().mockResolvedValue(cartWithItem),
+      expireStalePendingOrders: vi.fn(),
       createOrder: vi.fn().mockImplementation(async (data: any) => {
         // Mirrors OrdersRepository.createOrder's in-transaction atomic decrement.
         const tx = {
@@ -147,6 +150,7 @@ describe('OrdersService', () => {
   it('assigns a collision-proof BBT- order number', async () => {
     const repository = {
       findCart: vi.fn().mockResolvedValue(cartWithItem),
+      expireStalePendingOrders: vi.fn(),
       createOrder: vi
         .fn()
         .mockImplementation(async (data: any) => buildOrder(data, generateOrderNumber())),

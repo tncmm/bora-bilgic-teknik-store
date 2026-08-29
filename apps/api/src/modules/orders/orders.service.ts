@@ -18,6 +18,11 @@ export class OrdersService {
 
   async createOrder(userId: string, payload: unknown) {
     const data = checkoutSchema.parse(payload);
+
+    // A pending order locks stock; before taking another one, free everything
+    // whose 30-minute payment window has already closed.
+    await this.repository.expireStalePendingOrders(userId, new Date(Date.now() - 30 * 60 * 1000));
+
     const cart = await this.repository.findCart(userId);
 
     if (!cart || cart.items.length === 0) {

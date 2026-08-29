@@ -75,6 +75,8 @@ export class OrdersRepository {
           shippingAddressLine: data.shippingAddressLine,
           notes: data.notes,
           total: data.total,
+          paymentAmount: data.total,
+          paymentCurrency: 'TL',
           items: {
             create: data.items,
           },
@@ -104,7 +106,83 @@ export class OrdersRepository {
         id: orderId,
         userId,
       },
-      include: { items: true },
+      include: { items: true, user: true },
     });
+  }
+
+  findByPaymentRef(paymentRef: string) {
+    return prisma.order.findUnique({
+      where: { paymentRef },
+      include: { items: true, user: true },
+    });
+  }
+
+  /** Stores the merchant_oid the next PayTR attempt will identify itself with. */
+  assignPaymentRef(orderId: string, paymentRef: string) {
+    return prisma.order.update({
+      where: { id: orderId },
+      data: { paymentRef, paymentMethod: 'card', paymentType: 'card' },
+    });
+  }
+
+  /**
+   * Idempotent PENDING -> PAID transition. When the row was already resolved
+   * (duplicate callback) the count is 0 and the caller treats it as a no-op.
+   */
+  markPaid(orderId: string) {
+    return prisma.order.updateMany({
+      where: { id: orderId, paymentStatus: 'PENDING' },
+      data: { paymentStatus: 'PAID', paidAt: new Date(), paymentNotifiedAt: new Date() },
+    });
+  }
+
+  /**
+   * PENDING -> FAILED with a stock refund, atomically. Only ever reverts an
+   * order that is still waiting for payment, so a successful payment is never
+   * clobbered by a late or forged failure callback.
+   */
+  async markFailed(orderId: string, code: string, message: string) {
+    return prisma.$transaction(async (tx) => {
+      const result = await tx.order.updateMany({
+        where: { id: orderId, paymentStatus: 'PENDING' },
+        data: {
+          paymentStatus: 'FAILED',
+          paymentFailureCode: code,
+          paymentFailureMessage: message,
+          paymentNotifiedAt: new Date(),
+        },
+      });
+
+      if (result.count === 0) {
+        return 0;
+      }
+
+      const items = await tx.orderItem.findMany({ where: { orderId } });
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+
+      return result.count;
+    });
+  }
+
+  /**
+   * Checkout-time hygiene: pending orders whose payment window expired are
+   * cancelled and their stock is returned before a new order is created.
+   */
+  async expireStalePendingOrders(userId: string, cutoff: Date) {
+    const staleOrders = await prisma.order.findMany({
+      where: { userId, paymentStatus: 'PENDING', createdAt: { lt: cutoff } },
+      select: { id: true },
+    });
+
+    for (const stale of staleOrders) {
+      await this.markFailed(stale.id, 'expired', 'Odeme suresi doldugu icin siparis otomatik iptal edildi.');
+    }
+
+    return staleOrders.length;
   }
 }
