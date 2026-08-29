@@ -22,4 +22,16 @@ describe('UsersService', () => {
       }),
     ).rejects.toBeInstanceOf(AppError);
   });
+
+  it('rejects deleting an address that does not belong to the user', async () => {
+    const repository = {
+      findAddress: vi.fn().mockResolvedValue(null),
+      deleteAddress: vi.fn(),
+    };
+
+    const service = new UsersService(repository as any);
+
+    await expect(service.deleteAddress('user-1', 'address-2')).rejects.toBeInstanceOf(AppError);
+    expect(repository.deleteAddress).not.toHaveBeenCalled();
+  });
 });

@@ -18,6 +18,66 @@ export class UsersRepository {
     });
   }
 
+  listAddresses(userId: string) {
+    return prisma.address.findMany({
+      where: { userId },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  findAddress(userId: string, addressId: string) {
+    return prisma.address.findFirst({
+      where: {
+        id: addressId,
+        userId,
+      },
+    });
+  }
+
+  createAddress(
+    userId: string,
+    data: {
+      title: string;
+      line1: string;
+      city: string;
+      district: string;
+      postalCode: string;
+      country: string;
+      phone: string;
+    },
+  ) {
+    return prisma.address.create({
+      data: {
+        ...data,
+        userId,
+      },
+    });
+  }
+
+  updateAddress(
+    addressId: string,
+    data: Partial<{
+      title: string;
+      line1: string;
+      city: string;
+      district: string;
+      postalCode: string;
+      country: string;
+      phone: string;
+    }>,
+  ) {
+    return prisma.address.update({
+      where: { id: addressId },
+      data,
+    });
+  }
+
+  deleteAddress(addressId: string) {
+    return prisma.address.delete({
+      where: { id: addressId },
+    });
+  }
+
   ensureWishlist(userId: string) {
     return prisma.wishlist.upsert({
       where: { userId },

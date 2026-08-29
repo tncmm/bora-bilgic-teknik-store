@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
-import { serializeUser, serializeWishlist } from '../../lib/serializers.js';
+import { serializeAddress, serializeUser, serializeWishlist } from '../../lib/serializers.js';
 import { UsersRepository } from './users.repository.js';
 
 const themeSchema = z.object({
@@ -10,6 +10,20 @@ const themeSchema = z.object({
 
 const favoriteSchema = z.object({
   productId: z.string().min(1),
+});
+
+const addressSchema = z.object({
+  title: z.string().trim().min(2),
+  line1: z.string().trim().min(5),
+  city: z.string().trim().min(2),
+  district: z.string().trim().min(2),
+  postalCode: z.string().trim().optional().default(''),
+  country: z.string().trim().optional().default('Turkey'),
+  phone: z.string().trim().min(10),
+});
+
+const addressUpdateSchema = addressSchema.partial().refine((value) => Object.keys(value).length > 0, {
+  message: 'Guncellenecek en az bir alan gonderilmelidir.',
 });
 
 export class UsersService {
@@ -31,6 +45,39 @@ export class UsersService {
     const data = themeSchema.parse(payload);
     await this.repository.updateTheme(userId, data.mode);
     return this.getProfile(userId);
+  }
+
+  async listAddresses(userId: string) {
+    const addresses = await this.repository.listAddresses(userId);
+    return addresses.map(serializeAddress);
+  }
+
+  async createAddress(userId: string, payload: unknown) {
+    const data = addressSchema.parse(payload);
+    const address = await this.repository.createAddress(userId, data);
+    return serializeAddress(address);
+  }
+
+  async updateAddress(userId: string, addressId: string, payload: unknown) {
+    const existingAddress = await this.repository.findAddress(userId, addressId);
+
+    if (!existingAddress) {
+      throw new AppError('Adres bulunamadi.', 404);
+    }
+
+    const data = addressUpdateSchema.parse(payload);
+    const address = await this.repository.updateAddress(addressId, data);
+    return serializeAddress(address);
+  }
+
+  async deleteAddress(userId: string, addressId: string) {
+    const existingAddress = await this.repository.findAddress(userId, addressId);
+
+    if (!existingAddress) {
+      throw new AppError('Adres bulunamadi.', 404);
+    }
+
+    await this.repository.deleteAddress(addressId);
   }
 
   async getFavorites(userId: string) {
