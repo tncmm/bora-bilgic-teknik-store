@@ -51,6 +51,7 @@ export function AppRouter() {
           <Route element={<CatalogPage forcedSection="aksiyon-kamera" />} path="/aksiyon-kamera" />
           <Route element={<CatalogPage forcedSection="aksesuar" />} path="/aksesuar" />
           <Route element={<CatalogPage forcedSection="kurumsal" />} path="/kurumsal" />
+          <Route element={<CatalogPage />} path="/kategori/:slug" />
           <Route element={<CatalogPage />} path="/katalog" />
           <Route element={<ProductDetailPage />} path="/urun/:slug" />
           <Route element={<ContactPage />} path="/iletisim" />

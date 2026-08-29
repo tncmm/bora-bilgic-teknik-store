@@ -598,8 +598,9 @@ function resolveListingSection(forcedSection?: CatalogSectionSlug, searchParams?
 
 export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionSlug } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { slug: routeCategorySlug } = useParams();
   const categories = useCategories();
-  const sectionSlug = resolveListingSection(forcedSection, searchParams);
+  const sectionSlug = forcedSection ?? routeCategorySlug ?? resolveListingSection(undefined, searchParams);
   const section = findSectionBySlug(sectionSlug);
   const params = Object.fromEntries(
     Object.entries({

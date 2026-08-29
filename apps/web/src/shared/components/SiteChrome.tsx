@@ -1,12 +1,20 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import type { Category } from '@bora/types';
 
 import { useSession } from '../../app/providers/SessionProvider';
+import { api } from '../api/client';
 import { storefrontSections } from '../lib/storefront';
 
 export function SiteChrome() {
   const { cartCount, isAuthenticated } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    void api.listCategories().then(setCategories).catch(() => undefined);
+  }, []);
 
   return (
     <div className="dji-site-shell">
@@ -20,7 +28,10 @@ export function SiteChrome() {
             <NavLink end to="/">
               ANASAYFA
             </NavLink>
-            {storefrontSections.map((section) => (
+            {(categories.length > 0
+              ? categories.map((category) => ({ slug: category.slug, label: category.name, path: `/kategori/${category.slug}` }))
+              : storefrontSections
+            ).map((section) => (
               <NavLink key={section.slug} to={section.path}>
                 {section.label.toUpperCase()}
               </NavLink>

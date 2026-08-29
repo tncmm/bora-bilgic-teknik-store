@@ -9,7 +9,8 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed';
 /** Products are no longer DJI-only; the brand is a free-form label. */
 export type BrandName = string;
 
-export type CatalogSectionSlug = 'drone' | 'gimbal' | 'aksiyon-kamera' | 'aksesuar' | 'kurumsal';
+/** Category slugs are user-managed now, so any string is valid. */
+export type CatalogSectionSlug = string;
 
 export type ProductMediaKind = 'image' | 'video';
 
