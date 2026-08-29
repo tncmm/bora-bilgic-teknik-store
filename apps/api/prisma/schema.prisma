@@ -19,6 +19,20 @@ enum OrderStatus {
   DELIVERED
 }
 
+/**
+ * Payment is tracked separately from OrderStatus on purpose. OrderStatus is the
+ * fulfilment axis and is consumed by compile-time-exhaustive structures
+ * (admin orderStatusSchema, the storefront progress flow, and the headline /
+ * support copy maps). Merging the two would let an admin ship an unpaid order,
+ * and would make "shipped" and "payment failed" mutually exclusive when they
+ * are in fact orthogonal.
+ */
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
 model User {
   id               String           @id @default(cuid())
   firstName        String
@@ -109,12 +123,15 @@ model Product {
 }
 
 model ProductImage {
-  id        String   @id @default(cuid())
-  url       String
-  alt       String
-  isPrimary Boolean  @default(false)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  url          String
+  alt          String
+  isPrimary    Boolean  @default(false)
+  kind         String   @default("image")
+  thumbnailUrl String?
+  mimeType     String?
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductSpec {
@@ -182,8 +199,27 @@ model Order {
   userId              String
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
-  items               OrderItem[]
-  user                User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // --- Payment (PayTR) -------------------------------------------------
+  // paymentRef is the merchant_oid exchanged with PayTR. Nullable and unique:
+  // Postgres permits many NULLs, so orders created before this column existed
+  // are unaffected.
+  paymentStatus         PaymentStatus @default(PENDING)
+  paymentMethod         String? // 'card'
+  paymentRef            String?    @unique
+  paymentCurrency       String?
+  paymentAmount         Decimal?   @db.Decimal(10, 2) // actually charged, incl. installments
+  paymentType           String? // 'card' | 'eft'
+  paidAt                DateTime?
+  paymentNotifiedAt     DateTime?
+  paymentFailureCode    String?
+  paymentFailureMessage String?
+
+  items OrderItem[]
+  user  User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([paymentStatus, createdAt]) // expiry sweep
+  @@index([userId, paymentStatus]) // "my orders" filtering
 }
 
 model OrderItem {

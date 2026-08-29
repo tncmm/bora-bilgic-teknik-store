@@ -48,7 +48,7 @@ const baseProduct: Product = {
   sku: 'SKU',
   isPublished: true,
   isPurchasable: true,
-  images: [{ id: 'image-1', url: 'https://example.com/image.jpg', alt: 'Image', isPrimary: true }],
+  images: [{ id: 'image-1', url: 'https://example.com/image.jpg', alt: 'Image', isPrimary: true, kind: 'image', thumbnailUrl: 'https://example.com/image.jpg' }],
   specs: [{ id: 'spec-1', name: 'Sensor', value: '1-inch' }],
 };
 

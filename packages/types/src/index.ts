@@ -8,6 +8,29 @@ export type BrandName = 'DJI';
 
 export type CatalogSectionSlug = 'drone' | 'gimbal' | 'aksiyon-kamera' | 'aksesuar' | 'kurumsal';
 
+export type ProductMediaKind = 'image' | 'video';
+
+export type AdminUploadKind = 'image' | 'video' | 'poster';
+
+export const PRODUCT_MEDIA_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
+export const PRODUCT_MEDIA_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm'] as const;
+export const PRODUCT_MEDIA_POSTER_MIME_TYPES = PRODUCT_MEDIA_IMAGE_MIME_TYPES;
+
+export const PRODUCT_MEDIA_LIMITS = {
+  imageBytes: 5 * 1024 * 1024,
+  posterBytes: 3 * 1024 * 1024,
+  videoBytes: 100 * 1024 * 1024,
+} as const;
+
+export interface ProductMediaInput {
+  url: string;
+  alt: string;
+  isPrimary: boolean;
+  kind: ProductMediaKind;
+  thumbnailUrl?: string | null;
+  mimeType?: string | null;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -27,8 +50,9 @@ export interface ProductImage {
   url: string;
   alt: string;
   isPrimary: boolean;
-  kind?: 'image' | 'video';
+  kind: ProductMediaKind;
   thumbnailUrl?: string | null;
+  mimeType?: string | null;
 }
 
 export interface ProductSpec {
@@ -122,6 +146,21 @@ export interface Cart {
   itemCount: number;
 }
 
+export interface Address {
+  id: string;
+  title: string;
+  line1: string;
+  city: string;
+  district: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AddressPayload = Omit<Address, 'id' | 'createdAt' | 'updatedAt'>;
+
 export interface WishlistItem {
   id: string;
   productId: string;
@@ -149,6 +188,12 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
   total: number;
+  shippingName: string;
+  shippingPhone: string;
+  shippingCity: string;
+  shippingDistrict: string;
+  shippingAddressLine: string;
+  notes?: string | null;
   items: OrderItem[];
 }
 

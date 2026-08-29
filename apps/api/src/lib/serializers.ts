@@ -1,4 +1,5 @@
 import type {
+  Address,
   Cart,
   Category,
   DashboardMetrics,
@@ -59,6 +60,7 @@ export function serializeProduct(product: any): Product {
     isPrimary: image.isPrimary,
     kind: image.kind ?? 'image',
     thumbnailUrl: image.thumbnailUrl ?? null,
+    mimeType: image.mimeType ?? null,
   }));
 
   const fallbackPackageOptions: ProductPackageOption[] = [
@@ -134,6 +136,32 @@ export function serializeCart(cart: any): Cart {
   };
 }
 
+export function serializeAddress(address: {
+  id: string;
+  title: string;
+  line1: string;
+  city: string;
+  district: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): Address {
+  return {
+    id: address.id,
+    title: address.title,
+    line1: address.line1,
+    city: address.city,
+    district: address.district,
+    postalCode: address.postalCode,
+    country: address.country,
+    phone: address.phone,
+    createdAt: address.createdAt.toISOString(),
+    updatedAt: address.updatedAt.toISOString(),
+  };
+}
+
 export function serializeWishlist(wishlist: any): Wishlist {
   const items = wishlist.items.map((item: any) => ({
     id: item.id,
@@ -156,6 +184,12 @@ export function serializeOrder(order: any): Order {
     status: order.status.toLowerCase() as Lowercase<OrderStatus>,
     createdAt: order.createdAt.toISOString(),
     total: decimalToNumber(order.total),
+    shippingName: order.shippingName,
+    shippingPhone: order.shippingPhone,
+    shippingCity: order.shippingCity,
+    shippingDistrict: order.shippingDistrict,
+    shippingAddressLine: order.shippingAddressLine,
+    notes: order.notes ?? null,
     items: order.items.map((item: any) => ({
       id: item.id,
       productName: item.productName,

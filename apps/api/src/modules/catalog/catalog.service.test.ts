@@ -35,7 +35,16 @@ describe('CatalogService', () => {
               slug: 'drone',
               description: 'Drone category',
             },
-            images: [{ id: 'image-1', url: 'https://example.com/image.jpg', alt: 'Image', isPrimary: true }],
+            images: [
+              {
+                id: 'image-1',
+                url: 'https://example.com/image.jpg',
+                alt: 'Image',
+                isPrimary: true,
+                kind: 'image',
+                thumbnailUrl: 'https://example.com/image.jpg',
+              },
+            ],
             specs: [{ id: 'spec-1', name: 'Camera', value: '4/3 CMOS' }],
             packageOptions: [{ id: 'standard', name: 'Standart Paket', price: 88999, isDefault: true }],
             detailSections: [{ id: 'aciklama', label: 'Aciklama', body: 'Test body' }],

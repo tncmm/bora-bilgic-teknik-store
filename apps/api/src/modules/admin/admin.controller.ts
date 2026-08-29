@@ -25,6 +25,11 @@ export class AdminController {
     res.status(201).json(product);
   };
 
+  uploadMedia = async (req: Request, res: Response) => {
+    const media = await this.service.uploadMedia(req.body);
+    res.status(201).json(media);
+  };
+
   updateProduct = async (req: Request, res: Response) => {
     const product = await this.service.updateProduct(String(req.params.id), req.body);
     res.json(product);

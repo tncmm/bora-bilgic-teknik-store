@@ -79,6 +79,7 @@ const media = {
   productAction: '/storefront/product-action.png',
   productAccessory: '/storefront/product-accessory.png',
   productEnterprise: '/storefront/product-enterprise.png',
+  demoVideo: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 };
 
 const categories: Array<any> = [
@@ -463,7 +464,17 @@ const products: Array<any> = [
     reviewCount: 91,
     featureTags: ['4K Video', 'Uzun Pil Omru'],
     categorySlug: 'aksiyon-kamera',
-    images: [{ url: media.productAction, alt: 'DJI Osmo Action 4', isPrimary: true }],
+    images: [
+      { url: media.productAction, alt: 'DJI Osmo Action 4', isPrimary: true, kind: 'image', thumbnailUrl: media.productAction, mimeType: 'image/png' },
+      {
+        url: media.demoVideo,
+        alt: 'DJI Osmo Action 4 demo video',
+        isPrimary: false,
+        kind: 'video',
+        thumbnailUrl: media.productAction,
+        mimeType: 'video/mp4',
+      },
+    ],
     specs: [
       { name: 'Video', value: '4K / 120fps' },
       { name: 'Govde', value: 'Dayanikli ve kompakt' },

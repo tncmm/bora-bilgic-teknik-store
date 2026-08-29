@@ -4,6 +4,7 @@ import express from 'express';
 
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { jsonBodyUnlessLarge } from './middleware/json-body.js';
 import { adminRoutes } from './modules/admin/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { cartRoutes } from './modules/cart/routes.js';
@@ -36,7 +37,7 @@ export function createApp() {
       credentials: true,
     }),
   );
-  app.use(express.json());
+  app.use(jsonBodyUnlessLarge);
   app.use(cookieParser());
 
   app.get('/health', (_req, res) => {
