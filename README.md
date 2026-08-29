@@ -37,17 +37,18 @@ React + Vite + React Router frontend, Express + Prisma + PostgreSQL backend ve p
 - Kategori yapisi resmi DJI ailelerine gore sadeleştirildi: `Camera Drones`, `Handheld`, `Enterprise`.
 - Bazi DJI enterprise ve premium urunleri `satisa kapali` baslar; detay sayfasinda teklif odakli gorunur.
 - Admin panelinden urun bazinda satis ac/kapat yapilabilir, ancak marka sabit olarak DJI kabul edilir.
-- Checkout PayTR iFrame ile gercek odeme alir; PayTR anahtarlari tanimli degilse siparis kaydi olusur ve odeme "bekliyor" durumunda kalir (detay sayfasindan tekrar denenebilir).
+- Checkout PayTR iFrame ile gercek odeme alir; siparis ancak odeme PayTR tarafindan onaylandiktan sonra olusur. PayTR anahtarlari tanimli degilse odeme adimi 503 ile net bir sekilde reddedilir (siparis olusmaz).
 
 ## Odeme (PayTR iFrame)
 
-Akis: musteri checkout'ta siparisi olusturur (`paymentStatus: pending`, stok aninda duser), frontend `POST /api/v1/payments/paytr/token` ile iframe tokeni ister, PayTR guvenli cercevesinde kart bilgilerini girer. Kart verisi magaza sunucusuna hic ulasmaz.
+Akis (odeme-oncelikli): musteri checkout'ta `POST /api/v1/payments/paytr/checkout` cagirir; API stogu atomik olarak rezerve eden bir `PaymentAttempt` olusturur ve PayTR iframe tokeni dondurur. Musteri karti PayTR guvenli cercevesinde girer — kart verisi magaza sunucusuna hic ulasmaz. Siparis kaydi (`Order`) yalnizca callback "success" geldiginde yaratilir; basarisiz/suresi dolan denemeler stoklarini iade eder ve sepet korunur.
 
-- **Callback:** PayTR odeme sonucunu `POST /api/v1/payments/paytr/callback` adresine sunucu-sunucu bildirir. Endpoint HMAC imzasini dogrular, tutari siparis toplamiyla karsilastirir, sonra `paid`/`failed` isaretler. Basarisiz veya suresi dolan odemelerde stok otomatik iade edilir.
-- **Idempotency:** PayTR "OK" disinda yanit alirsa callback'i tekrarlar; kod buna dayaniklidir (yalnizca `pending` siparisler gecis yapar). Başarı/hata sayfalari `WEB_URL` altindaki `/odeme/basarili` ve `/odeme/basarisiz` yollaridir.
-- **Siparis numarasi:** Her odeme denemesi icin benzersiz, alfanumerik `merchant_oid` uretilir ve `Order.paymentRef` alanina yazilir.
+- **Callback:** PayTR odeme sonucunu `POST /api/v1/payments/paytr/callback` adresine sunucu-sunucu bildirir. Endpoint HMAC imzasini dogrular, tutari deneme toplamiyla karsilastirir, sonra siparisi tek transaction icinde olusturur (attempt COMPLETED + sepet temizlenir). Basarisiz bildirimde attempt FAILED olur ve stok iade edilir.
+- **Idempotency:** PayTR "OK" disinda yanit alirsa callback'i tekrarlar; tum gecisler `PENDING` korumali oldugu icin tekrarlar guvenlidir. Basari/hata sayfalari `WEB_URL` altindaki `/odeme/basarili` ve `/odeme/basarisiz` yollaridir.
+- **Odeme penceresi:** Her deneme icin benzersiz, alfanumerik `merchant_oid` uretilir. 30 dakika icinde tamamlanmayan denemeler kullanicinin bir sonraki checkout'unda suresi dolmus sayilip stoklari iade edilir; yeni checkout eskisini otomatik kapatir.
+- **Siparis numarasi:** `Order` satiri yaratilirken `Order.paymentRef` alanina denemenin `merchant_oid` degeri yazilir.
 - **Ayarlar:** `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`, `PAYTR_TEST_MODE` (`apps/api/.env.example` icindeki aciklamalara bakin). Lokal gelistirmede callback'e ngrok gibi bir tunel gerekir.
-- **Guvensiz mod:** Uc anahtar bosken token endpoint'i `503` doner; checkout bu durumda musteriyi siparis detayina yonlendirip "odeme bekleniyor" mesaji gosterir.
+- **Anahtarsiz mod:** Uc anahtar bosken checkout odeme adiminda `503` doner; siparis veya stok rezervi olusmaz.
 - Seed sonrasinda:
   - birden fazla siparis durumu (`pending`, `processing`, `shipped`, `delivered`) gorunur
   - admin dashboard sifir olmayan satis ve stok metrikleri gosterir
