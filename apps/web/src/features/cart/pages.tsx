@@ -1,7 +1,7 @@
 import type { Address } from '@bora/types';
 import { Button, EmptyState, InputField, TextareaField } from '@bora/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -357,14 +357,13 @@ export function CartPage() {
 }
 
 export function CheckoutPage() {
-  const { cart, token, syncCart, isAuthenticated, user } = useSession();
+  const { cart, token, isAuthenticated, user } = useSession();
   const { showToast } = useToast();
   const { language } = useI18n();
-  const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethods)[number]['id']>('card');
-  const [payment, setPayment] = useState<{ orderId: string; iframeToken: string } | null>(null);
+  const [iframeToken, setIframeToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     shippingName: '',
@@ -425,30 +424,30 @@ export function CheckoutPage() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
-    if (payment) {
-      return (
-        <section className="page-section" style={{ paddingTop: '140px' }}>
-          <div className="ui-shell">
-            <div className="profile-card profile-card--full">
-              <div className="section-header">
-                <div>
-                  <div className="detail-chip">{language === 'tr' ? 'Guvenli Odeme' : 'Secure Payment'}</div>
-                  <h2>{language === 'tr' ? 'Kart Bilgilerinizi PayTR Ekranina Girin' : 'Enter Your Card Details on the PayTR Screen'}</h2>
-                  <p>
-                    {language === 'tr'
-                      ? 'Odeme PayTR guvenli cercevesinde alinir ve kart bilgilerinize bizim sunucularimiz hic dokunmaz. Islem bitince PayTR sizi otomatik olarak sonuc sayfasina yonlendirir.'
-                      : 'Payment is collected inside PayTR’s secure frame; our servers never touch your card details. PayTR redirects you to the result page when finished.'}
-                  </p>
-                </div>
+  if (iframeToken) {
+    return (
+      <section className="page-section" style={{ paddingTop: '140px' }}>
+        <div className="ui-shell">
+          <div className="profile-card profile-card--full">
+            <div className="section-header">
+              <div>
+                <div className="detail-chip">{language === 'tr' ? 'Guvenli Odeme' : 'Secure Payment'}</div>
+                <h2>{language === 'tr' ? 'Kart Bilgilerinizi PayTR Ekranina Girin' : 'Enter Your Card Details on the PayTR Screen'}</h2>
+                <p>
+                  {language === 'tr'
+                    ? 'Odeme PayTR guvenli cercevesinde alinir; kart bilgilerinize bizim sunucularimiz hic dokunmaz. Odeme onaylandiginda siparisiniz otomatik olusturulur. Islem bitince PayTR sizi sonuc sayfasina yonlendirir.'
+                    : 'Payment is collected inside PayTR’s secure frame; our servers never touch your card details. Once confirmed, your order is created automatically and PayTR redirects you to the result page.'}
+                </p>
               </div>
-              <PaytrIframe token={payment.iframeToken} />
             </div>
+            <PaytrIframe token={iframeToken} />
           </div>
-        </section>
-      );
-    }
+        </div>
+      </section>
+    );
+  }
 
+  if (!cart || cart.items.length === 0) {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell cart-empty-layout">
@@ -468,27 +467,14 @@ export function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const order = await api.createOrder(token, form);
-      await syncCart();
-
-      try {
-        const session = await api.createPaymentToken(token, order.id);
-        sessionStorage.setItem('bora-last-order', order.id);
-        setPayment({ orderId: order.id, iframeToken: session.iframeToken });
-      } catch (paymentError) {
-        // Order is safely stored; PayTR being unreachable must not strand the
-        // customer — send them to the order page, which offers a retry button.
-        showToast({
-          tone: 'info',
-          title: language === 'tr' ? 'Siparis alindi, odeme bekleniyor' : 'Order received, payment pending',
-          description: (paymentError as Error).message,
-        });
-        navigate(`/siparislerim/${order.id}`, { state: { justPlaced: true } });
-      }
+      const session = await api.startPayment(token, form);
+      setIframeToken(session.iframeToken);
     } catch (error) {
+      // The attempt gateway failed before PayTR took over: no stock is locked,
+      // no order exists, and the cart is untouched, so the user can just retry.
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Siparis olusturulamadi' : 'Order could not be created',
+        title: language === 'tr' ? 'Odeme baslatilamadi' : 'Payment could not start',
         description: (error as Error).message,
       });
     } finally {

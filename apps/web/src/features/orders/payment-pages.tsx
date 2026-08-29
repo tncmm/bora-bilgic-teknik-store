@@ -5,12 +5,12 @@ import { useI18n } from '../../app/providers/I18nProvider';
 
 /**
  * PayTR redirects the shopper back here once the iframe flow finishes. The
- * definitive confirmation arrives via the server-to-server callback; these
- * pages only reflect what PayTR told the browser.
+ * order itself is created by the server-to-server callback, which can land a
+ * few seconds after the redirect — so these pages only acknowledge; they
+ * never confirm anything.
  */
 export function PaymentSuccessPage() {
   const { language } = useI18n();
-  const lastOrderId = sessionStorage.getItem('bora-last-order');
 
   return (
     <section className="page-section" style={{ paddingTop: '140px' }}>
@@ -19,19 +19,17 @@ export function PaymentSuccessPage() {
           <EmptyState
             description={
               language === 'tr'
-                ? 'PayTR odemenizi aldi. Onay saniyeler icinde sunucumuza ulasir ve siparisiniz isleme alinir. Siparis durumunu Siparislerim sayfasindan takip edebilirsiniz.'
-                : 'PayTR has taken your payment. Confirmation reaches our server within seconds and your order moves into processing. You can follow the status on My Orders.'
+                ? 'Odemeniz alindi. Onay birkaç saniye icinde sunucumuza ulasir ve siparisiniz otomatik olusur; Siparislerim sayfasinda belirecektir.'
+                : 'Your payment has been received. Confirmation reaches our server within a few seconds and your order is created automatically; it will appear under My Orders.'
             }
             title={language === 'tr' ? 'Odeme Alindi' : 'Payment Received'}
           />
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
-            {lastOrderId ? (
-              <Link to={`/siparislerim/${lastOrderId}`}>
-                <Button>{language === 'tr' ? 'Siparisi Goruntule' : 'View Order'}</Button>
-              </Link>
-            ) : null}
             <Link to="/siparislerim">
-              <Button variant="secondary">{language === 'tr' ? 'Siparislerim' : 'My Orders'}</Button>
+              <Button>{language === 'tr' ? 'Siparislerime Git' : 'Go to My Orders'}</Button>
+            </Link>
+            <Link to="/katalog">
+              <Button variant="secondary">{language === 'tr' ? 'Alisverise Devam Et' : 'Continue Shopping'}</Button>
             </Link>
           </div>
         </div>
@@ -42,7 +40,6 @@ export function PaymentSuccessPage() {
 
 export function PaymentFailPage() {
   const { language } = useI18n();
-  const lastOrderId = sessionStorage.getItem('bora-last-order');
 
   return (
     <section className="page-section" style={{ paddingTop: '140px' }}>
@@ -51,17 +48,15 @@ export function PaymentFailPage() {
           <EmptyState
             description={
               language === 'tr'
-                ? 'Odeme tamamlanamadi. Yaklasik 30 dakika icinde siparis detay sayfasindan yeniden deneyebilirsiniz; sure dolarsa siparis otomatik iptal olur ve stok iade edilir.'
-                : 'The payment could not be completed. You can retry from the order detail page within about 30 minutes; after that the order is cancelled automatically and stock is released.'
+                ? 'Odeme tamamlanamadi. Sepetiniz aynen duruyor ve stok rezervi kaldirildi; dilediginizde yeniden deneyebilirsiniz.'
+                : 'The payment could not be completed. Your cart is preserved and the stock reservation was released; you can retry whenever you like.'
             }
             title={language === 'tr' ? 'Odeme Tamamlanamadi' : 'Payment Not Completed'}
           />
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
-            {lastOrderId ? (
-              <Link to={`/siparislerim/${lastOrderId}`}>
-                <Button>{language === 'tr' ? 'Odemeyi Yeniden Dene' : 'Retry Payment'}</Button>
-              </Link>
-            ) : null}
+            <Link to="/sepet">
+              <Button>{language === 'tr' ? 'Sepete Don ve Tekrar Dene' : 'Back to Cart and Retry'}</Button>
+            </Link>
             <Link to="/katalog">
               <Button variant="secondary">{language === 'tr' ? 'Alisverise Don' : 'Back to Shopping'}</Button>
             </Link>

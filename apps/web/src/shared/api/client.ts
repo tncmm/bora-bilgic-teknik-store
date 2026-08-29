@@ -148,8 +148,8 @@ export const api = {
   removeCartItem(token: string, itemId: string) {
     return request<Cart>(`/cart/items/${itemId}`, { method: 'DELETE' }, token);
   },
-  createOrder(token: string, payload: Record<string, string>) {
-    return request<Order>('/orders', {
+  startPayment(token: string, payload: Record<string, string>) {
+    return request<PaytrTokenResponse>('/payments/paytr/checkout', {
       method: 'POST',
       body: JSON.stringify(payload),
     }, token);
@@ -159,12 +159,6 @@ export const api = {
   },
   getMyOrder(token: string, orderId: string) {
     return request<Order>(`/orders/me/${orderId}`, {}, token);
-  },
-  createPaymentToken(token: string, orderId: string) {
-    return request<PaytrTokenResponse>('/payments/paytr/token', {
-      method: 'POST',
-      body: JSON.stringify({ orderId }),
-    }, token);
   },
   getAdminDashboard(token: string) {
     return request<DashboardMetrics>('/admin/dashboard', {}, token);
