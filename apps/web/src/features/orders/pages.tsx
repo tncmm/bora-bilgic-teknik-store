@@ -6,8 +6,9 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { useI18n } from '../../app/providers/I18nProvider';
 import { useSession } from '../../app/providers/SessionProvider';
 import { api } from '../../shared/api/client';
+import { PaytrIframe } from '../../shared/components/PaytrIframe';
 import { formatCurrency, formatDate } from '../../shared/lib/format';
-import { translateOrderStatus } from '../../shared/lib/i18n';
+import { translateOrderStatus, translatePaymentStatus } from '../../shared/lib/i18n';
 
 interface OrderDetailLocationState {
   justPlaced?: boolean;
@@ -124,6 +125,7 @@ export function OrdersPage() {
                 <p>{formatDate(order.createdAt, language)}</p>
               </div>
               <span className="order-badge">{translateOrderStatus(language, order.status)}</span>
+              <span className={`order-badge order-badge--payment-${order.paymentStatus}`}>{translatePaymentStatus(language, order.paymentStatus)}</span>
               <strong>{formatCurrency(order.total, language)}</strong>
             </Link>
           ))
@@ -141,6 +143,8 @@ export function OrderDetailPage() {
   const state = (location.state ?? null) as OrderDetailLocationState | null;
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentToken, setPaymentToken] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !orderId) return;
@@ -150,6 +154,19 @@ export function OrderDetailPage() {
       setError(nextError.message);
     });
   }, [orderId, token]);
+
+  async function handleResumePayment() {
+    if (!token || !order) return;
+
+    setPaymentError(null);
+    try {
+      const session = await api.createPaymentToken(token, order.id);
+      sessionStorage.setItem('bora-last-order', order.id);
+      setPaymentToken(session.iframeToken);
+    } catch (nextError) {
+      setPaymentError((nextError as Error).message);
+    }
+  }
 
   if (!user || !token) {
     return (
@@ -239,8 +256,68 @@ export function OrderDetailPage() {
               <span>{language === 'tr' ? 'Genel Toplam' : 'Grand Total'}</span>
               <strong>{formatCurrency(order.total, language)}</strong>
             </div>
+            <div className="order-hero-fact">
+              <span>{language === 'tr' ? 'Odeme' : 'Payment'}</span>
+              <strong>
+                {translatePaymentStatus(language, order.paymentStatus)}
+                {order.paidAt ? ` · ${formatDate(order.paidAt, language)}` : ''}
+              </strong>
+            </div>
           </div>
         </div>
+
+        {paymentToken ? (
+          <div className="profile-card profile-card--full">
+            <div className="section-header">
+              <div>
+                <h2>{language === 'tr' ? 'Guvenli Odeme' : 'Secure Payment'}</h2>
+                <p>
+                  {language === 'tr'
+                    ? 'Kart bilgilerinizi asagidaki PayTR cercevesine girin. Islem bitince otomatik olarak sonuc sayfasina yonlenirsiniz.'
+                    : 'Enter your card details in the PayTR frame below. You will be redirected to the result page when done.'}
+                </p>
+              </div>
+            </div>
+            <PaytrIframe token={paymentToken} />
+          </div>
+        ) : null}
+
+        {!paymentToken && order.paymentStatus === 'pending' ? (
+          <div className="profile-card profile-card--full">
+            <div className="section-header">
+              <div>
+                <h2>{language === 'tr' ? 'Odeme Bekleniyor' : 'Payment Pending'}</h2>
+                <p>
+                  {language === 'tr'
+                    ? 'Bu siparis icin odeme henuz tamamlanmadi. Yaklasik 30 dakika icinde odeme yapilmazsa siparis otomatik iptal edilir ve stok iade edilir.'
+                    : 'This order has not been paid yet. If payment is not completed within roughly 30 minutes, the order is cancelled automatically and stock is released.'}
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => void handleResumePayment()} style={{ maxWidth: 320 }}>
+              {language === 'tr' ? 'Guvenli Odemeye Gec' : 'Continue to Secure Payment'}
+            </Button>
+            {paymentError ? <p className="form-feedback form-feedback--error">{paymentError}</p> : null}
+          </div>
+        ) : null}
+
+        {!paymentToken && order.paymentStatus === 'failed' ? (
+          <div className="profile-card profile-card--full">
+            <div className="section-header">
+              <div>
+                <h2>{language === 'tr' ? 'Odeme Basarisiz' : 'Payment Failed'}</h2>
+                <p>
+                  {language === 'tr'
+                    ? 'Bu siparis icin odeme tamamlanamadi ve siparis iptal edildi; urunler stoga geri eklendi. Isterseniz yeni bir siparis olusturabilirsiniz.'
+                    : 'Payment for this order could not be completed and the order was cancelled; the items were returned to stock. You are welcome to place a new order.'}
+                </p>
+              </div>
+            </div>
+            <Link to="/katalog" style={{ display: 'inline-block', maxWidth: 320 }}>
+              <Button>{language === 'tr' ? 'Yeniden Alisveris Yap' : 'Shop Again'}</Button>
+            </Link>
+          </div>
+        ) : null}
 
         <div className="profile-card profile-card--full">
           <div className="order-progress">

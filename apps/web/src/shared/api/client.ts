@@ -9,6 +9,7 @@ import type {
   Category,
   DashboardMetrics,
   Order,
+  PaytrTokenResponse,
   Product,
   ThemeMode,
   User,
@@ -158,6 +159,12 @@ export const api = {
   },
   getMyOrder(token: string, orderId: string) {
     return request<Order>(`/orders/me/${orderId}`, {}, token);
+  },
+  createPaymentToken(token: string, orderId: string) {
+    return request<PaytrTokenResponse>('/payments/paytr/token', {
+      method: 'POST',
+      body: JSON.stringify({ orderId }),
+    }, token);
   },
   getAdminDashboard(token: string) {
     return request<DashboardMetrics>('/admin/dashboard', {}, token);

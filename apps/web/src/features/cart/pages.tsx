@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
+import { PaytrIframe } from '../../shared/components/PaytrIframe';
 import { formatCurrency } from '../../shared/lib/format';
 import { useI18n } from '../../app/providers/I18nProvider';
 import { translateCategoryName } from '../../shared/lib/i18n';
@@ -363,6 +364,8 @@ export function CheckoutPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethods)[number]['id']>('card');
+  const [payment, setPayment] = useState<{ orderId: string; iframeToken: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     shippingName: '',
     shippingPhone: '',
@@ -423,6 +426,29 @@ export function CheckoutPage() {
   }
 
   if (!cart || cart.items.length === 0) {
+    if (payment) {
+      return (
+        <section className="page-section" style={{ paddingTop: '140px' }}>
+          <div className="ui-shell">
+            <div className="profile-card profile-card--full">
+              <div className="section-header">
+                <div>
+                  <div className="detail-chip">{language === 'tr' ? 'Guvenli Odeme' : 'Secure Payment'}</div>
+                  <h2>{language === 'tr' ? 'Kart Bilgilerinizi PayTR Ekranina Girin' : 'Enter Your Card Details on the PayTR Screen'}</h2>
+                  <p>
+                    {language === 'tr'
+                      ? 'Odeme PayTR guvenli cercevesinde alinir ve kart bilgilerinize bizim sunucularimiz hic dokunmaz. Islem bitince PayTR sizi otomatik olarak sonuc sayfasina yonlendirir.'
+                      : 'Payment is collected inside PayTR’s secure frame; our servers never touch your card details. PayTR redirects you to the result page when finished.'}
+                  </p>
+                </div>
+              </div>
+              <PaytrIframe token={payment.iframeToken} />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell cart-empty-layout">
@@ -438,26 +464,35 @@ export function CheckoutPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token) return;
+    if (!token || submitting) return;
 
+    setSubmitting(true);
     try {
       const order = await api.createOrder(token, form);
       await syncCart();
-      showToast({
-        tone: 'success',
-        title: language === 'tr' ? 'Siparis olusturuldu' : 'Order created',
-        description:
-          language === 'tr'
-            ? 'Siparisiniz kaydedildi. Odeme entegrasyonu eklendiginde bu adim tahsilata baglanacak.'
-            : 'Your order was saved. Once payment integration is added, this step will connect to collection.',
-      });
-      navigate(`/siparislerim/${order.id}`, { state: { justPlaced: true } });
+
+      try {
+        const session = await api.createPaymentToken(token, order.id);
+        sessionStorage.setItem('bora-last-order', order.id);
+        setPayment({ orderId: order.id, iframeToken: session.iframeToken });
+      } catch (paymentError) {
+        // Order is safely stored; PayTR being unreachable must not strand the
+        // customer — send them to the order page, which offers a retry button.
+        showToast({
+          tone: 'info',
+          title: language === 'tr' ? 'Siparis alindi, odeme bekleniyor' : 'Order received, payment pending',
+          description: (paymentError as Error).message,
+        });
+        navigate(`/siparislerim/${order.id}`, { state: { justPlaced: true } });
+      }
     } catch (error) {
       showToast({
         tone: 'error',
         title: language === 'tr' ? 'Siparis olusturulamadi' : 'Order could not be created',
         description: (error as Error).message,
       });
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -554,7 +589,7 @@ export function CheckoutPage() {
               <span>2</span>
               <div>
                 <strong>{language === 'tr' ? 'Odeme Tercihi' : 'Payment Preference'}</strong>
-                <p>{language === 'tr' ? 'Bu bolum su an tahsilat yapmaz; PayTR iframe sonraki asamada buraya eklenecek.' : 'This area does not collect payment yet; PayTR iframe will be added here next.'}</p>
+                <p>{language === 'tr' ? 'Onay sonrasi odeme PayTR guvenli cercevesinde alinir.' : 'After confirmation, payment is collected inside PayTR’s secure frame.'}</p>
               </div>
             </div>
             <div className="checkout-choice-grid checkout-choice-grid--payment">
@@ -572,8 +607,14 @@ export function CheckoutPage() {
             </div>
           </div>
 
-          <Button style={{ marginTop: '1.25rem', width: '100%' }} type="submit">
-            {language === 'tr' ? 'Siparisi Onayla' : 'Confirm Order'}
+          <Button disabled={submitting} style={{ marginTop: '1.25rem', width: '100%' }} type="submit">
+            {submitting
+              ? language === 'tr'
+                ? 'Odeme Hazirlaniyor...'
+                : 'Preparing Payment...'
+              : language === 'tr'
+                ? 'Siparisi Onayla ve Odeme Yap'
+                : 'Confirm Order and Pay'}
           </Button>
         </form>
 
@@ -616,8 +657,8 @@ export function CheckoutPage() {
           </div>
           <div className="cart-summary-note">
             {language === 'tr'
-              ? 'Odeme altyapisi henuz tahsilat yapmaz. Siparis kaydi olusur, PayTR iframe entegrasyonu sonraki asamada bu karta baglanir.'
-              : 'Payment infrastructure does not collect funds yet. The order is recorded, and PayTR iframe integration will connect to this card next.'}
+              ? 'Siparisi onayladiginizda guvenli PayTR odeme cercevesi acilir; kart bilgileri yalnizca PayTR tarafindan islenir.'
+              : 'Confirming the order opens the secure PayTR payment frame; card details are processed by PayTR only.'}
           </div>
         </div>
       </div>

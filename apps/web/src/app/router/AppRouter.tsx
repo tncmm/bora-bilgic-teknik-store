@@ -5,6 +5,7 @@ import { LoginPage, RegisterPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
 import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
 import { OrderDetailPage, OrdersPage } from '../../features/orders/pages';
+import { PaymentFailPage, PaymentSuccessPage } from '../../features/orders/payment-pages';
 import { FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
@@ -59,6 +60,8 @@ export function AppRouter() {
           <Route element={<PrivacyPage />} path="/gizlilik" />
           <Route element={<CartPage />} path="/sepet" />
           <Route element={<CheckoutPage />} path="/checkout" />
+          <Route element={<PaymentSuccessPage />} path="/odeme/basarili" />
+          <Route element={<PaymentFailPage />} path="/odeme/basarisiz" />
           <Route element={<LoginPage />} path="/giris" />
           <Route element={<RegisterPage />} path="/kayit" />
           <Route element={<ProtectedRoute />}>

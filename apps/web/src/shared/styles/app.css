@@ -1550,3 +1550,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+.order-badge--payment-paid {
+  border-color: rgba(46, 204, 113, 0.45);
+  color: #2ecc71;
+}
+
+.order-badge--payment-pending {
+  border-color: rgba(255, 176, 32, 0.45);
+  color: #ffb020;
+}
+
+.order-badge--payment-failed {
+  border-color: rgba(255, 95, 86, 0.45);
+  color: #ff5f56;
+}

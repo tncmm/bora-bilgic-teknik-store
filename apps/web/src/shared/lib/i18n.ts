@@ -59,6 +59,19 @@ export function translateOrderStatus(language: Language, status?: string) {
   return dictionary[normalized]?.[language] ?? status;
 }
 
+export function translatePaymentStatus(language: Language, status?: string) {
+  if (!status) return '';
+
+  const normalized = status.toLowerCase();
+  const dictionary: Record<string, { tr: string; en: string }> = {
+    pending: { tr: 'Odeme Bekleniyor', en: 'Awaiting Payment' },
+    paid: { tr: 'Odendi', en: 'Paid' },
+    failed: { tr: 'Odeme Basarisiz', en: 'Payment Failed' },
+  };
+
+  return dictionary[normalized]?.[language] ?? status;
+}
+
 export function translateThemeMode(language: Language, mode: 'light' | 'dark' | 'system') {
   const dictionary = {
     light: { tr: 'Acik', en: 'Light' },

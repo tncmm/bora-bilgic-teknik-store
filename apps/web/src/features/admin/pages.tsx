@@ -18,7 +18,7 @@ import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
 import { formatCurrency, formatDate } from '../../shared/lib/format';
-import { translateCategoryName, translateOrderStatus } from '../../shared/lib/i18n';
+import { translateCategoryName, translateOrderStatus, translatePaymentStatus } from '../../shared/lib/i18n';
 
 function parseSpecs(value: string) {
   return value
@@ -742,6 +742,7 @@ export function AdminOrdersPage() {
                 <th>{language === 'tr' ? 'Musteri' : 'Client'}</th>
                 <th>{language === 'tr' ? 'Tarih' : 'Date'}</th>
                 <th>{language === 'tr' ? 'Durum' : 'Status'}</th>
+                <th>{language === 'tr' ? 'Odeme' : 'Payment'}</th>
                 <th>{language === 'tr' ? 'Tutar' : 'Amount'}</th>
               </tr>
             </thead>
@@ -770,6 +771,11 @@ export function AdminOrdersPage() {
                       <option value="SHIPPED">{translateOrderStatus(language, 'shipped')}</option>
                       <option value="DELIVERED">{translateOrderStatus(language, 'delivered')}</option>
                     </select>
+                  </td>
+                  <td>
+                    <span className={`order-badge order-badge--payment-${order.paymentStatus}`}>
+                      {translatePaymentStatus(language, order.paymentStatus)}
+                    </span>
                   </td>
                   <td>
                     <strong>{formatCurrency(order.total, language)}</strong>
