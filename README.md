@@ -37,7 +37,17 @@ React + Vite + React Router frontend, Express + Prisma + PostgreSQL backend ve p
 - Kategori yapisi resmi DJI ailelerine gore sadeleştirildi: `Camera Drones`, `Handheld`, `Enterprise`.
 - Bazi DJI enterprise ve premium urunleri `satisa kapali` baslar; detay sayfasinda teklif odakli gorunur.
 - Admin panelinden urun bazinda satis ac/kapat yapilabilir, ancak marka sabit olarak DJI kabul edilir.
-- Checkout gercek odeme almaz, siparis kaydi olusturur.
+- Checkout PayTR iFrame ile gercek odeme alir; PayTR anahtarlari tanimli degilse siparis kaydi olusur ve odeme "bekliyor" durumunda kalir (detay sayfasindan tekrar denenebilir).
+
+## Odeme (PayTR iFrame)
+
+Akis: musteri checkout'ta siparisi olusturur (`paymentStatus: pending`, stok aninda duser), frontend `POST /api/v1/payments/paytr/token` ile iframe tokeni ister, PayTR guvenli cercevesinde kart bilgilerini girer. Kart verisi magaza sunucusuna hic ulasmaz.
+
+- **Callback:** PayTR odeme sonucunu `POST /api/v1/payments/paytr/callback` adresine sunucu-sunucu bildirir. Endpoint HMAC imzasini dogrular, tutari siparis toplamiyla karsilastirir, sonra `paid`/`failed` isaretler. Basarisiz veya suresi dolan odemelerde stok otomatik iade edilir.
+- **Idempotency:** PayTR "OK" disinda yanit alirsa callback'i tekrarlar; kod buna dayaniklidir (yalnizca `pending` siparisler gecis yapar). Başarı/hata sayfalari `WEB_URL` altindaki `/odeme/basarili` ve `/odeme/basarisiz` yollaridir.
+- **Siparis numarasi:** Her odeme denemesi icin benzersiz, alfanumerik `merchant_oid` uretilir ve `Order.paymentRef` alanina yazilir.
+- **Ayarlar:** `PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`, `PAYTR_TEST_MODE` (`apps/api/.env.example` icindeki aciklamalara bakin). Lokal gelistirmede callback'e ngrok gibi bir tunel gerekir.
+- **Guvensiz mod:** Uc anahtar bosken token endpoint'i `503` doner; checkout bu durumda musteriyi siparis detayina yonlendirip "odeme bekleniyor" mesaji gosterir.
 - Seed sonrasinda:
   - birden fazla siparis durumu (`pending`, `processing`, `shipped`, `delivered`) gorunur
   - admin dashboard sifir olmayan satis ve stok metrikleri gosterir
