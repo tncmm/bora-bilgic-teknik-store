@@ -8,10 +8,13 @@ import { AppError } from './app-error.js';
  *
  * Docs summary this module encodes:
  * - Token request: POST https://www.paytr.com/odeme/api/get-token with a
- *   form body; the `paytr_token` field is base64(HMAC-SHA256) over
- *   merchant_id + user_ip + merchant_oid + email + payment_amount(kurus) +
- *   user_basket(base64) + no_installment + max_installment + currency +
- *   test_mode, keyed with merchant_key + merchant_salt.
+ *   form body; `paytr_token` is base64(HMAC-SHA256) where the KEY is
+ *   merchant_key alone and the MESSAGE is the concatenated fields with the
+ *   merchant_salt appended AT THE END:
+ *   merchant_id+user_ip+merchant_oid+email+payment_amount+user_basket+
+ *   no_installment+max_installment+currency+test_mode + merchant_salt.
+ *   (Move the salt into the key instead and PayTR answers "gecersiz
+ *   paytr_token" — verified against the official sample code.)
  * - Callback: PayTR POSTs merchant_oid, status, total_amount and hash; the
  *   hash is base64(HMAC-SHA256) over merchant_oid + merchant_salt + status +
  *   total_amount keyed with merchant_key alone. The endpoint must answer the
@@ -23,6 +26,26 @@ export interface PaytrBasketItem {
   name: string;
   unitPrice: number;
   quantity: number;
+}
+
+/**
+ * PayTR requires a public IPv4 buyer address and rejects loopback/private or
+ * IPv6 sender values with a misleading "paytr_token invalid" error. Behind
+ * proxies Express may hand us "::ffff:203.0.113.9" — strip the mapping, keep
+ * real public v4 addresses, and in test mode fall back to a stable public
+ * placeholder so local development (127.0.0.1 / ::1) can still complete.
+ */
+export function resolveClientIp(rawIp: string) {
+  const ip = rawIp.replace(/^::ffff:/, '');
+  const looksV4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip);
+  const isPrivateOrLoopback =
+    /^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(ip);
+
+  if (looksV4 && !isPrivateOrLoopback) {
+    return ip;
+  }
+
+  return env.PAYTR_TEST_MODE === '0' ? ip : '85.34.78.112';
 }
 
 export interface PaytrCallbackPayload {
@@ -87,7 +110,7 @@ export async function requestIframeToken(input: TokenRequestInput): Promise<stri
   const testMode = env.PAYTR_TEST_MODE === '0' ? '0' : '1';
   const paymentAmount = String(input.amountKurus);
   const userBasket = buildUserBasket(input.basket);
-  const noInstallment = '1';
+  const noInstallment = '0';
   const maxInstallment = '0';
   const currency = 'TL';
   const okUrl = `${env.WEB_URL}/odeme/basarili`;
@@ -105,7 +128,7 @@ export async function requestIframeToken(input: TokenRequestInput): Promise<stri
     currency +
     testMode;
 
-  const paytrToken = createHmac('sha256', config.merchantKey + config.merchantSalt).update(hashSource).digest('base64');
+  const paytrToken = createHmac('sha256', config.merchantKey).update(hashSource + config.merchantSalt).digest('base64');
 
   const body = new URLSearchParams({
     merchant_id: config.merchantId,

@@ -5,6 +5,7 @@ import {
   isPaytrConfigured,
   newMerchantOid,
   requestIframeToken,
+  resolveClientIp,
   toKurus,
   verifyCallbackHash,
 } from '../../lib/paytr.js';
@@ -46,7 +47,7 @@ export class PaymentsService {
       merchantOid,
       email: order.user.email,
       amountKurus,
-      userIp: clientIp,
+      userIp: resolveClientIp(clientIp),
       userName: order.shippingName,
       userAddress: `${order.shippingAddressLine} ${order.shippingDistrict}/${order.shippingCity}`,
       userPhone: order.shippingPhone,
