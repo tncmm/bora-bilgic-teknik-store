@@ -203,17 +203,6 @@ body {
   position: absolute;
   inset: 0;
 }
-
-.dji-hero__background::after,
-.dji-listing-hero__background::after,
-.dji-contact-hero::after,
-.dji-newsletter__card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(4, 7, 11, 0.92) 0%, rgba(7, 11, 15, 0.52) 46%, rgba(4, 7, 11, 0.94) 100%);
-}
-
 .dji-hero__background img,
 .dji-listing-hero__background img {
   width: 100%;
@@ -359,23 +348,6 @@ body {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
-
-.dji-category-card,
-.dji-product-card,
-.dji-newsletter__card,
-.dji-contact-card,
-.auth-card,
-.profile-card,
-.checkout-panel,
-.order-panel,
-.admin-panel,
-.admin-table {
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(12, 17, 23, 0.96), rgba(10, 14, 19, 0.94));
-  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.25);
-}
-
 .dji-category-card {
   overflow: hidden;
   transition: transform 180ms ease, border-color 180ms ease;
@@ -526,26 +498,6 @@ body {
   opacity: 0.45;
   cursor: not-allowed;
 }
-
-.dji-newsletter__card {
-  position: relative;
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2rem;
-  overflow: hidden;
-}
-.dji-editorial-card--wide {
-  display: grid;
-  grid-template-columns: 1fr 0.9fr;
-  align-items: end;
-}
-
-.dji-editorial-card--wide img {
-  width: 100%;
-  height: auto;
-  align-self: end;
-}
 .dji-inline-links {
   display: flex;
   flex-wrap: wrap;
@@ -559,34 +511,6 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
 }
-
-.dji-newsletter__card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.dji-newsletter__card h2 {
-  margin: 0 0 0.5rem;
-  color: #fff;
-  font-size: 2.4rem;
-}
-
-.dji-newsletter__card p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.74);
-}
-
-.dji-newsletter__form {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  min-width: min(100%, 460px);
-}
-
-.dji-newsletter__form .ui-input {
-  min-width: 280px;
-}
-
 .dji-footer {
   padding: 3.8rem 0 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -1684,16 +1608,7 @@ body {
     border-left: 0;
     border-top: 1px solid var(--border);
   }
-
-  .dji-toolbar__left,
-  .dji-toolbar__right,
-  .dji-newsletter__form,
-  .admin-headline {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .dji-product-grid {
+.dji-product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
