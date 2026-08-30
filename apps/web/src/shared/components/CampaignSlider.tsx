@@ -44,12 +44,17 @@ export function CampaignSlider() {
             {campaigns.map((campaign) => {
               const content = (
                 <article className="campaign-slide" key={campaign.id}>
+                  {campaign.imageUrl ? (
+                    <>
+                      <div className="campaign-slide__bg" style={{ backgroundImage: `url(${campaign.imageUrl})` }} />
+                      <div className="campaign-slide__overlay" />
+                    </>
+                  ) : null}
                   <div className="campaign-slide__copy">
                     {campaign.badge ? <span className="campaign-slide__badge">{campaign.badge}</span> : null}
                     <h3>{campaign.title}</h3>
                     {campaign.description ? <p>{campaign.description}</p> : null}
                   </div>
-                  {campaign.imageUrl ? <img alt={campaign.title} src={campaign.imageUrl} /> : null}
                 </article>
               );
 
