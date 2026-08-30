@@ -282,56 +282,6 @@ function NewsletterBanner() {
   );
 }
 
-function PurchaseJourneySection() {
-  const steps = [
-    {
-      title: '1. Urunu Secin',
-      description: 'Kategori veya urun detay sayfasindan teknik ozellikleri, fiyatlari ve stok bilgisini inceleyin.',
-    },
-    {
-      title: '2. Sepete Ekleyin',
-      description: 'Sepette urun adedi, ara toplam ve kargo bilgisi acikca gorunur.',
-    },
-    {
-      title: '3. Teslimat Bilgisi',
-      description: 'Checkout ekraninda ad, telefon, il, ilce ve acik adres bilgilerinizi doldurun.',
-    },
-    {
-      title: '4. Odeme Onayi',
-      description: 'Odeme oncesi toplam tutar, siparis ozeti ve teslimat bilgileri son kez kontrol edilir.',
-    },
-  ];
-
-  return (
-    <section className="dji-section">
-      <div className="ui-shell">
-        <div className="dji-section__heading">
-          <h2>SATIN ALMA SURECI</h2>
-          <Link to="/checkout">ODEME AKISINI GOR</Link>
-        </div>
-        <div className="dji-purchase-grid">
-          {steps.map((step) => (
-            <article className="dji-purchase-card" key={step.title}>
-              <div className="dji-kicker">{step.title}</div>
-              <p>{step.description}</p>
-            </article>
-          ))}
-        </div>
-        <div className="dji-compliance-banner">
-          <strong>Odeme, teslimat ve iade bilgilendirmesi siparis oncesinde acikca gosterilir.</strong>
-          <p>Stoktaki urunler icin fiyat ve teslim sureci, kurumsal urunlerde ise teklif ve termin akisi net sekilde belirtilir.</p>
-          <div className="dji-inline-links">
-            <Link to="/teslimat">Teslimat</Link>
-            <Link to="/iade">Iade</Link>
-            <Link to="/mesafeli-satis">Mesafeli Satis</Link>
-            <Link to="/gizlilik">Gizlilik</Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 interface InfoSection {
   heading: string;
   body?: string;
@@ -500,7 +450,6 @@ export function HomePage() {
         </div>
       </section>
 
-      <PurchaseJourneySection />
       <EditorialPanels />
       <NewsletterBanner />
       <StoreFooter />

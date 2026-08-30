@@ -574,18 +574,6 @@ body {
   height: auto;
   align-self: end;
 }
-.dji-purchase-card {
-  padding: 1.25rem;
-}
-
-.dji-purchase-card .dji-kicker {
-  font-size: 0.9rem;
-  margin-bottom: 0.65rem;
-}
-.dji-compliance-banner {
-  margin-top: 1rem;
-  padding: 1rem 1.2rem;
-}
 .dji-inline-links {
   display: flex;
   flex-wrap: wrap;
