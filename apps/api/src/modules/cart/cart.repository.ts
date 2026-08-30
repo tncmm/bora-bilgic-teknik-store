@@ -8,6 +8,9 @@ export class CartRepository {
       create: { userId },
       include: {
         items: {
+          // Stable insertion order: without this the DB may reshuffle rows
+          // after every quantity update and the cart UI reorders on each tap.
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
           include: {
             product: {
               include: {
@@ -27,6 +30,7 @@ export class CartRepository {
       where: { userId },
       include: {
         items: {
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
           include: {
             product: {
               include: {
