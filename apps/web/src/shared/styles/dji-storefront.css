@@ -574,22 +574,6 @@ body {
   height: auto;
   align-self: end;
 }
-
-.dji-purchase-grid,
-.compliance-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.dji-purchase-card,
-.compliance-card,
-.dji-compliance-banner {
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(13, 18, 24, 0.96), rgba(9, 14, 19, 0.92));
-}
-
 .dji-purchase-card {
   padding: 1.25rem;
 }
@@ -598,29 +582,10 @@ body {
   font-size: 0.9rem;
   margin-bottom: 0.65rem;
 }
-
-.dji-purchase-card p,
-.compliance-card p,
-.dji-compliance-banner p {
-  margin: 0;
-  color: var(--text-soft);
-  font-size: 0.92rem;
-  line-height: 1.65;
-}
-
 .dji-compliance-banner {
   margin-top: 1rem;
   padding: 1rem 1.2rem;
 }
-
-.dji-compliance-banner strong,
-.compliance-card strong {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #fff;
-  font-size: 0.98rem;
-}
-
 .dji-inline-links {
   display: flex;
   flex-wrap: wrap;
@@ -1211,34 +1176,9 @@ body {
   margin: 0.85rem 0 0;
   padding-left: 1.1rem;
 }
-
-.cart-empty-layout {
-  display: grid;
-  gap: 1rem;
-}
-
-.purchase-steps {
-  margin: 0;
-  padding-left: 1.1rem;
-  color: var(--text);
-}
-
-.purchase-steps li {
-  margin-bottom: 0.75rem;
-  line-height: 1.65;
-}
-
 .dji-muted {
   color: var(--text-soft);
 }
-
-.auth-shell,
-.cart-page,
-.profile-layout,
-.admin-layout {
-  padding-top: 120px;
-}
-
 .auth-shell {
   padding-bottom: 4rem;
 }
@@ -1409,21 +1349,6 @@ body {
   gap: 0.8rem;
   flex-wrap: wrap;
 }
-
-.cart-product-card,
-.favorite-card,
-.favorite-preview-card,
-.order-history-row {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: rgba(10, 14, 19, 0.88);
-}
-
-.cart-product-card,
-.favorite-card {
-  overflow: hidden;
-}
-
 .cart-product-card__media,
 .favorite-card__media {
   background: rgba(13, 19, 26, 0.94);
@@ -1751,16 +1676,6 @@ body {
   .dji-product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .dji-footer__top,
-  .dji-contact-grid,
-  .admin-grid,
-  .dji-editorial-grid,
-  .dji-purchase-grid,
-  .compliance-grid,
-  .dji-info-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 .admin-upload-grid {
     grid-template-columns: 1fr;
   }
@@ -1805,25 +1720,7 @@ body {
   .dji-nav a::after {
     display: none;
   }
-
-  .dji-service-band__grid,
-  .dji-category-grid,
-  .dji-toolbar,
-  .dji-listing-layout,
-  .dji-footer__top,
-  .dji-footer__bottom,
-  .dji-newsletter__card,
-  .admin-layout,
-  .dji-editorial-grid,
-  .dji-editorial-card--wide,
-  .dji-purchase-grid,
-  .compliance-grid,
-  .dji-info-grid {
-    grid-template-columns: 1fr;
-    display: grid;
-  }
-
-  .dji-service-band__item + .dji-service-band__item {
+.dji-service-band__item + .dji-service-band__item {
     border-left: 0;
     border-top: 1px solid var(--border);
   }

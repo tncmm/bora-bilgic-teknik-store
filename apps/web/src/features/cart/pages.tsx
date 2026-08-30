@@ -6,96 +6,23 @@ import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
 import { formatCurrency } from '../../shared/lib/format';
-import { useI18n } from '../../app/providers/I18nProvider';
 import { translateCategoryName } from '../../shared/lib/i18n';
 
-function PurchaseProcessPanel({ showLoginStep = true }: { showLoginStep?: boolean }) {
-  const { language } = useI18n();
-
-  const steps = [
-    language === 'tr' ? 'Urunu secin ve detay sayfasindan sepete ekleyin.' : 'Select a product and add it to cart from the detail page.',
-    showLoginStep
-      ? language === 'tr'
-        ? 'Siparisi tamamlamak icin giris yapin veya yeni hesap olusturun.'
-        : 'Log in or create an account to complete the order.'
-      : language === 'tr'
-        ? 'Sepette adet ve urun kontrolunu tamamlayin.'
-        : 'Review quantities and products in the cart.',
-    language === 'tr'
-      ? 'Teslimat ve fatura bilgilerinizi checkout ekraninda doldurun.'
-      : 'Fill in delivery and billing details on the checkout screen.',
-    language === 'tr'
-      ? 'Odeme oncesi toplam tutar, kargo ve siparis ozeti net olarak gosterilir.'
-      : 'The total, shipping, and order summary are shown clearly before payment.',
-    language === 'tr'
-      ? 'Onay sonrasi siparisiniz kayda alinir ve surec profilinizden takip edilir.'
-      : 'After approval, the order is recorded and can be tracked from your profile.',
-  ];
-
-  return (
-    <div className="checkout-panel">
-      <div className="section-header">
-        <div>
-          <h2>{language === 'tr' ? 'Satin Alma Sureci' : 'Purchase Flow'}</h2>
-          <p>
-            {language === 'tr'
-              ? 'PayTR incelemesi icin urun seciminden siparis onayina kadar tum adimlar acikca listelenir.'
-              : 'For payment review, every step from product selection to order approval is listed clearly.'}
-          </p>
-        </div>
-      </div>
-
-      <ol className="purchase-steps">
-        {steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-
-      <div className="compliance-grid">
-        <div className="compliance-card">
-          <strong>{language === 'tr' ? 'Odeme' : 'Payment'}</strong>
-          <p>{language === 'tr' ? 'Kart ile guvenli odeme, siparis ozeti ve toplam tutar oncesinde acikca gosterilir.' : 'Secure card payment with a clear total and order summary before approval.'}</p>
-        </div>
-        <div className="compliance-card">
-          <strong>{language === 'tr' ? 'Teslimat' : 'Delivery'}</strong>
-          <p>{language === 'tr' ? 'Stoktaki urunlerde hizli kargo, kurumsal urunlerde teklif ve termin bilgilendirmesi sunulur.' : 'Fast shipping for in-stock items, quote and lead-time information for enterprise items.'}</p>
-        </div>
-        <div className="compliance-card">
-          <strong>{language === 'tr' ? 'Iade ve Destek' : 'Returns and Support'}</strong>
-          <p>{language === 'tr' ? 'Siparis sonrasi destek, iade ve degisim surecleri musteri hizmetleri ekibi tarafindan yonetilir.' : 'After-sales support, returns, and exchange flows are managed by customer service.'}</p>
-        </div>
-      </div>
-
-      <div className="dji-inline-links">
-        <Link to="/teslimat">{language === 'tr' ? 'Teslimat' : 'Delivery'}</Link>
-        <Link to="/iade">{language === 'tr' ? 'Iade' : 'Returns'}</Link>
-        <Link to="/mesafeli-satis">{language === 'tr' ? 'Mesafeli Satis' : 'Distance Sales'}</Link>
-        <Link to="/gizlilik">{language === 'tr' ? 'Gizlilik' : 'Privacy'}</Link>
-      </div>
-    </div>
-  );
-}
-
 export function CartPage() {
-  const { cart, token, syncCart, toggleFavorite, isFavorite, isAuthenticated } = useSession();
+  const { cart, token, syncCart, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
-  const { language } = useI18n();
   const subtotal = useMemo(() => cart?.subtotal ?? 0, [cart]);
-  const itemCount = cart?.itemCount ?? 0;
 
   if (!cart || cart.items.length === 0) {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
-        <div className="ui-shell cart-empty-layout">
-          <EmptyState
-            description={
-              language === 'tr'
-                ? 'Katalogdan bir urun secerek sepeti doldurabilir, kalp ikonuyla kendi favori listenizi de kurabilirsiniz.'
-                : 'Pick a product from the catalog to fill your cart, and build a favorites list with the heart icon.'
-            }
-            title={language === 'tr' ? 'Sepet bos' : 'Your cart is empty'}
-          />
-          <PurchaseProcessPanel showLoginStep={!isAuthenticated} />
+        <div className="ui-shell account-layout">
+          <EmptyState description="Katalogdan urun secerek sepetini doldurmaya baslayabilirsin." title="Sepetin bos" />
+          <div style={{ textAlign: 'center' }}>
+            <Link to="/katalog">
+              <Button>Kataloga Git</Button>
+            </Link>
+          </div>
         </div>
       </section>
     );
@@ -108,11 +35,7 @@ export function CartPage() {
       await api.updateCartItem(token, itemId, quantity);
       await syncCart();
     } catch (error) {
-      showToast({
-        tone: 'error',
-        title: language === 'tr' ? 'Adet guncellenemedi' : 'Quantity could not be updated',
-        description: (error as Error).message,
-      });
+      showToast({ tone: 'error', title: 'Adet guncellenemedi', description: (error as Error).message });
     }
   }
 
@@ -122,17 +45,9 @@ export function CartPage() {
     try {
       await api.removeCartItem(token, itemId);
       await syncCart();
-      showToast({
-        tone: 'info',
-        title: language === 'tr' ? 'Urun sepetten kaldirildi' : 'Product removed from cart',
-        description: language === 'tr' ? `${productName} sepetinizden cikarildi.` : `${productName} was removed from your cart.`,
-      });
+      showToast({ tone: 'info', title: 'Urun sepetten kaldirildi', description: productName });
     } catch (error) {
-      showToast({
-        tone: 'error',
-        title: language === 'tr' ? 'Urun kaldirilamadi' : 'Product could not be removed',
-        description: (error as Error).message,
-      });
+      showToast({ tone: 'error', title: 'Urun kaldirilamadi', description: (error as Error).message });
     }
   }
 
@@ -146,181 +61,113 @@ export function CartPage() {
 
       await api.removeCartItem(token, itemId);
       await syncCart();
-      showToast({
-        tone: 'success',
-        title: language === 'tr' ? 'Favorilere tasindi' : 'Moved to favorites',
-        description:
-          language === 'tr'
-            ? `${productName} favorilerinize kaydedildi ve sepetten kaldirildi.`
-            : `${productName} was saved to your favorites and removed from the cart.`,
-      });
+      showToast({ tone: 'success', title: 'Favorilere tasindi', description: `${productName} favorilerine kaydedildi.` });
     } catch (error) {
-      showToast({
-        tone: 'error',
-        title: language === 'tr' ? 'Islem tamamlanamadi' : 'Action could not be completed',
-        description: (error as Error).message,
-      });
+      showToast({ tone: 'error', title: 'Islem tamamlanamadi', description: (error as Error).message });
     }
   }
 
   return (
     <section className="page-section" style={{ paddingTop: '140px' }}>
-      <div className="ui-shell cart-page">
-        <div className="cart-page__headline">
+      <div className="ui-shell">
+        <div className="admin-headline">
           <div>
-            <div className="detail-chip">{language === 'tr' ? 'Sepet' : 'Cart'}</div>
-            <h1>{language === 'tr' ? 'Sepetiniz Hazir' : 'Your Cart Is Ready'}</h1>
-            <p>
-              {language === 'tr'
-                ? 'Seciminizi son kez rahatca gozden gecirin, adetleri ayarlayin ve checkout oncesi favori listenizi duzenleyin.'
-                : 'Review your selection comfortably, adjust quantities, and organize your favorites before checkout.'}
-            </p>
-          </div>
-          <div className="cart-page__stats">
-            <div>
-              <span>{language === 'tr' ? 'Urun' : 'Items'}</span>
-              <strong>{itemCount}</strong>
-            </div>
-            <div>
-              <span>{language === 'tr' ? 'Ara Toplam' : 'Subtotal'}</span>
-              <strong>{formatCurrency(subtotal, language)}</strong>
-            </div>
+            <h1>Sepet</h1>
+            <p>{cart.itemCount} urun · adetleri ayarla, sonra guvenli odemeye gec.</p>
           </div>
         </div>
 
-        <div className="cart-layout cart-layout--enhanced">
-          <div className="order-panel">
-            <div className="section-header">
-              <div>
-                <h2>{language === 'tr' ? 'Sepettekiler' : 'Cart Items'}</h2>
-                <p>{language === 'tr' ? 'Her satirda gorsel, teknik ozet ve hizli aksiyonlar bulunur.' : 'Each row includes imagery, a technical summary, and quick actions.'}</p>
-              </div>
-            </div>
+        <div className="checkout-grid">
+          <div className="basket-list">
+            {cart.items.map((item) => {
+              const image = item.product.images.find((entry) => entry.isPrimary) ?? item.product.images[0];
+              const maxQty = Math.max(1, Math.min(10, item.product.stock));
 
-            <div className="cart-items-stack">
-              {cart.items.map((item) => {
-                const image = item.product.images.find((entry) => entry.isPrimary) ?? item.product.images[0];
+              return (
+                <article className="basket-item" key={item.id}>
+                  <Link className="basket-item__thumb" to={`/urun/${item.product.slug}`}>
+                    <img alt={image?.alt ?? item.product.name} src={image?.url} />
+                  </Link>
 
-                return (
-                  <article className="cart-product-card" key={item.id}>
-                    <div className="cart-product-card__media">
-                      <img alt={image?.alt ?? item.product.name} src={image?.url} />
+                  <div className="basket-item__body">
+                    <div className="basket-item__head">
+                      <div>
+                        <span className="text-muted">{translateCategoryName('tr', item.product.category.slug, item.product.category.name)} · {item.product.brand}</span>
+                        <strong>
+                          <Link to={`/urun/${item.product.slug}`}>{item.product.name}</Link>
+                        </strong>
+                      </div>
+                      <button
+                        aria-label="Sepetten kaldir"
+                        className="basket-item__remove"
+                        onClick={() => void handleRemoveItem(item.id, item.product.name)}
+                        type="button"
+                      >
+                        ×
+                      </button>
                     </div>
 
-                    <div className="cart-product-card__body">
-                      <div className="detail-chip-row">
-                        <div className="detail-chip">{translateCategoryName(language, item.product.category.slug, item.product.category.name)}</div>
-                        <div className="detail-chip">{item.product.badge ?? item.product.brand}</div>
+                    <div className="basket-item__foot">
+                      <div className="basket-qty">
+                        <button
+                          aria-label="Adet azalt"
+                          disabled={item.quantity <= 1}
+                          onClick={() => void handleQuantityChange(item.id, item.quantity - 1)}
+                          type="button"
+                        >
+                          −
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button
+                          aria-label="Adet arttir"
+                          disabled={item.quantity >= maxQty}
+                          onClick={() => void handleQuantityChange(item.id, item.quantity + 1)}
+                          type="button"
+                        >
+                          +
+                        </button>
                       </div>
-                      <div className="cart-product-card__topline">
-                        <div>
-                          <h3>{item.product.name}</h3>
-                          <p>{item.product.shortDescription}</p>
-                        </div>
-                        <strong>{formatCurrency(item.lineTotal, language)}</strong>
-                      </div>
-
-                      <div className="cart-product-card__meta">
-                        {item.product.specs.slice(0, 3).map((spec) => (
-                          <div key={spec.id}>
-                            <span>{spec.name}</span>
-                            <strong>{spec.value}</strong>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="cart-product-card__footer">
-                        <div className="cart-quantity-control">
-                          <button
-                            aria-label={language === 'tr' ? 'Adet azalt' : 'Decrease quantity'}
-                            onClick={() => void handleQuantityChange(item.id, Math.max(1, item.quantity - 1))}
-                            type="button"
-                          >
-                            -
-                          </button>
-                          <input
-                            className="ui-input"
-                            min={1}
-                            onChange={(event) => void handleQuantityChange(item.id, Math.max(1, Number(event.target.value) || 1))}
-                            type="number"
-                            value={item.quantity}
-                          />
-                          <button
-                            aria-label={language === 'tr' ? 'Adet arttir' : 'Increase quantity'}
-                            onClick={() => void handleQuantityChange(item.id, Math.min(10, item.quantity + 1))}
-                            type="button"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <div className="cart-product-card__actions">
-                          <Button
-                            onClick={() => void handleMoveToFavorites(item.id, item.product.id, item.product.name)}
-                            variant="secondary"
-                          >
-                            {language === 'tr' ? 'Favorilere Tasi' : 'Move to Favorites'}
-                          </Button>
-                          <Button onClick={() => void handleRemoveItem(item.id, item.product.name)} variant="ghost">
-                            {language === 'tr' ? 'Kaldir' : 'Remove'}
-                          </Button>
-                        </div>
-                      </div>
+                      <span className="text-muted">{formatCurrency(Number(item.product.price), 'tr')} / adet</span>
+                      <strong className="basket-item__total">{formatCurrency(item.lineTotal, 'tr')}</strong>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
+
+                    <button className="basket-item__fav" onClick={() => void handleMoveToFavorites(item.id, item.product.id, item.product.name)} type="button">
+                      <span className="material-symbols-outlined">favorite</span> Favorilere tasi
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
 
-          <div className="checkout-panel checkout-panel--sticky">
-            <div className="section-header">
-              <div>
-                <h2>{language === 'tr' ? 'Siparis Ozeti' : 'Order Summary'}</h2>
-                <p>{language === 'tr' ? 'Checkout oncesi toplamlar ve kisa teslim bilgisi.' : 'Totals and a short delivery summary before checkout.'}</p>
+          <aside className="checkout-grid__aside">
+            <div className="admin-card">
+              <div className="admin-card__head">
+                <h2>Ozet</h2>
               </div>
-            </div>
-
-            <div className="checkout-summary__rows">
-              <div className="summary-row">
-                <span>{language === 'tr' ? 'Ara toplam' : 'Subtotal'}</span>
-                <strong>{formatCurrency(subtotal, language)}</strong>
-              </div>
-              <div className="summary-row">
-                <span>{language === 'tr' ? 'Kargo' : 'Shipping'}</span>
-                <strong>{language === 'tr' ? 'Ucretsiz' : 'Free'}</strong>
-              </div>
-              <div className="summary-row">
-                <span>{language === 'tr' ? 'Koruma paketi' : 'Protection plan'}</span>
-                <strong>{language === 'tr' ? 'Dahil' : 'Included'}</strong>
-              </div>
-              <div className="summary-row summary-row--total">
-                <span>{language === 'tr' ? 'Genel toplam' : 'Grand total'}</span>
-                <strong>{formatCurrency(subtotal, language)}</strong>
-              </div>
-            </div>
-
-            <div className="cart-mini-list">
-              {cart.items.map((item) => (
-                <div className="cart-mini-list__row" key={item.id}>
-                  <span>
-                    {item.product.name} x {item.quantity}
-                  </span>
-                  <strong>{formatCurrency(item.lineTotal, language)}</strong>
+              <div className="checkout-lines">
+                <div className="checkout-line">
+                  <span>Urunler ({cart.itemCount})</span>
+                  <strong>{formatCurrency(subtotal, 'tr')}</strong>
                 </div>
-              ))}
-            </div>
+                <div className="checkout-line checkout-line--muted">
+                  <span>Kargo</span>
+                  <span>Dahil</span>
+                </div>
+                <div className="checkout-line checkout-line--total">
+                  <span>Toplam</span>
+                  <strong>{formatCurrency(subtotal, 'tr')}</strong>
+                </div>
+              </div>
 
-            <div className="cart-summary-note">
-              {language === 'tr'
-                ? 'Odeme oncesinde urunler, toplam tutar, teslimat bilgileri ve siparis ozeti net bicimde gorunur.'
-                : 'Products, total price, delivery information, and the order summary are shown clearly before payment.'}
+              <Link to="/checkout">
+                <Button style={{ width: '100%', marginTop: '1rem' }}>Odemeye Gec</Button>
+              </Link>
+              <Link to="/katalog" style={{ display: 'block', marginTop: '0.5rem', textAlign: 'center' }}>
+                <Button variant="ghost" style={{ width: '100%' }}>Alisverise Devam Et</Button>
+              </Link>
             </div>
-
-            <Link to="/checkout">
-              <Button style={{ marginTop: '1.25rem', width: '100%' }}>{language === 'tr' ? "Checkout'a Gec" : 'Continue to Checkout'}</Button>
-            </Link>
-          </div>
+          </aside>
         </div>
       </div>
     </section>
