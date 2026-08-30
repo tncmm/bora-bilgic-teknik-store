@@ -4,6 +4,7 @@ import type {
   AddressPayload,
   AdminUploadKind,
   AuthResponse,
+  Campaign,
   Cart,
   CatalogListResponse,
   Category,
@@ -86,6 +87,21 @@ export const api = {
   },
   listCategories() {
     return request<Category[]>('/categories');
+  },
+  listCampaigns() {
+    return request<Campaign[]>('/campaigns');
+  },
+  listAdminCampaigns(token: string) {
+    return request<Campaign[]>('/admin/campaigns', {}, token);
+  },
+  createAdminCampaign(token: string, payload: Record<string, unknown>) {
+    return request<Campaign>('/admin/campaigns', { method: 'POST', body: JSON.stringify(payload) }, token);
+  },
+  updateAdminCampaign(token: string, campaignId: string, payload: Record<string, unknown>) {
+    return request<Campaign>(`/admin/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
+  },
+  deleteAdminCampaign(token: string, campaignId: string) {
+    return request<void>(`/admin/campaigns/${campaignId}`, { method: 'DELETE' }, token);
   },
   register(payload: { firstName: string; lastName: string; email: string; password: string }) {
     return request<AuthResponse>('/auth/register', {

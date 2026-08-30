@@ -2,10 +2,12 @@ import { Router } from 'express';
 
 import { requireAdmin, requireAuth } from '../../middleware/auth.js';
 import { largeJsonBody } from '../../middleware/json-body.js';
+import { CampaignsController } from '../campaigns/campaigns.controller.js';
 import { AdminController } from './admin.controller.js';
 
 const router = Router();
 const controller = new AdminController();
+const campaignsController = new CampaignsController();
 
 router.use(requireAuth, requireAdmin);
 
@@ -17,6 +19,10 @@ router.patch('/categories/:id', controller.updateCategory);
 router.delete('/categories/:id', controller.deleteCategory);
 router.get('/brands', controller.listBrands);
 router.post('/brands/rename', controller.renameBrand);
+router.get('/campaigns', campaignsController.listAll);
+router.post('/campaigns', campaignsController.create);
+router.patch('/campaigns/:id', campaignsController.update);
+router.delete('/campaigns/:id', campaignsController.delete);
 // Mounted after requireAuth/requireAdmin on purpose: the large body limit is
 // only ever reachable by an authenticated admin.
 router.post('/media/upload', largeJsonBody, controller.uploadMedia);

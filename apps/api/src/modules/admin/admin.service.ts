@@ -84,6 +84,7 @@ const productSchemaBase = z.object({
   badge: z.string().optional().nullable(),
   heroTag: z.string().optional().nullable(),
   price: z.number().min(0),
+  discountPercent: z.number().int().min(0).max(100).optional().default(0),
   stock: z.number().int().min(0),
   isPublished: z.boolean(),
   isPurchasable: z.boolean(),

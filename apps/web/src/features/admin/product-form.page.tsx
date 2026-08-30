@@ -92,6 +92,7 @@ const emptyForm = (categoryId: string) => ({
   badge: '',
   heroTag: '',
   price: '',
+  discountPercent: '0',
   stock: '1',
   isPublished: true,
   isPurchasable: true,
@@ -142,6 +143,7 @@ export function AdminProductFormPage() {
           badge: found.badge ?? '',
           heroTag: found.heroTag ?? '',
           price: String(found.price),
+          discountPercent: String(found.discountPercent ?? 0),
           stock: String(found.stock),
           isPublished: found.isPublished,
           isPurchasable: found.isPurchasable,
@@ -281,6 +283,7 @@ export function AdminProductFormPage() {
       badge: form.badge || null,
       heroTag: form.heroTag || null,
       price: Number(form.price),
+      discountPercent: Number(form.discountPercent) || 0,
       stock: Number(form.stock),
       isPublished: form.isPublished,
       isPurchasable: form.isPurchasable,
@@ -417,6 +420,21 @@ export function AdminProductFormPage() {
                     type="number"
                     value={form.stock}
                   />
+                </div>
+                <div>
+                  <InputField
+                    label="Indirim (%)"
+                    onChange={(event) => setForm((value) => ({ ...value, discountPercent: event.target.value }))}
+                    min="0"
+                    max="100"
+                    type="number"
+                    value={form.discountPercent}
+                  />
+                  {Number(form.discountPercent) > 0 && Number(form.price) > 0 ? (
+                    <p className="admin-field-hint">
+                      Efektif fiyat: {(Math.round(Number(form.price) * (100 - Number(form.discountPercent))) / 100).toFixed(2)} TL
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>

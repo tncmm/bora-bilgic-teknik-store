@@ -1,6 +1,6 @@
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
-import { AdminBrandsPage, AdminCategoriesPage, AdminDashboardPage, AdminOrdersPage, AdminProductFormPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
+import { AdminBrandsPage, AdminCampaignsPage, AdminCategoriesPage, AdminDashboardPage, AdminOrdersPage, AdminProductFormPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
 import { LoginPage, RegisterPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
 import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
@@ -83,6 +83,7 @@ export function AppRouter() {
             <Route element={<AdminProductFormPage />} path="/admin/urunler/yeni" />
             <Route element={<AdminProductFormPage />} path="/admin/urunler/:productId" />
             <Route element={<AdminCategoriesPage />} path="/admin/kategoriler" />
+            <Route element={<AdminCampaignsPage />} path="/admin/kampanyalar" />
             <Route element={<AdminBrandsPage />} path="/admin/markalar" />
             <Route element={<AdminOrdersPage />} path="/admin/siparisler" />
             <Route element={<AdminUsersPage />} path="/admin/kullanicilar" />

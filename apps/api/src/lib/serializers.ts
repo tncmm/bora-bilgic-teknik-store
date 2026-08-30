@@ -18,6 +18,13 @@ export function decimalToNumber(value: Prisma.Decimal | number) {
   return Number(value);
 }
 
+/** Price actually charged after the admin discount; rounded to kurus. */
+export function computeEffectivePrice(price: Prisma.Decimal | number, discountPercent: number) {
+  const base = decimalToNumber(price);
+  const discount = Math.min(100, Math.max(0, discountPercent || 0));
+  return Math.round(base * (100 - discount)) / 100;
+}
+
 function readJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
   if (!Array.isArray(value)) return fallback;
   return value as T[];
@@ -93,6 +100,8 @@ export function serializeProduct(product: any): Product {
     shortDescription: product.shortDescription,
     description: product.description,
     price: decimalToNumber(product.price),
+    discountPercent: product.discountPercent ?? 0,
+    effectivePrice: computeEffectivePrice(product.price, product.discountPercent ?? 0),
     stock: product.stock,
     sku: product.sku,
     badge: product.badge,
@@ -125,7 +134,7 @@ export function serializeCart(cart: any): Cart {
     id: item.id,
     productId: item.productId,
     quantity: item.quantity,
-    lineTotal: decimalToNumber(item.product.price) * item.quantity,
+    lineTotal: computeEffectivePrice(item.product.price, item.product.discountPercent ?? 0) * item.quantity,
     product: serializeProduct(item.product),
   }));
 

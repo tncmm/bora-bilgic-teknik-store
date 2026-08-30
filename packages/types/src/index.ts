@@ -94,6 +94,9 @@ export interface Product {
   shortDescription: string;
   description: string;
   price: number;
+  /** 0-100; effectivePrice is always computed server side and is what gets charged. */
+  discountPercent: number;
+  effectivePrice: number;
   stock: number;
   sku: string;
   badge?: string | null;
@@ -241,4 +244,15 @@ export interface ProductFilters {
   page?: string;
   limit?: string;
   saleMode?: 'purchasable' | 'all';
+}
+
+export interface Campaign {
+  id: string;
+  title: string;
+  description?: string | null;
+  badge?: string | null;
+  imageUrl?: string | null;
+  linkUrl?: string | null;
+  isActive: boolean;
+  sortOrder: number;
 }

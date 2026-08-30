@@ -8,6 +8,7 @@ import { jsonBodyUnlessLarge } from './middleware/json-body.js';
 import { adminRoutes } from './modules/admin/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { cartRoutes } from './modules/cart/routes.js';
+import { campaignsRoutes } from './modules/campaigns/routes.js';
 import { catalogRoutes } from './modules/catalog/routes.js';
 import { ordersRoutes } from './modules/orders/routes.js';
 import { paymentsRoutes } from './modules/payments/routes.js';
@@ -52,6 +53,7 @@ export function createApp() {
 
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1', catalogRoutes);
+  app.use('/api/v1', campaignsRoutes);
   app.use('/api/v1/cart', cartRoutes);
   app.use('/api/v1/orders', ordersRoutes);
   app.use('/api/v1/payments', paymentsRoutes);

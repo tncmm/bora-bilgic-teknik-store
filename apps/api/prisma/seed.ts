@@ -217,6 +217,7 @@ const products: Array<any> = [
   },
   {
     name: 'DJI Mini 4 Pro',
+    discountPercent: 10,
     slug: 'dji-mini-4-pro',
     brand: 'DJI',
     series: 'Mini Serisi',
@@ -886,6 +887,37 @@ const orderScenarios: Array<any> = [
   },
 ];
 
+const campaignFixtures = [
+  {
+    title: 'Yaz Sezonu Drone Kampanyasi',
+    badge: '%10 indirim',
+    description: 'Secili drone ve aksesuarlarda sezon indirimi basladi. Stoklar sinirlidir.',
+    linkUrl: '/kategori/drone',
+    sortOrder: 0,
+    isActive: true,
+  },
+  {
+    title: 'Creator Ekipmani Paket Firsati',
+    badge: 'Set avantaji',
+    description: 'Gimbal ve mobil video urunlerinde set alimlarina ozel fiyatlar.',
+    linkUrl: '/kategori/gimbal',
+    sortOrder: 1,
+    isActive: true,
+  },
+];
+
+async function upsertCampaigns() {
+  for (const fixture of campaignFixtures) {
+    const existing = await prisma.campaign.findFirst({ where: { title: fixture.title } });
+
+    if (existing) {
+      await prisma.campaign.update({ where: { id: existing.id }, data: fixture });
+    } else {
+      await prisma.campaign.create({ data: fixture });
+    }
+  }
+}
+
 async function upsertCategories() {
   for (const category of categories) {
     await prisma.category.upsert({
@@ -934,6 +966,7 @@ async function upsertProducts() {
       heroTag: product.heroTag,
       price: product.price,
       stock: product.stock,
+      discountPercent: product.discountPercent ?? 0,
       isPublished: product.isPublished,
       isPurchasable: product.isPurchasable,
       featureTags: [...product.featureTags],
@@ -1167,6 +1200,7 @@ async function seedOrders() {
 
 async function main() {
   await upsertCategories();
+  await upsertCampaigns();
   await cleanupCatalog();
   await upsertProducts();
   await cleanupCategories();

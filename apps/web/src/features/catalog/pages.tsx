@@ -1,12 +1,14 @@
 import { Badge, Button, EmptyState } from '@bora/ui';
 import type { CatalogListResponse, CatalogSectionSlug, Category, Product, ProductDetailSection, ProductPackageOption } from '@bora/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useI18n } from '../../app/providers/I18nProvider';
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
+import { CampaignSlider } from '../../shared/components/CampaignSlider';
+import { PriceTag } from '../../shared/components/PriceTag';
 import { formatCurrency } from '../../shared/lib/format';
 import { findSectionBySlug, mapLegacyCategoryToSection, storefrontSections } from '../../shared/lib/storefront';
 import { translateCategoryName } from '../../shared/lib/i18n';
@@ -156,7 +158,11 @@ function StorefrontProductCard({ product }: { product: Product }) {
           <h3>{product.name}</h3>
           <p className="dji-product-card__description">{product.shortDescription}</p>
           <div className="dji-product-card__price">
-            {product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Teklif Uzerine' : 'Quote on Request'}
+            {product.isPurchasable ? (
+              <PriceTag discountPercent={product.discountPercent} effectivePrice={product.effectivePrice} price={product.price} />
+            ) : (
+              'Teklif Uzerine'
+            )}
           </div>
           <span className="dji-product-card__meta">
             {product.isPurchasable ? `${product.stock} adet stokta` : 'Teklif ile satis'}
@@ -329,6 +335,40 @@ function InfoPage({ title, summary, pathLabel, highlights, sections }: InfoPageP
   );
 }
 
+function BestsellersRail({ products }: { products: Product[] }) {
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const [paused, setPaused] = useState(false);
+  const items = useMemo(() => (products.length > 1 ? [...products, ...products, ...products] : products), [products]);
+
+  useEffect(() => {
+    if (paused || products.length < 2) return;
+
+    const timer = setInterval(() => {
+      const rail = railRef.current;
+      if (!rail) return;
+
+      const copyWidth = rail.scrollWidth / 3;
+      const cardWidth = (rail.firstElementChild as HTMLElement | null)?.offsetWidth ?? 280;
+
+      if (rail.scrollLeft + cardWidth + 16 >= copyWidth * 2) {
+        rail.scrollTo({ left: copyWidth });
+      } else {
+        rail.scrollBy({ behavior: 'smooth', left: cardWidth + 16 });
+      }
+    }, 3200);
+
+    return () => clearInterval(timer);
+  }, [paused, products.length]);
+
+  return (
+    <div className="bestsellers-rail" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} ref={railRef}>
+      {items.map((product, index) => (
+        <StorefrontProductCard key={`${product.id}-${index}`} product={product} />
+      ))}
+    </div>
+  );
+}
+
 export function HomePage() {
   const { language } = useI18n();
   const categories = useCategories();
@@ -367,6 +407,8 @@ export function HomePage() {
 
       <ServiceBand overlay />
 
+      <CampaignSlider />
+
       <section className="dji-section">
         <div className="ui-shell">
           <div className="dji-section__heading">
@@ -398,11 +440,7 @@ export function HomePage() {
             <h2>COK SATANLAR</h2>
           </div>
           {heroLoading || featuredLoading ? <p className="dji-muted">Urunler yukleniyor...</p> : null}
-          <div className="dji-product-grid">
-            {purchasable.map((product) => (
-              <StorefrontProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <BestsellersRail products={purchasable} />
         </div>
       </section>
 
@@ -894,7 +932,11 @@ export function ProductDetailPage() {
                 </span>
               </div>
               <div className="dji-detail__price-row">
-                <strong>{formatCurrency(activePackage?.price ?? product.price, language)}</strong>
+                {activePackage && activePackage.price !== product.price ? (
+                  <strong>{formatCurrency(activePackage.price, language)}</strong>
+                ) : (
+                  <PriceTag discountPercent={product.discountPercent} effectivePrice={product.effectivePrice} price={product.price} />
+                )}
                 <span>{product.isPurchasable ? 'KDV dahil' : 'Teklif akisi'}</span>
                 <em>{product.stock > 0 ? 'Stokta var' : 'Stok bekleniyor'}</em>
               </div>

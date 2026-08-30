@@ -57,6 +57,19 @@ enum AttemptStatus {
   EXPIRED
 }
 
+model Campaign {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  badge       String?
+  imageUrl    String?
+  linkUrl     String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // A checkout in flight: holds the merchant_oid and the full order payload
 // while PayTR collects the card. An Order row is only created once the
 // callback confirms the money, so unpaid checkouts never become "orders".
@@ -133,6 +146,7 @@ model Product {
   badge            String?
   heroTag          String?
   price            Decimal       @db.Decimal(10, 2)
+  discountPercent  Int           @default(0)
   stock            Int
   isPublished      Boolean       @default(true)
   isPurchasable    Boolean       @default(false)

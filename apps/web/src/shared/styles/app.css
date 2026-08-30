@@ -2173,3 +2173,170 @@
     grid-template-columns: 72px 1fr;
   }
 }
+
+/* --- Kampanya slideri + fiyat rozeti + kayan bestseller rayli ---------- */
+.campaign-slider-section {
+  padding-top: 2rem;
+}
+
+.campaign-slider {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.campaign-slider__track {
+  display: flex;
+  transition: transform 0.45s ease;
+}
+
+.campaign-slide,
+.campaign-slide-link {
+  min-width: 100%;
+}
+
+.campaign-slide-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.campaign-slide {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 220px;
+  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary, #ff6a1a) 12%, transparent), transparent 60%),
+    color-mix(in srgb, var(--surface, #101318) 96%, transparent);
+}
+
+.campaign-slide h3 {
+  margin: 0.5rem 0;
+  font-size: 1.6rem;
+}
+
+.campaign-slide p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.campaign-slide__badge {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--primary, #ff6a1a);
+  color: #111;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.campaign-slide img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.campaign-slider__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.campaign-slider__arrow--prev {
+  left: 12px;
+}
+
+.campaign-slider__arrow--next {
+  right: 12px;
+}
+
+.campaign-slider__dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.campaign-slider__dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  padding: 0;
+}
+
+.campaign-slider__dots button.is-active {
+  background: var(--primary, #ff6a1a);
+}
+
+.bestsellers-rail {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+
+.bestsellers-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.bestsellers-rail > * {
+  flex: 0 0 280px;
+}
+
+.price-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.price-tag__old {
+  color: var(--text-soft);
+  text-decoration: line-through;
+  font-size: 0.85em;
+}
+
+.price-tag__now {
+  color: var(--text-strong, #f5f6f8);
+}
+
+.price-tag__badge {
+  background: color-mix(in srgb, var(--primary, #ff6a1a) 18%, transparent);
+  color: var(--primary, #ff6a1a);
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .campaign-slide {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-slide img {
+    height: 150px;
+  }
+}

@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
-import { formatCurrency } from '../../shared/lib/format';
+import { PriceTag } from '../../shared/components/PriceTag';
 import { translateCategoryName } from '../../shared/lib/i18n';
 
 export function FavoritesPage() {
@@ -82,7 +82,11 @@ export function FavoritesPage() {
                     <h2>{item.product.name}</h2>
                     <p>{item.product.shortDescription}</p>
                     <div className="favorite-card__meta">
-                      <strong>{item.product.isPurchasable ? formatCurrency(item.product.price, 'tr') : 'Teklif Uzerine'}</strong>
+                      {item.product.isPurchasable ? (
+                        <PriceTag discountPercent={item.product.discountPercent} effectivePrice={item.product.effectivePrice} price={item.product.price} />
+                      ) : (
+                        <strong>Teklif Uzerine</strong>
+                      )}
                       <span>{item.product.isPurchasable ? `${item.product.stock} adet stokta` : 'Kurumsal teklif ile ilerler'}</span>
                     </div>
                     <div className="favorite-card__actions">

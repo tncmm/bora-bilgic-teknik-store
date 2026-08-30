@@ -34,6 +34,9 @@ React + Vite + React Router frontend, Express + Prisma + PostgreSQL backend ve p
 ## Notlar
 
 - Storefront yayindaki tum urunleri listeler (marka kisitlamasi yok; marka urun formundan serbestce duzenlenebilir, varsayilan DJI'dir).
+- Ana sayfada kampanya slider'i vardir; kampanyalar `/admin/kampanyalar` ekranindan yonetilir (baslik, rozet, aciklama, link, sira, aktif/pasif).
+- Urun formundaki `Indirim (%)` alani vitrindeki tum fiyatlari ve odeme tutarini degistirir: kart/detayda eski fiyat ustunun cizilip efektif fiyat ve yuzde rozeti gorunur, sepet ve PayTR tahsilatinda efektif fiyat kullanilir.
+- Ana sayfadaki `Cok Satanlar` bolumu otomatik kayan yatay raya sahiptir (hover ile durur).
 - Kategori yapisi resmi DJI ailelerine gore sadeleştirildi: `Camera Drones`, `Handheld`, `Enterprise`.
 - Bazi DJI enterprise ve premium urunleri `satisa kapali` baslar; detay sayfasinda teklif odakli gorunur.
 - Admin panelinden urun bazinda satis ac/kapat yapilabilir; marka serbest metindir.

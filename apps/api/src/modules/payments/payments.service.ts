@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
+import { computeEffectivePrice } from '../../lib/serializers.js';
 import {
   isPaytrConfigured,
   newMerchantOid,
@@ -55,13 +56,16 @@ export class PaymentsService {
       }
     }
 
-    const items: AttemptItem[] = cart.items.map((item) => ({
-      productId: item.productId,
-      productName: item.product.name,
-      quantity: item.quantity,
-      unitPrice: Number(item.product.price),
-      lineTotal: Number(item.product.price) * item.quantity,
-    }));
+    const items: AttemptItem[] = cart.items.map((item) => {
+      const unitPrice = computeEffectivePrice(item.product.price, item.product.discountPercent ?? 0);
+      return {
+        productId: item.productId,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice,
+        lineTotal: unitPrice * item.quantity,
+      };
+    });
 
     const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
     const merchantOid = newMerchantOid(`BBT${Date.now().toString(36).toUpperCase()}`);

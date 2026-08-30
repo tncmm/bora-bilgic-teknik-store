@@ -14,6 +14,7 @@ export function AdminChrome() {
         <nav className="admin-sidebar__nav">
           <NavLink end to="/admin">{language === 'tr' ? 'Panel' : 'Dashboard'}</NavLink>
           <NavLink to="/admin/urunler">{language === 'tr' ? 'Urunler' : 'Products'}</NavLink>
+          <NavLink to="/admin/kampanyalar">Kampanyalar</NavLink>
           <NavLink to="/admin/kategoriler">Kategoriler</NavLink>
           <NavLink to="/admin/markalar">Markalar</NavLink>
           <NavLink to="/admin/siparisler">{language === 'tr' ? 'Siparisler' : 'Orders'}</NavLink>
