@@ -27,6 +27,15 @@ interface AdminMediaUploadResponse {
 
 export type AdminCategory = Category & { _count?: { products: number } };
 
+export interface CheckoutPayload {
+  shippingName: string;
+  shippingPhone: string;
+  shippingCity: string;
+  shippingDistrict: string;
+  shippingAddressLine: string;
+  notes?: string;
+}
+
 interface ApiErrorPayload {
   message?: string;
   fieldErrors?: Record<string, string[]>;
@@ -150,7 +159,7 @@ export const api = {
   removeCartItem(token: string, itemId: string) {
     return request<Cart>(`/cart/items/${itemId}`, { method: 'DELETE' }, token);
   },
-  startPayment(token: string, payload: Record<string, string>) {
+  startPayment(token: string, payload: CheckoutPayload) {
     return request<PaytrTokenResponse>('/payments/paytr/checkout', {
       method: 'POST',
       body: JSON.stringify(payload),

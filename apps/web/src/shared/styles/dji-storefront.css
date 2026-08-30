@@ -1386,28 +1386,9 @@ body {
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-
-.admin-grid,
-.admin-stat-grid,
-.admin-products-layout,
-.checkout-layout,
-.cart-layout,
-.profile-layout,
-.orders-layout {
-  display: grid;
-  gap: 1rem;
-}
-
 .admin-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-
-.admin-stat-grid,
-.checkout-layout,
-.cart-layout {
-  grid-template-columns: 1fr 360px;
-}
-
 .profile-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1490,11 +1471,6 @@ body {
   min-height: auto;
   font-size: 0.72rem;
 }
-
-.checkout-step-card {
-  margin-bottom: 1rem;
-}
-
 .checkout-step-card--compact {
   margin-top: 1rem;
 }
@@ -1519,45 +1495,9 @@ body {
   font-size: 0.82rem;
   font-weight: 800;
 }
-
-.checkout-empty-note {
-  padding: 0.9rem 1rem;
-}
-
-.checkout-choice-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .checkout-choice-grid--payment {
   grid-template-columns: 1fr;
 }
-
-.checkout-choice-card {
-  display: grid;
-  gap: 0.35rem;
-  width: 100%;
-  padding: 0.95rem;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(13, 19, 26, 0.72);
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
-}
-
-.checkout-choice-card:hover,
-.checkout-choice-card--active {
-  border-color: rgba(255, 106, 26, 0.55);
-  background: rgba(255, 106, 26, 0.1);
-  transform: translateY(-1px);
-}
-
-.checkout-choice-card small {
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 0.78rem;
-}
-
 .checkout-summary-box {
   margin-top: 0.75rem;
 }
@@ -1921,16 +1861,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .dji-product-grid,
-  .dji-contact-grid,
-  .admin-grid,
-  .profile-layout,
-  .checkout-choice-grid,
-  .orders-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .order-list-card {
+.order-list-card {
     align-items: flex-start;
     flex-direction: column;
   }
