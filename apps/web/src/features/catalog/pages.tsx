@@ -265,23 +265,6 @@ function StoreFooter() {
   );
 }
 
-function NewsletterBanner() {
-  return (
-    <section className="dji-newsletter">
-      <div className="ui-shell dji-newsletter__card">
-        <div>
-          <h2>BORA BILGIÇ TEKNIK BULTENI</h2>
-          <p>En yeni urunler, kampanyalar ve ilham verici icerik mailinize gelsin.</p>
-        </div>
-        <form className="dji-newsletter__form">
-          <input className="ui-input" placeholder="E-posta adresiniz" type="email" />
-          <Button type="submit">ABONE OL</Button>
-        </form>
-      </div>
-    </section>
-  );
-}
-
 interface InfoSection {
   heading: string;
   body?: string;
@@ -343,33 +326,6 @@ function InfoPage({ title, summary, pathLabel, highlights, sections }: InfoPageP
       <ServiceBand />
       <StoreFooter />
     </>
-  );
-}
-
-function EditorialPanels() {
-  return (
-    <section className="dji-section">
-      <div className="ui-shell dji-editorial-grid">
-        <article className="dji-editorial-card dji-editorial-card--wide">
-          <div>
-            <div className="dji-kicker">AERIAL PRODUCTION</div>
-            <h3>Mavic, Air ve Mini ailesi ile cekim brief'lerinizi tek vitrinde netlestirin.</h3>
-            <p>Seyahat icerigi, reklam prodüksiyonu ve hizli creator deployment senaryolari icin tek akista karar verin.</p>
-          </div>
-          <img alt="Aerial production" src="/storefront/hero-drone.png" />
-        </article>
-        <article className="dji-editorial-card">
-          <div className="dji-kicker">CREATOR FLOW</div>
-          <h3>Gimbal, action ve pocket sistemleri ayni kurgu icinde ilerler.</h3>
-          <p>Run-and-gun ekipler, mobil prodüksiyonlar ve social-first icerikler icin hizli setup kombinasyonlari.</p>
-        </article>
-        <article className="dji-editorial-card">
-          <div className="dji-kicker">ENTERPRISE FIELD</div>
-          <h3>Kurumsal kesif, denetim ve kamu guvenligi akislarini ayrica ele alin.</h3>
-          <p>Quote odakli sistemleri e-ticaret urunlerinden ayrıştıran, karar destekli bir vitrin yapisi.</p>
-        </article>
-      </div>
-    </section>
   );
 }
 
@@ -450,8 +406,6 @@ export function HomePage() {
         </div>
       </section>
 
-      <EditorialPanels />
-      <NewsletterBanner />
       <StoreFooter />
     </>
   );

@@ -535,34 +535,6 @@ body {
   gap: 2rem;
   overflow: hidden;
 }
-
-.dji-editorial-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr;
-  gap: 1rem;
-}
-
-.dji-editorial-card {
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(13, 18, 24, 0.96), rgba(9, 14, 19, 0.92));
-  overflow: hidden;
-}
-
-.dji-editorial-card h3 {
-  margin: 0.2rem 0 0.8rem;
-  color: #fff;
-  font-size: 1.8rem;
-  line-height: 1.2;
-}
-
-.dji-editorial-card p {
-  margin: 0;
-  color: var(--text-soft);
-  line-height: 1.7;
-}
-
 .dji-editorial-card--wide {
   display: grid;
   grid-template-columns: 1fr 0.9fr;
