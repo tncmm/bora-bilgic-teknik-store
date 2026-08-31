@@ -68,8 +68,8 @@ export function AddressFormPage() {
 
       showToast({
         tone: 'success',
-        title: isEdit ? 'Adres guncellendi' : 'Adres kaydedildi',
-        description: 'Checkout ekraninda tek tikla secilebilir.',
+        title: isEdit ? 'Adres güncellendi' : 'Adres kaydedildi',
+        description: 'Checkout ekranında tek tıkla seçilebilir.',
       });
       navigate('/profil/adresler');
     } catch (error) {
@@ -84,36 +84,36 @@ export function AddressFormPage() {
       <div className="ui-shell account-layout">
         <div className="admin-headline">
           <div>
-            <h1>{isEdit ? 'Adresi Duzenle' : 'Yeni Adres'}</h1>
-            <p>Teslimat bilgilerini kaydet; checkout aninda tek tikla sec.</p>
+            <h1>{isEdit ? 'Adresi Düzenle' : 'Yeni Adres'}</h1>
+            <p>Teslimat bilgilerini kaydet; checkout anında tek tıkla seç.</p>
           </div>
           <div className="admin-headline__actions">
             <Link to="/profil/adresler">
-              <Button variant="secondary">Vazgec</Button>
+              <Button variant="secondary">Vazgeç</Button>
             </Link>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-muted">Adres yukleniyor...</p>
+          <p className="text-muted">Adres yükleniyor...</p>
         ) : (
           <div className="admin-card" style={{ maxWidth: 640 }}>
             <form className="admin-form-grid" onSubmit={handleSubmit}>
-              <InputField label="Adres Basligi (Ev, Is...)" onChange={(event) => setForm((v) => ({ ...v, title: event.target.value }))} required value={form.title} />
+              <InputField label="Adres Başlığı (Ev, İş...)" onChange={(event) => setForm((v) => ({ ...v, title: event.target.value }))} required value={form.title} />
               <InputField label="Telefon" onChange={(event) => setForm((v) => ({ ...v, phone: event.target.value }))} required value={form.phone} />
-              <InputField label="Sehir" onChange={(event) => setForm((v) => ({ ...v, city: event.target.value }))} required value={form.city} />
-              <InputField label="Ilce" onChange={(event) => setForm((v) => ({ ...v, district: event.target.value }))} required value={form.district} />
+              <InputField label="Şehir" onChange={(event) => setForm((v) => ({ ...v, city: event.target.value }))} required value={form.city} />
+              <InputField label="İlçe" onChange={(event) => setForm((v) => ({ ...v, district: event.target.value }))} required value={form.district} />
               <InputField label="Posta Kodu (opsiyonel)" onChange={(event) => setForm((v) => ({ ...v, postalCode: event.target.value }))} value={form.postalCode} />
-              <InputField label="Ulke" onChange={(event) => setForm((v) => ({ ...v, country: event.target.value }))} required value={form.country} />
+              <InputField label="Ülke" onChange={(event) => setForm((v) => ({ ...v, country: event.target.value }))} required value={form.country} />
               <div className="full">
-                <TextareaField label="Acik Adres" onChange={(event) => setForm((v) => ({ ...v, line1: event.target.value }))} required value={form.line1} />
+                <TextareaField label="Açık Adres" onChange={(event) => setForm((v) => ({ ...v, line1: event.target.value }))} required value={form.line1} />
               </div>
               <div className="full auth-actions">
                 <Button disabled={saving} type="submit">
-                  {saving ? 'Kaydediliyor...' : isEdit ? 'Degisiklikleri Kaydet' : 'Adresi Kaydet'}
+                  {saving ? 'Kaydediliyor...' : isEdit ? 'Değişiklikleri Kaydet' : 'Adresi Kaydet'}
                 </Button>
                 <Link to="/profil/adresler">
-                  <Button variant="secondary">Vazgec</Button>
+                  <Button variant="secondary">Vazgeç</Button>
                 </Link>
               </div>
             </form>

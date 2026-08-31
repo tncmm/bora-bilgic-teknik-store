@@ -36,6 +36,13 @@ const envSchema = z.object({
   // Anything but '0' means test mode: a misconfigured deploy must never
   // silently start charging real cards.
   PAYTR_TEST_MODE: z.preprocess(blankToUndefined, z.enum(['0', '1']).optional()),
+  // SMTP mail — when any of these is blank the mail service falls back to
+  // console logging so the auth flow still works during local development.
+  SMTP_HOST: optionalText,
+  SMTP_PORT: z.preprocess(blankToUndefined, z.coerce.number().positive().int().optional()),
+  SMTP_USER: optionalText,
+  SMTP_PASS: optionalText,
+  SMTP_FROM: optionalText,
 });
 
 export const env = envSchema.parse(process.env);

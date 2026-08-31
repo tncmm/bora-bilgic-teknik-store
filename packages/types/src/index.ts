@@ -103,6 +103,7 @@ export interface Product {
   heroTag?: string | null;
   isPublished: boolean;
   isPurchasable: boolean;
+  isBestseller: boolean;
   ratingAverage?: number;
   reviewCount?: number;
   featureTags?: string[];
@@ -255,4 +256,19 @@ export interface Campaign {
   linkUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
+}
+
+export interface HeroSlide {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  ctaText?: string | null;
+  ctaLink?: string | null;
+  imageUrl: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface MessageResponse {
+  message: string;
 }

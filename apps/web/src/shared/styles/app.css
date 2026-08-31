@@ -1258,6 +1258,10 @@
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
+
+  .admin-page > * {
+    min-width: 0;
+  }
 .cart-page__stats,
   .cart-product-card__meta {
     grid-template-columns: 1fr;
@@ -1407,6 +1411,12 @@
   padding: 0;
   border: 0;
   background: transparent;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table--flat table {
+  min-width: 640px;
 }
 
 .admin-table--flat tr:hover td {
@@ -2345,5 +2355,54 @@
   .campaign-slide {
     min-height: 260px;
     padding: 1.5rem;
+  }
+}
+
+/* --- Odeme iframe'i ------------------------------------------------------ */
+.paytr-iframe {
+  width: 100%;
+  min-height: 640px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* --- Mobil responsive duzeltmeleri -------------------------------------- */
+@media (max-width: 640px) {
+  .page-section {
+    padding: 96px 0 56px !important;
+  }
+
+  .paytr-iframe {
+    min-height: 400px;
+  }
+
+  .favorites-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .favorite-card {
+    grid-template-columns: 1fr;
+  }
+
+  .favorite-card__media {
+    min-height: 200px;
+  }
+
+  .auth-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .address-pick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-grid,
+  .admin-price-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-toolbar {
+    flex-wrap: wrap;
   }
 }

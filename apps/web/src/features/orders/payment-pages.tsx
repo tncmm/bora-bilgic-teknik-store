@@ -19,17 +19,17 @@ export function PaymentSuccessPage() {
           <EmptyState
             description={
               language === 'tr'
-                ? 'Odemeniz alindi. Onay birkaç saniye icinde sunucumuza ulasir ve siparisiniz otomatik olusur; Siparislerim sayfasinda belirecektir.'
+                ? 'Ödemeniz alındı. Onay birkaç saniye içinde sunucumuza ulaşır ve siparişiniz otomatik oluşur; Siparişlerim sayfasında belirecektir.'
                 : 'Your payment has been received. Confirmation reaches our server within a few seconds and your order is created automatically; it will appear under My Orders.'
             }
-            title={language === 'tr' ? 'Odeme Alindi' : 'Payment Received'}
+            title={language === 'tr' ? 'Ödeme Alındı' : 'Payment Received'}
           />
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
             <Link to="/siparislerim">
-              <Button>{language === 'tr' ? 'Siparislerime Git' : 'Go to My Orders'}</Button>
+              <Button>{language === 'tr' ? 'Siparişlerime Git' : 'Go to My Orders'}</Button>
             </Link>
             <Link to="/katalog">
-              <Button variant="secondary">{language === 'tr' ? 'Alisverise Devam Et' : 'Continue Shopping'}</Button>
+              <Button variant="secondary">{language === 'tr' ? 'Alışverişe Devam Et' : 'Continue Shopping'}</Button>
             </Link>
           </div>
         </div>
@@ -48,17 +48,17 @@ export function PaymentFailPage() {
           <EmptyState
             description={
               language === 'tr'
-                ? 'Odeme tamamlanamadi. Sepetiniz aynen duruyor ve stok rezervi kaldirildi; dilediginizde yeniden deneyebilirsiniz.'
+                ? 'Ödeme tamamlanamadı. Sepetiniz aynen duruyor ve stok rezervi kaldırıldı; dilediğinizde yeniden deneyebilirsiniz.'
                 : 'The payment could not be completed. Your cart is preserved and the stock reservation was released; you can retry whenever you like.'
             }
-            title={language === 'tr' ? 'Odeme Tamamlanamadi' : 'Payment Not Completed'}
+            title={language === 'tr' ? 'Ödeme Tamamlanamadı' : 'Payment Not Completed'}
           />
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
             <Link to="/sepet">
-              <Button>{language === 'tr' ? 'Sepete Don ve Tekrar Dene' : 'Back to Cart and Retry'}</Button>
+              <Button>{language === 'tr' ? 'Sepete Dön ve Tekrar Dene' : 'Back to Cart and Retry'}</Button>
             </Link>
             <Link to="/katalog">
-              <Button variant="secondary">{language === 'tr' ? 'Alisverise Don' : 'Back to Shopping'}</Button>
+              <Button variant="secondary">{language === 'tr' ? 'Alışverişe Dön' : 'Back to Shopping'}</Button>
             </Link>
           </div>
         </div>

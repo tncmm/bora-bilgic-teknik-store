@@ -84,6 +84,7 @@ describe('CatalogService', () => {
       page: 2,
       limit: 6,
       onlyPurchasable: false,
+      onlyBestseller: false,
     });
     expect(response.total).toBe(1);
     expect(response.availableFilters.sorts).toEqual(['newest', 'price-asc', 'price-desc', 'rating']);

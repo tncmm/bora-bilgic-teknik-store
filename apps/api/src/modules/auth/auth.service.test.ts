@@ -35,6 +35,9 @@ describe('AuthService', () => {
       lastName: 'Tunc',
       email: 'mustafa@example.com',
       passwordHash: expect.any(String),
+      emailVerified: false,
+      verifyToken: expect.any(String),
+      verifyTokenExpiry: expect.any(Date),
     });
     expect(createUser.mock.calls[0][0]).not.toHaveProperty('password');
   });

@@ -61,11 +61,11 @@ function validateMediaFile(file: File, kind: AdminUploadKind) {
     kind === 'video' ? PRODUCT_MEDIA_LIMITS.videoBytes : kind === 'poster' ? PRODUCT_MEDIA_LIMITS.posterBytes : PRODUCT_MEDIA_LIMITS.imageBytes;
 
   if (!allowedMimeTypes.includes(file.type as never)) {
-    throw new Error(kind === 'video' ? 'Yalnizca MP4 veya WEBM yukleyebilirsiniz.' : 'Yalnizca JPG, PNG, WEBP veya AVIF yukleyebilirsiniz.');
+    throw new Error(kind === 'video' ? 'Yalnızca MP4 veya WEBM yükleyebilirsiniz.' : 'Yalnızca JPG, PNG, WEBP veya AVIF yükleyebilirsiniz.');
   }
 
   if (file.size > maxBytes) {
-    throw new Error(`Dosya ${formatMegabytes(maxBytes)} sinirini asamaz.`);
+    throw new Error(`Dosya ${formatMegabytes(maxBytes)} sınırını aşamaz.`);
   }
 }
 
@@ -73,7 +73,7 @@ async function readFileAsBase64(file: File) {
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ''));
-    reader.onerror = () => reject(new Error('Dosya okunamadi.'));
+    reader.onerror = () => reject(new Error('Dosya okunamadı.'));
     reader.readAsDataURL(file);
   });
 
@@ -226,9 +226,9 @@ export function AdminProductFormPage() {
         };
       });
 
-      showToast({ tone: 'success', title: 'Medya yuklendi', description: 'Dosya Cloudflare R2 uzerine yuklendi.' });
+      showToast({ tone: 'success', title: 'Medya yüklendi', description: 'Dosya Cloudflare R2 üzerine yüklendi.' });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Yukleme basarisiz', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Yükleme başarısız', description: (error as Error).message });
     } finally {
       setUploadingMediaId(null);
     }
@@ -257,17 +257,17 @@ export function AdminProductFormPage() {
     const images = normalizedMedia.filter((item) => item.kind === 'image');
 
     if (images.length === 0) {
-      throw new Error('En az bir gorsel eklemelisiniz (yukleyin veya URL yapistirin).');
+      throw new Error('En az bir görsel eklemelisiniz (yükleyin veya URL yapıştırın).');
     }
 
     if (normalizedMedia.some((item) => item.kind === 'video' && !item.thumbnailUrl)) {
-      throw new Error('Her video icin bir poster gorseli gereklidir.');
+      throw new Error('Her video için bir poster görseli gereklidir.');
     }
 
     const specs = form.specs.filter((spec) => spec.name.trim() && spec.value.trim());
 
     if (specs.length === 0) {
-      throw new Error('En az bir teknik ozellik girin.');
+      throw new Error('En az bir teknik özellik girin.');
     }
 
     const primaryId = images.find((item) => item.isPrimary)?.id ?? images[0]?.id;
@@ -317,8 +317,8 @@ export function AdminProductFormPage() {
 
       showToast({
         tone: 'success',
-        title: isEdit ? 'Urun guncellendi' : 'Urun olusturuldu',
-        description: 'Degisiklikler katalogda hemen gorunur.',
+        title: isEdit ? 'Ürün güncellendi' : 'Ürün oluşturuldu',
+        description: 'Değişiklikler katalogda hemen görünür.',
       });
       navigate('/admin/urunler');
     } catch (error) {
@@ -334,7 +334,7 @@ export function AdminProductFormPage() {
     return (
       <div className="admin-page">
         <p className="text-muted" style={{ padding: '2rem 0' }}>
-          Urun bilgileri yukleniyor...
+          Ürün bilgileri yükleniyor...
         </p>
       </div>
     );
@@ -343,9 +343,9 @@ export function AdminProductFormPage() {
   if (isEdit && !product) {
     return (
       <div className="admin-page">
-        <EmptyState description="Bu urun artik mevcut degil veya baska bir hesaptan kaldirilmis olabilir." title="Urun bulunamadi" />
+        <EmptyState description="Bu ürün artık mevcut değil veya başka bir hesaptan kaldırılmış olabilir." title="Ürün bulunamadı" />
         <Link to="/admin/urunler">
-          <Button variant="secondary">Urun Listesine Don</Button>
+          <Button variant="secondary">Ürün Listesine Dön</Button>
         </Link>
       </div>
     );
@@ -355,8 +355,8 @@ export function AdminProductFormPage() {
     <div className="admin-page">
       <div className="admin-headline">
         <div>
-          <h1>{isEdit ? 'Urunu Duzenle' : 'Yeni Urun'}</h1>
-          <p>{isEdit ? `${product?.name ?? ''} urununun bilgilerini guncelleyin.` : 'Kataloga yeni urun ekleyin.'}</p>
+          <h1>{isEdit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</h1>
+          <p>{isEdit ? `${product?.name ?? ''} ürününün bilgilerini güncelleyin.` : 'Kataloga yeni ürün ekleyin.'}</p>
         </div>
       </div>
 
@@ -374,7 +374,7 @@ export function AdminProductFormPage() {
             </div>
             <div className="admin-form-grid">
               <div className="full">
-                <InputField label="Urun Adi" onChange={(event) => handleNameChange(event.target.value)} value={form.name} />
+                <InputField label="Ürün Adı" onChange={(event) => handleNameChange(event.target.value)} value={form.name} />
               </div>
               <div>
                 <InputField
@@ -385,7 +385,7 @@ export function AdminProductFormPage() {
                   }}
                   value={form.slug}
                 />
-                <p className="admin-field-hint">/urun/{form.slug || '...'} adresinde gorunur; ada gore otomatik uretilir.</p>
+                <p className="admin-field-hint">/urun/{form.slug || '...'} adresinde görünür; ada göre otomatik üretilir.</p>
               </div>
               <div>
                 <InputField label="Marka" onChange={(event) => setForm((value) => ({ ...value, brand: event.target.value }))} value={form.brand} />
@@ -423,7 +423,7 @@ export function AdminProductFormPage() {
                 </div>
                 <div>
                   <InputField
-                    label="Indirim (%)"
+                    label="İndirim (%)"
                     onChange={(event) => setForm((value) => ({ ...value, discountPercent: event.target.value }))}
                     min="0"
                     max="100"
@@ -442,26 +442,26 @@ export function AdminProductFormPage() {
 
           <div className="admin-card">
             <div className="admin-card__head">
-              <h2>Aciklamalar</h2>
+              <h2>Açıklamalar</h2>
             </div>
             <div className="admin-form-grid">
               <div className="full">
                 <InputField
-                  label="Kisa Aciklama"
+                  label="Kısa Açıklama"
                   onChange={(event) => setForm((value) => ({ ...value, shortDescription: event.target.value }))}
                   value={form.shortDescription}
                 />
-                <p className="admin-field-hint">Katalog kartlarinda gorunen tek satirlik ozet.</p>
+                <p className="admin-field-hint">Katalog kartlarında görünen tek satırlık özet.</p>
               </div>
               <div className="full">
                 <TextareaField
-                  label="Detayli Aciklama"
+                  label="Detaylı Açıklama"
                   onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
                   value={form.description}
                 />
               </div>
               <div>
-                <InputField label="Rozet (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, badge: event.target.value }))} placeholder="YENI, COK SATAN..." value={form.badge} />
+                <InputField label="Rozet (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, badge: event.target.value }))} placeholder="YENİ, ÇOK SATAN..." value={form.badge} />
               </div>
               <div>
                 <InputField label="Hero Etiketi (opsiyonel)" onChange={(event) => setForm((value) => ({ ...value, heroTag: event.target.value }))} value={form.heroTag} />
@@ -473,8 +473,8 @@ export function AdminProductFormPage() {
             <div className="admin-card__head">
               <h2>Medya</h2>
               <p>
-                Gorseller en fazla {formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}, videolar {formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}. Ilk gorsel kapaktir;
-                yildizla degistirebilirsiniz.
+                Görseller en fazla {formatMegabytes(PRODUCT_MEDIA_LIMITS.imageBytes)}, videolar {formatMegabytes(PRODUCT_MEDIA_LIMITS.videoBytes)}. İlk görsel kapaktır;
+                yıldızla değiştirebilirsiniz.
               </p>
             </div>
             <div className="media-grid">
@@ -482,20 +482,20 @@ export function AdminProductFormPage() {
                 <div className="media-tile" key={media.id}>
                   <div className="media-tile__preview">
                     {media.kind === 'image' && media.url ? (
-                      <img alt={form.name || 'Urun gorseli'} src={media.url} />
+                      <img alt={form.name || 'Ürün görseli'} src={media.url} />
                     ) : media.kind === 'video' && media.thumbnailUrl ? (
                       <img alt="Video posteri" src={media.thumbnailUrl} />
                     ) : (
-                      <span className="media-tile__placeholder">{media.kind === 'video' ? 'VIDEO' : 'Gorsel yok'}</span>
+                      <span className="media-tile__placeholder">{media.kind === 'video' ? 'VIDEO' : 'Görsel yok'}</span>
                     )}
-                    <button className="media-tile__remove" onClick={() => removeMedia(media.id)} type="button" aria-label="Medyayi kaldir">
+                    <button className="media-tile__remove" onClick={() => removeMedia(media.id)} type="button" aria-label="Medyayı kaldır">
                       ×
                     </button>
                     {media.kind === 'image' && media.url ? (
                       <button
                         className={['media-tile__cover', media.isPrimary ? 'is-active' : ''].filter(Boolean).join(' ')}
                         onClick={() => setPrimaryImage(media.id)}
-                        title="Kapak gorseli yap"
+                        title="Kapak görseli yap"
                         type="button"
                       >
                         ★
@@ -506,11 +506,11 @@ export function AdminProductFormPage() {
                     <input
                       className="ui-input media-tile__url"
                       onChange={(event) => updateMedia(media.id, (value) => ({ ...value, url: event.target.value }))}
-                      placeholder={media.kind === 'video' ? 'Video URL veya yukleyin' : 'Gorsel URL veya yukleyin'}
+                      placeholder={media.kind === 'video' ? 'Video URL veya yükleyin' : 'Görsel URL veya yükleyin'}
                       value={media.url}
                     />
                     <label className="media-tile__upload">
-                      {uploadingMediaId === media.id ? 'Yukleniyor...' : media.kind === 'video' ? 'Video Yukle' : 'Gorsel Yukle'}
+                      {uploadingMediaId === media.id ? 'Yükleniyor...' : media.kind === 'video' ? 'Video Yükle' : 'Görsel Yükle'}
                       <input
                         accept={media.kind === 'video' ? PRODUCT_MEDIA_VIDEO_MIME_TYPES.join(',') : PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
                         hidden
@@ -529,11 +529,11 @@ export function AdminProductFormPage() {
                       <input
                         className="ui-input media-tile__url"
                         onChange={(event) => updateMedia(media.id, (value) => ({ ...value, thumbnailUrl: event.target.value }))}
-                        placeholder="Poster URL veya yukleyin"
+                        placeholder="Poster URL veya yükleyin"
                         value={media.thumbnailUrl ?? ''}
                       />
                       <label className="media-tile__upload media-tile__upload--soft">
-                        Poster Yukle
+                        Poster Yükle
                         <input
                           accept={PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
                           hidden
@@ -553,7 +553,7 @@ export function AdminProductFormPage() {
 
               <div className="media-tile media-tile--add">
                 <button className="media-tile__add" onClick={() => addMedia('image')} type="button">
-                  + Gorsel
+                  + Görsel
                 </button>
                 <button className="media-tile__add" onClick={() => addMedia('video')} type="button">
                   + Video
@@ -564,8 +564,8 @@ export function AdminProductFormPage() {
 
           <div className="admin-card">
             <div className="admin-card__head">
-              <h2>Teknik Ozellikler</h2>
-              <p>Satir satir "ozellik / deger" ciftleri ekleyin (ornegin: Sensor / 1 inch CMOS).</p>
+              <h2>Teknik Özellikler</h2>
+              <p>Satır satır "özellik / değer" çiftleri ekleyin (örneğin: Sensör / 1 inch CMOS).</p>
             </div>
             <div className="spec-list">
               {form.specs.map((spec) => (
@@ -573,23 +573,23 @@ export function AdminProductFormPage() {
                   <input
                     className="ui-input"
                     onChange={(event) => updateSpec(spec.id, { name: event.target.value })}
-                    placeholder="Ozellik (Sensor)"
+                    placeholder="Özellik (Sensör)"
                     value={spec.name}
                   />
                   <input
                     className="ui-input"
                     onChange={(event) => updateSpec(spec.id, { value: event.target.value })}
-                    placeholder="Deger (1 inch CMOS)"
+                    placeholder="Değer (1 inch CMOS)"
                     value={spec.value}
                   />
-                  <button className="spec-row__remove" onClick={() => removeSpec(spec.id)} type="button" aria-label="Ozellik satirini sil">
+                  <button className="spec-row__remove" onClick={() => removeSpec(spec.id)} type="button" aria-label="Özellik satırını sil">
                     ×
                   </button>
                 </div>
               ))}
             </div>
             <Button onClick={addSpec} style={{ marginTop: '0.75rem' }} type="button" variant="secondary">
-              + Ozellik Ekle
+              + Özellik Ekle
             </Button>
           </div>
         </div>
@@ -597,33 +597,33 @@ export function AdminProductFormPage() {
         <aside className="admin-editor__aside">
           <div className="admin-card">
             <div className="admin-card__head">
-              <h2>Yayin</h2>
+              <h2>Yayın</h2>
             </div>
             <label className="admin-switch-row">
               <input checked={form.isPublished} onChange={(event) => setForm((value) => ({ ...value, isPublished: event.target.checked }))} type="checkbox" />
               <span className="admin-switch" aria-hidden="true" />
               <span>
-                <strong>Vitrinde yayinda</strong>
-                <small>Kapaliysa urun katalogda hic gorunmez.</small>
+                <strong>Vitrinde yayında</strong>
+                <small>Kapalıysa ürün katalogda hiç görünmez.</small>
               </span>
             </label>
             <label className="admin-switch-row">
               <input checked={form.isPurchasable} onChange={(event) => setForm((value) => ({ ...value, isPurchasable: event.target.checked }))} type="checkbox" />
               <span className="admin-switch" aria-hidden="true" />
               <span>
-                <strong>Satin alinabilir</strong>
-                <small>Kapaliysa urun teklif modunda gorunur, sepete eklenemez.</small>
+                <strong>Satın alınabilir</strong>
+                <small>Kapalıysa ürün teklif modunda görünür, sepete eklenemez.</small>
               </span>
             </label>
           </div>
 
           <div className="admin-card admin-save-card">
             <Button disabled={submitting} style={{ width: '100%' }} type="submit">
-              {submitting ? 'Kaydediliyor...' : isEdit ? 'Degisiklikleri Kaydet' : 'Urunu Olustur'}
+              {submitting ? 'Kaydediliyor...' : isEdit ? 'Değişiklikleri Kaydet' : 'Ürünü Oluştur'}
             </Button>
             <Link to="/admin/urunler" style={{ width: '100%' }}>
               <Button style={{ width: '100%' }} variant="secondary">
-                Vazgec
+                Vazgeç
               </Button>
             </Link>
           </div>

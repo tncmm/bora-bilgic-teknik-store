@@ -42,30 +42,30 @@ export function AdminDashboardPage() {
     <div className="admin-page">
       <div className="admin-headline">
         <div>
-          <h1>Genel Bakis</h1>
-          <p>Magazanin gunluk nabzi: satis, siparis ve stok durumu.</p>
+          <h1>Genel Bakış</h1>
+          <p>Mağazanın günlük nabzı: satış, sipariş ve stok durumu.</p>
         </div>
         <div className="admin-headline__actions">
           <Link to="/admin/urunler/yeni">
-            <Button>+ Yeni Urun</Button>
+            <Button>+ Yeni Ürün</Button>
           </Link>
         </div>
       </div>
 
       <div className="admin-grid">
-        <StatCard hint="Odenmis siparislerin toplami" title="Toplam Satis" value={formatCurrency(metrics.totalSales, 'tr')} />
-        <StatCard hint="Islem bekleyen siparisler" title="Yeni Siparisler" value={`${metrics.newOrders}`} />
-        <StatCard hint="Toplam urun adedi" title="Aktif Stok" value={`${metrics.activeInventory}`} />
-        <StatCard hint={`Stogu ${LOW_STOCK_THRESHOLD} ve altinda olan urunler`} title="Dusuk Stok" value={`${metrics.lowStockCount}`} />
+        <StatCard hint="Ödenmiş siparişlerin toplamı" title="Toplam Satış" value={formatCurrency(metrics.totalSales, 'tr')} />
+        <StatCard hint="İşlem bekleyen siparişler" title="Yeni Siparişler" value={`${metrics.newOrders}`} />
+        <StatCard hint="Toplam ürün adedi" title="Aktif Stok" value={`${metrics.activeInventory}`} />
+        <StatCard hint={`Stoğu ${LOW_STOCK_THRESHOLD} ve altında olan ürünler`} title="Düşük Stok" value={`${metrics.lowStockCount}`} />
       </div>
 
       <div className="admin-card">
         <div className="admin-card__head">
-          <h2>Dusuk Stoktaki Urunler</h2>
-          <p>Yeniden siparis vermeniz gereken urunler burada listelenir.</p>
+          <h2>Düşük Stoktaki Ürünler</h2>
+          <p>Yeniden sipariş vermeniz gereken ürünler burada listelenir.</p>
         </div>
         {lowStockProducts.length === 0 ? (
-          <p className="text-muted">Kritik stokta urun yok.</p>
+          <p className="text-muted">Kritik stokta ürün yok.</p>
         ) : (
           <div className="admin-lowstock-list">
             {lowStockProducts.map((product) => (
@@ -75,10 +75,10 @@ export function AdminDashboardPage() {
                   <span className="text-muted">{translateCategoryName('tr', product.category.slug, product.category.name)}</span>
                 </div>
                 <span className={product.stock === 0 ? 'order-badge order-badge--payment-failed' : 'order-badge order-badge--payment-pending'}>
-                  {product.stock === 0 ? 'Tukendi' : `${product.stock} adet kaldi`}
+                  {product.stock === 0 ? 'Tükendi' : `${product.stock} adet kaldı`}
                 </span>
                 <Link to={`/admin/urunler/${product.id}`}>
-                  <Button variant="secondary">Duzenle</Button>
+                  <Button variant="secondary">Düzenle</Button>
                 </Link>
               </div>
             ))}

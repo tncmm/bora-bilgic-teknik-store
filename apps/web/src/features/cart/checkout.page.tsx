@@ -86,7 +86,7 @@ export function CheckoutPage() {
       const session = await api.startPayment(token, resolved);
       setIframeToken(session.iframeToken);
     } catch (error) {
-      showToast({ tone: 'error', title: 'Odeme baslatilamadi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Ödeme başlatılamadı', description: (error as Error).message });
     } finally {
       setSubmitting(false);
     }
@@ -96,9 +96,9 @@ export function CheckoutPage() {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell account-layout">
-          <EmptyState description="Odeme adimina gecmek icin once giris yapmalisin." title="Giris gerekli" />
+          <EmptyState description="Ödeme adımına geçmek için önce giriş yapmalısın." title="Giriş gerekli" />
           <Link to="/giris">
-            <Button>Giris Yap</Button>
+            <Button>Giriş Yap</Button>
           </Link>
         </div>
       </section>
@@ -109,9 +109,9 @@ export function CheckoutPage() {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell account-layout">
-          <EmptyState description="Sepetin bos; odeme oncesi en az bir urun eklemelisin." title="Sepet bos" />
+          <EmptyState description="Sepetin boş; ödeme öncesi en az bir ürün eklemelisin." title="Sepet boş" />
           <Link to="/katalog">
-            <Button>Kataloga Don</Button>
+            <Button>Kataloğa Dön</Button>
           </Link>
         </div>
       </section>
@@ -124,8 +124,8 @@ export function CheckoutPage() {
         <div className="ui-shell account-layout">
           <div className="admin-card">
             <div className="admin-card__head">
-              <h2>Guvenli Odeme</h2>
-              <p>Kart bilgilerin yalnizca PayTR tarafindan islenir. Odeme onaylandiginda siparisin otomatik olusur.</p>
+              <h2>Güvenli Ödeme</h2>
+              <p>Kart bilgilerin yalnızca PayTR tarafından işlenir. Ödeme onaylandığında siparişin otomatik oluşur.</p>
             </div>
             <PaytrIframe token={iframeToken} />
           </div>
@@ -141,8 +141,8 @@ export function CheckoutPage() {
       <div className="ui-shell">
         <div className="admin-headline">
           <div>
-            <h1>Teslimat ve Odeme</h1>
-            <p>Uc kisa adim: adres, not, guvenli odeme.</p>
+            <h1>Teslimat ve Ödeme</h1>
+            <p>Üç kısa adım: adres, not, güvenli ödeme.</p>
           </div>
         </div>
 
@@ -153,7 +153,7 @@ export function CheckoutPage() {
                 <span className="checkout-step-no">1</span>
                 <div>
                   <h2>Teslimat Adresi</h2>
-                  <p>Kayitli adreslerinden sec veya yeni bir tane gir.</p>
+                  <p>Kayıtlı adreslerinden seç veya yeni bir tane gir.</p>
                 </div>
               </div>
 
@@ -182,7 +182,7 @@ export function CheckoutPage() {
                     type="button"
                   >
                     <strong>+ Yeni adres gir</strong>
-                    <span className="text-muted">Bu siparis icin bir defalik adres</span>
+                    <span className="text-muted">Bu sipariş için bir defalık adres</span>
                   </button>
                 </div>
               ) : null}
@@ -191,17 +191,17 @@ export function CheckoutPage() {
                 <div className="admin-form-grid" style={{ marginTop: '1rem' }}>
                   <InputField label="Ad Soyad" onChange={(e) => setForm((v) => ({ ...v, shippingName: e.target.value }))} value={resolved.shippingName} />
                   <InputField label="Telefon" onChange={(e) => setForm((v) => ({ ...v, shippingPhone: e.target.value }))} value={resolved.shippingPhone} />
-                  <InputField label="Sehir" onChange={(e) => setForm((v) => ({ ...v, shippingCity: e.target.value }))} value={form.shippingCity} />
-                  <InputField label="Ilce" onChange={(e) => setForm((v) => ({ ...v, shippingDistrict: e.target.value }))} value={form.shippingDistrict} />
+                  <InputField label="Şehir" onChange={(e) => setForm((v) => ({ ...v, shippingCity: e.target.value }))} value={form.shippingCity} />
+                  <InputField label="İlçe" onChange={(e) => setForm((v) => ({ ...v, shippingDistrict: e.target.value }))} value={form.shippingDistrict} />
                   <div className="full">
-                    <TextareaField label="Acik Adres" onChange={(e) => setForm((v) => ({ ...v, shippingAddressLine: e.target.value }))} value={form.shippingAddressLine} />
+                    <TextareaField label="Açık Adres" onChange={(e) => setForm((v) => ({ ...v, shippingAddressLine: e.target.value }))} value={form.shippingAddressLine} />
                   </div>
                 </div>
               ) : null}
 
               {addresses.length > 0 ? (
                 <p className="admin-field-hint" style={{ marginTop: '0.75rem' }}>
-                  Adreslerini <Link to="/profil/adresler">profilindeki adres defterinden</Link> yonetebilirsin.
+                  Adreslerini <Link to="/profil/adresler">profilindeki adres defterinden</Link> yönetebilirsin.
                 </p>
               ) : null}
             </div>
@@ -210,26 +210,26 @@ export function CheckoutPage() {
               <div className="checkout-step-head">
                 <span className="checkout-step-no">2</span>
                 <div>
-                  <h2>Siparis Notu</h2>
-                  <p>Opsiyonel — teslimat ekibi icin bir sey ekleyebilirsin.</p>
+                  <h2>Sipariş Notu</h2>
+                  <p>Opsiyonel — teslimat ekibi için bir şey ekleyebilirsin.</p>
                 </div>
               </div>
-              <TextareaField label="" onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))} placeholder="Orn: Kapiya birakilabilir." value={form.notes} />
+              <TextareaField label="" onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))} placeholder="Örn: Kapıya bırakılabilir." value={form.notes} />
             </div>
 
             <div className="admin-card">
               <div className="checkout-step-head">
                 <span className="checkout-step-no">3</span>
                 <div>
-                  <h2>Odeme</h2>
-                  <p>Kart ile; guvenli PayTR cercevesinde.</p>
+                  <h2>Ödeme</h2>
+                  <p>Kart ile; güvenli PayTR çerçevesinde.</p>
                 </div>
               </div>
               <div className="checkout-pay-info">
                 <span className="material-symbols-outlined">credit_card</span>
                 <div>
                   <strong>Kart bilgilerin bizde saklanmaz</strong>
-                  <p>Odeme formu PayTR tarafindan sunulur; onay sonrasi siparisin otomatik olusur.</p>
+                  <p>Ödeme formu PayTR tarafından sunulur; onay sonrası siparişin otomatik oluşur.</p>
                 </div>
               </div>
             </div>
@@ -238,8 +238,8 @@ export function CheckoutPage() {
           <aside className="checkout-grid__aside">
             <div className="admin-card">
               <div className="admin-card__head">
-                <h2>Siparis Ozeti</h2>
-                <p>{itemCount} urun</p>
+                <h2>Sipariş Özeti</h2>
+                <p>{itemCount} ürün</p>
               </div>
               <div className="checkout-lines">
                 {cart.items.map((item) => (
@@ -261,9 +261,9 @@ export function CheckoutPage() {
               </div>
 
               <Button disabled={!formReady || submitting} style={{ width: '100%', marginTop: '1rem' }} type="submit">
-                {submitting ? 'Odeme Hazirlaniyor...' : 'Guvenli Odemeye Gec'}
+                {submitting ? 'Ödeme Hazırlanıyor...' : 'Güvenli Ödemeye Geç'}
               </Button>
-              {!formReady ? <p className="admin-field-hint">Devam icin teslimat bilgilerini tamamla.</p> : null}
+              {!formReady ? <p className="admin-field-hint">Devam için teslimat bilgilerini tamamla.</p> : null}
             </div>
           </aside>
         </form>

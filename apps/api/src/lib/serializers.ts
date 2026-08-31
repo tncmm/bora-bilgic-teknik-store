@@ -108,6 +108,7 @@ export function serializeProduct(product: any): Product {
     heroTag: product.heroTag,
     isPublished: product.isPublished,
     isPurchasable: product.isPurchasable,
+    isBestseller: product.isBestseller ?? false,
     categoryId: product.categoryId,
     category: serializeCategory(product.category),
     section: product.category?.slug,

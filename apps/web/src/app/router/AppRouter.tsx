@@ -1,9 +1,10 @@
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
-import { AdminBrandsPage, AdminCampaignsPage, AdminCategoriesPage, AdminDashboardPage, AdminOrdersPage, AdminProductFormPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
-import { LoginPage, RegisterPage } from '../../features/auth/pages';
+import { AdminBrandsPage, AdminCampaignsPage, AdminCategoriesPage, AdminDashboardPage, AdminHeroSlidesPage, AdminOrdersPage, AdminProductFormPage, AdminProductsPage, AdminUsersPage } from '../../features/admin/pages';
+import { LoginPage, RegisterPage, VerifyEmailPage } from '../../features/auth/pages';
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
-import { CatalogPage, ContactPage, DeliveryPage, DistanceSalesPage, HomePage, PrivacyPage, ProductDetailPage, ReturnPage } from '../../features/catalog/pages';
+import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
+import { DeliveryPage, DistanceSalesPage, FaqPage, PrivacyPage, ReturnPage, WarrantyPage } from '../../features/catalog/info-pages';
 import { OrderDetailPage, OrdersPage } from '../../features/orders/pages';
 import { PaymentFailPage, PaymentSuccessPage } from '../../features/orders/payment-pages';
 import { AddressFormPage, AddressesPage, FavoritesPage, ProfilePage } from '../../features/profile/pages';
@@ -59,12 +60,15 @@ export function AppRouter() {
           <Route element={<ReturnPage />} path="/iade" />
           <Route element={<DistanceSalesPage />} path="/mesafeli-satis" />
           <Route element={<PrivacyPage />} path="/gizlilik" />
+          <Route element={<WarrantyPage />} path="/garanti" />
+          <Route element={<FaqPage />} path="/sss" />
           <Route element={<CartPage />} path="/sepet" />
           <Route element={<CheckoutPage />} path="/checkout" />
           <Route element={<PaymentSuccessPage />} path="/odeme/basarili" />
           <Route element={<PaymentFailPage />} path="/odeme/basarisiz" />
           <Route element={<LoginPage />} path="/giris" />
           <Route element={<RegisterPage />} path="/kayit" />
+          <Route element={<VerifyEmailPage />} path="/dogrula" />
           <Route element={<ProtectedRoute />}>
             <Route element={<ProfilePage />} path="/profil" />
             <Route element={<AddressesPage />} path="/profil/adresler" />
@@ -84,6 +88,7 @@ export function AppRouter() {
             <Route element={<AdminProductFormPage />} path="/admin/urunler/:productId" />
             <Route element={<AdminCategoriesPage />} path="/admin/kategoriler" />
             <Route element={<AdminCampaignsPage />} path="/admin/kampanyalar" />
+            <Route element={<AdminHeroSlidesPage />} path="/admin/hero-gorselleri" />
             <Route element={<AdminBrandsPage />} path="/admin/markalar" />
             <Route element={<AdminOrdersPage />} path="/admin/siparisler" />
             <Route element={<AdminUsersPage />} path="/admin/kullanicilar" />

@@ -18,14 +18,14 @@ export function AdminUsersPage() {
     <div className="admin-page">
       <div className="admin-headline">
         <div>
-          <h1>Kullanicilar</h1>
-          <p>Kayitli tum musteri ve yonetici hesaplari.</p>
+          <h1>Kullanıcılar</h1>
+          <p>Kayıtlı tüm müşteri ve yönetici hesapları.</p>
         </div>
       </div>
 
       <div className="admin-card">
         {users.length === 0 ? (
-          <EmptyState description="Kayitli hesap bulunamadi." title="Kullanici yok" />
+          <EmptyState description="Kayıtlı hesap bulunamadı." title="Kullanıcı yok" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
@@ -47,7 +47,7 @@ export function AdminUsersPage() {
                     <td>{user.email}</td>
                     <td>
                       <span className={user.role === 'admin' ? 'order-badge order-badge--payment-paid' : 'order-badge'}>
-                        {user.role === 'admin' ? 'Yonetici' : 'Musteri'}
+                        {user.role === 'admin' ? 'Yönetici' : 'Müşteri'}
                       </span>
                     </td>
                   </tr>

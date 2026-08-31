@@ -1,4 +1,4 @@
-import type { Cart, ThemeMode, User, Wishlist } from '@bora/types';
+import type { AuthResponse, Cart, ThemeMode, User, Wishlist } from '@bora/types';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { api } from '../../shared/api/client';
@@ -14,7 +14,8 @@ interface SessionContextValue {
   cartCount: number;
   favoritesCount: number;
   login: (payload: { email: string; password: string }) => Promise<void>;
-  register: (payload: { firstName: string; lastName: string; email: string; password: string }) => Promise<void>;
+  register: (payload: { firstName: string; lastName: string; email: string; password: string }) => Promise<string>;
+  applyAuthResponse: (response: AuthResponse) => void;
   logout: () => void;
   syncCart: () => Promise<void>;
   syncWishlist: () => Promise<void>;
@@ -99,20 +100,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function login(payload: { email: string; password: string }) {
-    const response = await api.login(payload);
+  function applyAuthResponse(response: AuthResponse) {
     setToken(response.accessToken);
     setUser(response.user);
     window.localStorage.setItem(TOKEN_KEY, response.accessToken);
     window.localStorage.setItem(USER_KEY, JSON.stringify(response.user));
   }
 
+  async function login(payload: { email: string; password: string }) {
+    const response = await api.login(payload);
+    applyAuthResponse(response);
+  }
+
   async function register(payload: { firstName: string; lastName: string; email: string; password: string }) {
     const response = await api.register(payload);
-    setToken(response.accessToken);
-    setUser(response.user);
-    window.localStorage.setItem(TOKEN_KEY, response.accessToken);
-    window.localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    return response.message;
   }
 
   function logout() {
@@ -137,7 +139,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   async function toggleFavorite(productId: string) {
     if (!token) {
-      throw new Error('Favoriler icin giris yapmalisiniz.');
+      throw new Error('Favoriler için giriş yapmalısınız.');
     }
 
     const exists = wishlist?.items.some((item) => item.productId === productId) ?? false;
@@ -175,6 +177,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       favoritesCount: wishlist?.itemCount ?? 0,
       login,
       register,
+      applyAuthResponse,
       logout,
       syncCart,
       syncWishlist,

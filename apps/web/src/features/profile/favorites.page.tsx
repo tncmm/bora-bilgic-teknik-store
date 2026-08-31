@@ -16,7 +16,7 @@ export function FavoritesPage() {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
-          <EmptyState description="Favorileri gormek icin giris yapmalisin." title="Favoriler kullanilamiyor" />
+          <EmptyState description="Favorileri görmek için giriş yapmalısın." title="Favoriler kullanılamıyor" />
         </div>
       </section>
     );
@@ -28,7 +28,7 @@ export function FavoritesPage() {
     try {
       await api.addToCart(authToken, { productId, quantity: 1 });
       await syncCart();
-      showToast({ tone: 'success', title: 'Urun sepete eklendi', description: `${productName} sepetine eklendi.` });
+      showToast({ tone: 'success', title: 'Ürün sepete eklendi', description: `${productName} sepetine eklendi.` });
     } catch (error) {
       showToast({ tone: 'error', title: 'Sepete eklenemedi', description: (error as Error).message });
     }
@@ -37,9 +37,9 @@ export function FavoritesPage() {
   async function handleRemoveFavorite(productId: string, productName: string) {
     try {
       await toggleFavorite(productId);
-      showToast({ tone: 'info', title: 'Favorilerden kaldirildi', description: `${productName} favorilerinden cikarildi.` });
+      showToast({ tone: 'info', title: 'Favorilerden kaldırıldı', description: `${productName} favorilerinden çıkarıldı.` });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Favori kaldirilamadi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Favori kaldırılamadı', description: (error as Error).message });
     }
   }
 
@@ -49,12 +49,12 @@ export function FavoritesPage() {
         <div className="favorites-header">
           <div>
             <div className="detail-chip">Favoriler</div>
-            <h1>Kaydettigin Secimler</h1>
-            <p>Favori listen hesabina baglidir; her cihazda ayni hesaptan geri gelir.</p>
+            <h1>Kaydettiğin Seçimler</h1>
+            <p>Favori listen hesabına bağlıdır; her cihazda aynı hesaptan geri gelir.</p>
           </div>
           <div className="auth-actions">
             <Link to="/katalog">
-              <Button variant="secondary">Kataloga Don</Button>
+              <Button variant="secondary">Kataloğa Dön</Button>
             </Link>
             <Link to="/sepet">
               <Button>Sepete Git</Button>
@@ -63,7 +63,7 @@ export function FavoritesPage() {
         </div>
 
         {!wishlist || wishlist.items.length === 0 ? (
-          <EmptyState description="Bir urunu favorilere ekleyerek kisa listeni olustur." title="Favori listen bos" />
+          <EmptyState description="Bir ürünü favorilere ekleyerek kısa listeni oluştur." title="Favori listen boş" />
         ) : (
           <div className="favorites-grid">
             {wishlist.items.map((item) => {
@@ -85,7 +85,7 @@ export function FavoritesPage() {
                       {item.product.isPurchasable ? (
                         <PriceTag discountPercent={item.product.discountPercent} effectivePrice={item.product.effectivePrice} price={item.product.price} />
                       ) : (
-                        <strong>Teklif Uzerine</strong>
+                        <strong>Teklif Üzerine</strong>
                       )}
                       <span>{item.product.isPurchasable ? `${item.product.stock} adet stokta` : 'Kurumsal teklif ile ilerler'}</span>
                     </div>
@@ -94,11 +94,11 @@ export function FavoritesPage() {
                         <Button onClick={() => void handleAddToCart(item.product.id, item.product.name)}>Sepete Ekle</Button>
                       ) : (
                         <Button onClick={() => navigate(`/urun/${item.product.slug}`)} variant="secondary">
-                          Incele
+                          İncele
                         </Button>
                       )}
                       <Button onClick={() => void handleRemoveFavorite(item.product.id, item.product.name)} variant="ghost">
-                        Kaldir
+                        Kaldır
                       </Button>
                     </div>
                   </div>

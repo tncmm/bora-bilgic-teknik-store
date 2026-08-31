@@ -15,13 +15,47 @@ export class AuthRepository {
     });
   }
 
-  createUser(data: { firstName: string; lastName: string; email: string; passwordHash: string }) {
+  findUserByVerifyToken(token: string) {
+    return prisma.user.findUnique({
+      where: { verifyToken: token },
+      include: { themePreference: true },
+    });
+  }
+
+  createUser(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    passwordHash: string;
+    emailVerified?: boolean;
+    verifyToken?: string | null;
+    verifyTokenExpiry?: Date | null;
+  }) {
     return prisma.user.create({
       data: {
         ...data,
         cart: { create: {} },
         themePreference: { create: { mode: 'system' } },
       },
+    });
+  }
+
+  markEmailVerified(userId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: true,
+        verifyToken: null,
+        verifyTokenExpiry: null,
+      },
+      include: { themePreference: true },
+    });
+  }
+
+  updateVerifyToken(userId: string, verifyToken: string, verifyTokenExpiry: Date) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { verifyToken, verifyTokenExpiry },
     });
   }
 }

@@ -21,7 +21,7 @@ export function SiteChrome() {
       <header className="dji-header">
         <div className="ui-shell dji-header__inner">
           <NavLink className="dji-wordmark" to="/">
-            Bora Bilgiç Teknik
+            <img src="/logo.png" alt="Bora Bilgiç" className="dji-logo" />
           </NavLink>
 
           <nav className={`dji-nav ${menuOpen ? 'is-open' : ''}`}>
@@ -36,7 +36,7 @@ export function SiteChrome() {
                 {section.label.toUpperCase()}
               </NavLink>
             ))}
-            <NavLink to="/iletisim">ILETISIM</NavLink>
+            <NavLink to="/iletisim">İLETİŞİM</NavLink>
           </nav>
 
           <div className="dji-header__actions">
@@ -50,7 +50,7 @@ export function SiteChrome() {
               <span className="material-symbols-outlined">shopping_cart</span>
               {cartCount > 0 ? <span className="dji-cart-count">{cartCount}</span> : null}
             </NavLink>
-            <button aria-label="Menu" className="dji-header__toggle" onClick={() => setMenuOpen((value) => !value)} type="button">
+            <button aria-label="Menü" className="dji-header__toggle" onClick={() => setMenuOpen((value) => !value)} type="button">
               <span className="material-symbols-outlined">menu</span>
             </button>
           </div>

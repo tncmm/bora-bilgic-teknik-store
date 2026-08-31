@@ -1,27 +1,37 @@
-import { Button, EmptyState, InputField, TextareaField } from '@bora/ui';
-import { PRODUCT_MEDIA_IMAGE_MIME_TYPES, type Campaign } from '@bora/types';
+import { Button, EmptyState, InputField } from '@bora/ui';
+import type { HeroSlide } from '@bora/types';
+import { PRODUCT_MEDIA_IMAGE_MIME_TYPES } from '@bora/types';
 import { useEffect, useState } from 'react';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
 
-interface CampaignDraft {
+interface SlideDraft {
   title: string;
-  badge: string;
-  description: string;
-  linkUrl: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
   imageUrl: string;
   sortOrder: string;
+  isActive: boolean;
 }
 
-const emptyDraft: CampaignDraft = { title: '', badge: '', description: '', linkUrl: '', imageUrl: '', sortOrder: '0' };
+const emptyDraft: SlideDraft = {
+  title: '',
+  subtitle: '',
+  ctaText: '',
+  ctaLink: '',
+  imageUrl: '',
+  sortOrder: '0',
+  isActive: true,
+};
 
-export function AdminCampaignsPage() {
+export function AdminHeroSlidesPage() {
   const { token } = useSession();
   const { showToast } = useToast();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [draft, setDraft] = useState<CampaignDraft>(emptyDraft);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [draft, setDraft] = useState<SlideDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -47,54 +57,56 @@ export function AdminCampaignsPage() {
     }
   }
 
-  async function loadCampaigns() {
+  async function loadSlides() {
     if (!token) return;
-    const items = await api.listAdminCampaigns(token).catch(() => [] as Campaign[]);
-    setCampaigns(items);
+    const items = await api.listAdminHeroSlides(token).catch(() => [] as HeroSlide[]);
+    setSlides(items);
   }
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadCampaigns());
+    void Promise.resolve().then(() => loadSlides());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  function startEdit(campaign: Campaign) {
-    setEditingId(campaign.id);
+  function startEdit(slide: HeroSlide) {
+    setEditingId(slide.id);
     setDraft({
-      title: campaign.title,
-      badge: campaign.badge ?? '',
-      description: campaign.description ?? '',
-      linkUrl: campaign.linkUrl ?? '',
-      imageUrl: campaign.imageUrl ?? '',
-      sortOrder: String(campaign.sortOrder),
+      title: slide.title,
+      subtitle: slide.subtitle ?? '',
+      ctaText: slide.ctaText ?? '',
+      ctaLink: slide.ctaLink ?? '',
+      imageUrl: slide.imageUrl ?? '',
+      sortOrder: String(slide.sortOrder),
+      isActive: slide.isActive,
     });
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token || busy || !draft.title.trim()) return;
+    if (!token || busy || !draft.title.trim() || !draft.imageUrl.trim()) return;
 
     setBusy(true);
     try {
       const payload = {
         title: draft.title.trim(),
-        badge: draft.badge.trim() || null,
-        description: draft.description.trim() || null,
-        linkUrl: draft.linkUrl.trim() || null,
-        imageUrl: draft.imageUrl.trim() || null,
+        subtitle: draft.subtitle.trim() || null,
+        ctaText: draft.ctaText.trim() || null,
+        ctaLink: draft.ctaLink.trim() || null,
+        imageUrl: draft.imageUrl.trim(),
         sortOrder: Number(draft.sortOrder) || 0,
+        isActive: draft.isActive,
       };
 
       if (editingId) {
-        await api.updateAdminCampaign(token, editingId, payload);
+        await api.updateAdminHeroSlide(token, editingId, payload);
       } else {
-        await api.createAdminCampaign(token, payload);
+        await api.createAdminHeroSlide(token, payload);
       }
 
       setDraft(emptyDraft);
       setEditingId(null);
-      await loadCampaigns();
-      showToast({ tone: 'success', title: editingId ? 'Kampanya güncellendi' : 'Kampanya eklendi' });
+      await loadSlides();
+      showToast({ tone: 'success', title: editingId ? 'Slayt güncellendi' : 'Slayt eklendi' });
     } catch (error) {
       showToast({ tone: 'error', title: 'Kaydedilemedi', description: (error as Error).message });
     } finally {
@@ -102,39 +114,40 @@ export function AdminCampaignsPage() {
     }
   }
 
-  async function toggleActive(campaign: Campaign) {
+  async function toggleActive(slide: HeroSlide) {
     if (!token) return;
-    await api.updateAdminCampaign(token, campaign.id, { isActive: !campaign.isActive }).catch(() => undefined);
-    await loadCampaigns();
+    await api.updateAdminHeroSlide(token, slide.id, { isActive: !slide.isActive }).catch(() => undefined);
+    await loadSlides();
   }
 
-  async function handleDelete(campaign: Campaign) {
+  async function handleDelete(slide: HeroSlide) {
     if (!token) return;
-    if (!window.confirm(`"${campaign.title}" kampanyasını silmek istediğinize emin misiniz?`)) return;
-    await api.deleteAdminCampaign(token, campaign.id).catch(() => undefined);
-    await loadCampaigns();
-    showToast({ tone: 'info', title: 'Kampanya silindi' });
+    if (!window.confirm(`"${slide.title}" slaytını silmek istediğinize emin misiniz?`)) return;
+    await api.deleteAdminHeroSlide(token, slide.id).catch(() => undefined);
+    await loadSlides();
+    showToast({ tone: 'info', title: 'Slayt silindi' });
   }
 
   return (
     <div className="admin-page">
       <div className="admin-headline">
         <div>
-          <h1>Kampanyalar</h1>
-          <p>Ana sayfadaki kampanya slider'ı buradan beslenir. Aktif olanlar vitrine çıkar.</p>
+          <h1>Ana Görsel Yönetimi</h1>
+          <p>Ana sayfadaki hero slider buradan yönetilir. Aktif slaytlar vitrine çıkar.</p>
         </div>
       </div>
 
       <div className="admin-card">
         <div className="admin-card__head">
-          <h2>{editingId ? 'Kampanyayı Düzenle' : 'Yeni Kampanya'}</h2>
+          <h2>{editingId ? 'Slaytı Düzenle' : 'Yeni Slayt'}</h2>
         </div>
         <form className="admin-form-grid" onSubmit={handleSubmit}>
-          <InputField label="Başlık" onChange={(e) => setDraft((v) => ({ ...v, title: e.target.value }))} value={draft.title} />
-          <InputField label="Rozet (örn: %20'ye varan)" onChange={(e) => setDraft((v) => ({ ...v, badge: e.target.value }))} value={draft.badge} />
-          <InputField label="Link (opsiyonel, /kategori/...)" onChange={(e) => setDraft((v) => ({ ...v, linkUrl: e.target.value }))} value={draft.linkUrl} />
+          <InputField label="Başlık *" onChange={(e) => setDraft((v) => ({ ...v, title: e.target.value }))} value={draft.title} />
+          <InputField label="Alt başlık" onChange={(e) => setDraft((v) => ({ ...v, subtitle: e.target.value }))} value={draft.subtitle} />
+          <InputField label="CTA metni" onChange={(e) => setDraft((v) => ({ ...v, ctaText: e.target.value }))} value={draft.ctaText} />
+          <InputField label="CTA link (/katalog, /kategori/drone...)" onChange={(e) => setDraft((v) => ({ ...v, ctaLink: e.target.value }))} value={draft.ctaLink} />
           <div className="full">
-            <InputField label="Arka plan görseli URL (opsiyonel)" onChange={(e) => setDraft((v) => ({ ...v, imageUrl: e.target.value }))} value={draft.imageUrl} />
+            <InputField label="Görsel URL *" onChange={(e) => setDraft((v) => ({ ...v, imageUrl: e.target.value }))} value={draft.imageUrl} />
             <label className="media-tile__upload" style={{ marginTop: '0.5rem', display: 'inline-block' }}>
               {imageUploading ? 'Yükleniyor...' : 'Görsel Yükle (R2)'}
               <input
@@ -152,9 +165,10 @@ export function AdminCampaignsPage() {
             {draft.imageUrl ? <img alt="Önizleme" src={draft.imageUrl} style={{ display: 'block', marginTop: '0.5rem', maxHeight: 90, borderRadius: 8 }} /> : null}
           </div>
           <InputField label="Sıra" onChange={(e) => setDraft((v) => ({ ...v, sortOrder: e.target.value }))} type="number" value={draft.sortOrder} />
-          <div className="full">
-            <TextareaField label="Açıklama (opsiyonel)" onChange={(e) => setDraft((v) => ({ ...v, description: e.target.value }))} value={draft.description} />
-          </div>
+          <label className="dji-check-row full" style={{ padding: '0.5rem 0' }}>
+            <input checked={draft.isActive} onChange={(e) => setDraft((v) => ({ ...v, isActive: e.target.checked }))} type="checkbox" />
+            <span>Aktif</span>
+          </label>
           <div className="full auth-actions">
             <Button disabled={busy} type="submit">{editingId ? 'Güncelle' : 'Ekle'}</Button>
             {editingId ? (
@@ -168,38 +182,40 @@ export function AdminCampaignsPage() {
 
       <div className="admin-card">
         <div className="admin-card__head">
-          <h2>Kampanya Listesi</h2>
+          <h2>Slayt Listesi</h2>
         </div>
-        {campaigns.length === 0 ? (
-          <EmptyState description="Henüz kampanya eklenmemiş." title="Kampanya yok" />
+        {slides.length === 0 ? (
+          <EmptyState description="Henüz slayt eklenmemiş." title="Slayt yok" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
               <thead>
                 <tr>
                   <th>Başlık</th>
-                  <th>Rozet</th>
+                  <th>Alt Başlık</th>
+                  <th>Sıra</th>
                   <th style={{ textAlign: 'center' }}>Aktif</th>
                   <th style={{ textAlign: 'right' }}>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map((campaign) => (
-                  <tr key={campaign.id}>
+                {slides.map((slide) => (
+                  <tr key={slide.id}>
                     <td>
-                      <strong>{campaign.title}</strong>
-                      {campaign.description ? <div className="text-muted">{campaign.description}</div> : null}
+                      <strong>{slide.title}</strong>
+                      {slide.ctaText ? <div className="text-muted">CTA: {slide.ctaText} → {slide.ctaLink}</div> : null}
                     </td>
-                    <td>{campaign.badge ?? '—'}</td>
+                    <td>{slide.subtitle ?? '—'}</td>
+                    <td>{slide.sortOrder}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <button className="admin-switch-wrap" onClick={() => void toggleActive(campaign)} type="button" aria-pressed={campaign.isActive}>
-                        <span className={campaign.isActive ? 'order-badge order-badge--payment-paid' : 'order-badge'}>{campaign.isActive ? 'Aktif' : 'Pasif'}</span>
+                      <button className="admin-switch-wrap" onClick={() => void toggleActive(slide)} type="button" aria-pressed={slide.isActive}>
+                        <span className={slide.isActive ? 'order-badge order-badge--payment-paid' : 'order-badge'}>{slide.isActive ? 'Aktif' : 'Pasif'}</span>
                       </button>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
-                        <Button onClick={() => startEdit(campaign)} variant="secondary">Düzenle</Button>
-                        <Button onClick={() => void handleDelete(campaign)} variant="ghost">Sil</Button>
+                        <Button onClick={() => startEdit(slide)} variant="secondary">Düzenle</Button>
+                        <Button onClick={() => void handleDelete(slide)} variant="ghost">Sil</Button>
                       </div>
                     </td>
                   </tr>

@@ -10,20 +10,20 @@ const navCards = [
   {
     to: '/siparislerim',
     icon: 'package_2',
-    title: 'Siparislerim',
-    description: 'Gecmis ve aktif siparislerini takip et',
+    title: 'Siparişlerim',
+    description: 'Geçmiş ve aktif siparişlerini takip et',
   },
   {
     to: '/favoriler',
     icon: 'favorite',
     title: 'Favorilerim',
-    description: 'Kaydettigin urunlere hizlica don',
+    description: 'Kaydettiğin ürünlere hızla dön',
   },
   {
     to: '/profil/adresler',
     icon: 'location_on',
     title: 'Adreslerim',
-    description: 'Teslimat adreslerini yonet',
+    description: 'Teslimat adreslerini yönet',
   },
 ];
 
@@ -44,7 +44,7 @@ export function ProfilePage() {
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <div className="profile-card profile-card--full">
-            <p className="text-muted">Profilini gormek icin giris yapmalisin.</p>
+            <p className="text-muted">Profilini görmek için giriş yapmalısın.</p>
           </div>
         </div>
       </section>
@@ -63,7 +63,7 @@ export function ProfilePage() {
               {user.firstName} {user.lastName}
             </h1>
             <p>
-              {user.email} · {isAdmin ? 'Yonetici' : 'Musteri'}
+              {user.email} · {isAdmin ? 'Yönetici' : 'Müşteri'}
             </p>
           </div>
           <div className="auth-actions">
@@ -79,7 +79,7 @@ export function ProfilePage() {
               }}
               variant="ghost"
             >
-              Cikis Yap
+              Çıkış Yap
             </Button>
           </div>
         </div>
@@ -87,7 +87,7 @@ export function ProfilePage() {
         <div className="account-stats">
           <div className="account-stat">
             <strong>{orders.length}</strong>
-            <span>Siparis</span>
+            <span>Sipariş</span>
           </div>
           <div className="account-stat">
             <strong>{favoritesCount}</strong>

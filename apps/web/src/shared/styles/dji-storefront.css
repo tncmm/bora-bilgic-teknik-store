@@ -77,6 +77,14 @@ body {
   color: #fff;
 }
 
+.dji-logo {
+  height: 34px;
+  width: auto;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #fff;
+}
+
 .dji-wordmark--footer {
   font-size: 1.55rem;
   margin-bottom: 1rem;
@@ -267,6 +275,81 @@ body {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+/* Hero Slider */
+.dji-hero-slider {
+  outline: none;
+}
+
+.dji-hero-slider__image {
+  animation: heroSlideFadeIn 0.6s ease-in-out;
+}
+
+@keyframes heroSlideFadeIn {
+  from { opacity: 0.4; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.dji-hero-slider__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.35);
+  border: none;
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.dji-hero-slider__arrow:hover,
+.dji-hero-slider__arrow:focus-visible {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.dji-hero-slider__arrow--prev {
+  left: 1.5rem;
+}
+
+.dji-hero-slider__arrow--next {
+  right: 1.5rem;
+}
+
+.dji-hero-slider__dots {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.dji-hero-slider__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.dji-hero-slider__dot.is-active {
+  background: #fff;
+  border-color: #fff;
+}
+
+.dji-hero-slider__dot:hover {
+  border-color: #fff;
 }
 
 .dji-service-band {
@@ -545,7 +628,6 @@ body {
   gap: 0.45rem;
 }
 
-.dji-footer__socials,
 .dji-footer__payments {
   display: flex;
   gap: 0.9rem;
@@ -1565,8 +1647,18 @@ body {
   .dji-product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-.admin-upload-grid {
+
+  .admin-upload-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar,
+  .admin-content {
+    min-width: 0;
   }
 
   .order-hero-facts,
@@ -1609,14 +1701,34 @@ body {
   .dji-nav a::after {
     display: none;
   }
-.dji-service-band__item + .dji-service-band__item {
+
+  .dji-hero__actions {
+    flex-wrap: wrap;
+  }
+
+  .dji-hero-slider__arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dji-hero-slider__arrow--prev {
+    left: 0.75rem;
+  }
+
+  .dji-hero-slider__arrow--next {
+    right: 0.75rem;
+  }
+
+  .dji-service-band__item + .dji-service-band__item {
     border-left: 0;
     border-top: 1px solid var(--border);
   }
-.dji-product-grid {
+
+  .dji-product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .dji-detail__grid,
   .dji-detail__gallery,
   .dji-detail-tabpanel {
     grid-template-columns: 1fr;
@@ -1637,8 +1749,132 @@ body {
   }
 }
 
+@media (max-width: 780px) {
+  .dji-hero {
+    min-height: 480px;
+  }
+
+  .dji-service-band__grid,
+  .dji-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dji-service-band__item:nth-child(even) {
+    border-left: 1px solid var(--border);
+  }
+
+  .dji-footer__top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dji-listing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dji-sidebar,
+  .dji-listing-grid-shell {
+    border-radius: 18px;
+  }
+
+  .dji-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .dji-contact-grid,
+  .dji-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-grid,
+  .profile-layout,
+  .orders-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
-.order-list-card {
+  .dji-header__inner {
+    min-height: 64px;
+    gap: 0.75rem;
+  }
+
+  .dji-hero,
+  .dji-listing-hero,
+  .dji-contact-hero {
+    padding-top: 64px;
+  }
+
+  .dji-listing-hero,
+  .dji-contact-hero {
+    min-height: 300px;
+  }
+
+  .dji-section {
+    padding: 2.5rem 0;
+  }
+
+  .dji-section__heading {
+    flex-wrap: wrap;
+  }
+
+  .dji-service-band__item {
+    padding: 1.2rem;
+  }
+
+  .dji-category-card__media {
+    height: 140px;
+  }
+
+  .dji-product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dji-product-card {
+    min-height: 280px;
+  }
+
+  .dji-product-card__image {
+    height: 220px;
+  }
+
+  .dji-toolbar__left,
+  .dji-toolbar__right {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .dji-toolbar .ui-select {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .dji-detail {
+    padding: 5.5rem 0 2rem;
+  }
+
+  .dji-detail__stage {
+    min-height: 340px;
+  }
+
+  .dji-tabs {
+    flex-wrap: wrap;
+    padding: 0 1rem;
+  }
+
+  .dji-contact-hero > .ui-shell {
+    padding-top: 5rem;
+  }
+
+  .dji-footer__bottom {
+    flex-wrap: wrap;
+  }
+
+  .order-progress__step {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .order-list-card {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -1658,7 +1894,87 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .admin-grid,
+  .profile-layout,
+  .orders-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-headline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .ui-shell {
     width: min(var(--container-max), calc(100% - 24px));
+  }
+
+  .dji-hero-slider__arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dji-hero-slider__dots {
+    bottom: 1rem;
+  }
+
+  .dji-logo {
+    height: 26px;
+    padding: 3px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dji-wordmark {
+    font-size: 1rem;
+  }
+
+  .dji-header__actions {
+    gap: 0.2rem;
+  }
+
+  .dji-header__icon,
+  .dji-header__toggle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dji-hero {
+    min-height: 380px;
+  }
+
+  .dji-service-band__grid,
+  .dji-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dji-service-band__item:nth-child(even) {
+    border-left: 0;
+  }
+
+  .dji-footer__top {
+    grid-template-columns: 1fr;
+  }
+
+  .dji-detail__stage {
+    min-height: 260px;
+  }
+
+  .dji-hero-slider__arrow {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dji-hero-slider__arrow--prev {
+    left: 0.5rem;
+  }
+
+  .dji-hero-slider__arrow--next {
+    right: 0.5rem;
+  }
+
+  .dji-hero-slider__dot {
+    width: 8px;
+    height: 8px;
   }
 }

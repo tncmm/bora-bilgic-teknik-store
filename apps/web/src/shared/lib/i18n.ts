@@ -28,8 +28,8 @@ export function translateRole(language: Language, role?: string) {
 
   const normalized = role.toLowerCase();
   const dictionary: Record<string, { tr: string; en: string }> = {
-    admin: { tr: 'Yonetici', en: 'Admin' },
-    customer: { tr: 'Musteri', en: 'Customer' },
+    admin: { tr: 'Yönetici', en: 'Admin' },
+    customer: { tr: 'Müşteri', en: 'Customer' },
   };
 
   return dictionary[normalized]?.[language] ?? role;
@@ -41,7 +41,7 @@ export function translateOrderStatus(language: Language, status?: string) {
   const normalized = status.toLowerCase();
   const dictionary: Record<string, { tr: string; en: string }> = {
     pending: { tr: 'Beklemede', en: 'Pending' },
-    processing: { tr: 'Hazirlaniyor', en: 'Processing' },
+    processing: { tr: 'Hazırlanıyor', en: 'Processing' },
     shipped: { tr: 'Kargoda', en: 'Shipped' },
     delivered: { tr: 'Teslim Edildi', en: 'Delivered' },
   };
@@ -54,9 +54,9 @@ export function translatePaymentStatus(language: Language, status?: string) {
 
   const normalized = status.toLowerCase();
   const dictionary: Record<string, { tr: string; en: string }> = {
-    pending: { tr: 'Odeme Bekleniyor', en: 'Awaiting Payment' },
-    paid: { tr: 'Odendi', en: 'Paid' },
-    failed: { tr: 'Odeme Basarisiz', en: 'Payment Failed' },
+    pending: { tr: 'Ödeme Bekleniyor', en: 'Awaiting Payment' },
+    paid: { tr: 'Ödendi', en: 'Paid' },
+    failed: { tr: 'Ödeme Başarısız', en: 'Payment Failed' },
   };
 
   return dictionary[normalized]?.[language] ?? status;
@@ -64,7 +64,7 @@ export function translatePaymentStatus(language: Language, status?: string) {
 
 export function translateThemeMode(language: Language, mode: 'light' | 'dark' | 'system') {
   const dictionary = {
-    light: { tr: 'Acik', en: 'Light' },
+    light: { tr: 'Açık', en: 'Light' },
     dark: { tr: 'Koyu', en: 'Dark' },
     system: { tr: 'Sistem', en: 'System' },
   } as const;

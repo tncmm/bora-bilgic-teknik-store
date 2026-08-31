@@ -17,30 +17,30 @@ interface OrderDetailLocationState {
 const orderFlow = [
   {
     id: 'pending',
-    titleTr: 'Siparis Alindi',
+    titleTr: 'Sipariş Alındı',
     titleEn: 'Order Received',
-    descriptionTr: 'Kayit tamamlandi ve kontrol sirasina alindi.',
+    descriptionTr: 'Kayıt tamamlandı ve kontrol sırasına alındı.',
     descriptionEn: 'The order was recorded and queued for review.',
   },
   {
     id: 'processing',
-    titleTr: 'Hazirlaniyor',
+    titleTr: 'Hazırlanıyor',
     titleEn: 'Preparing',
-    descriptionTr: 'Urunler ve teslimat planlamasi hazirlaniyor.',
+    descriptionTr: 'Ürünler ve teslimat planlaması hazırlanıyor.',
     descriptionEn: 'Products and delivery planning are being prepared.',
   },
   {
     id: 'shipped',
     titleTr: 'Kargoda',
     titleEn: 'Shipped',
-    descriptionTr: 'Paket cikisi yapildi ve teslimata gidiyor.',
+    descriptionTr: 'Paket çıkışı yapıldı ve teslimata gidiyor.',
     descriptionEn: 'The package has left the warehouse and is in transit.',
   },
   {
     id: 'delivered',
     titleTr: 'Teslim Edildi',
     titleEn: 'Delivered',
-    descriptionTr: 'Siparis teslim edildi ve surec tamamlandi.',
+    descriptionTr: 'Sipariş teslim edildi ve süreç tamamlandı.',
     descriptionEn: 'The order was delivered and the flow is complete.',
   },
 ] as const;
@@ -51,10 +51,10 @@ function getOrderStepIndex(status: Order['status']) {
 
 function getOrderHeadline(status: Order['status'], language: 'tr' | 'en') {
   const copy = {
-    pending: language === 'tr' ? 'Siparisiniz onay bekliyor.' : 'Your order is pending review.',
-    processing: language === 'tr' ? 'Siparisiniz hazirlaniyor.' : 'Your order is being prepared.',
-    shipped: language === 'tr' ? 'Siparisiniz yola cikti.' : 'Your order is on the way.',
-    delivered: language === 'tr' ? 'Siparisiniz teslim edildi.' : 'Your order has been delivered.',
+    pending: language === 'tr' ? 'Siparişiniz onay bekliyor.' : 'Your order is pending review.',
+    processing: language === 'tr' ? 'Siparişiniz hazırlanıyor.' : 'Your order is being prepared.',
+    shipped: language === 'tr' ? 'Siparişiniz yola çıktı.' : 'Your order is on the way.',
+    delivered: language === 'tr' ? 'Siparişiniz teslim edildi.' : 'Your order has been delivered.',
   } satisfies Record<Order['status'], string>;
 
   return copy[status];
@@ -62,10 +62,10 @@ function getOrderHeadline(status: Order['status'], language: 'tr' | 'en') {
 
 function getOrderSupportCopy(status: Order['status'], language: 'tr' | 'en') {
   const copy = {
-    pending: language === 'tr' ? 'Siparisiniz kontrol asamasinda. Ekip kisa sure icinde isleme alir.' : 'Your order is in review. The team will move it into processing shortly.',
-    processing: language === 'tr' ? 'Hazirlama sureci devam ediyor. Teslimat ve paket icerigi netlestiriliyor.' : 'Preparation is underway. Delivery timing and package contents are being finalized.',
-    shipped: language === 'tr' ? 'Siparisiniz sevkte. Teslimat icin telefonunuzu ulasilabilir tutmaniz iyi olur.' : 'Your order is in transit. Keeping your phone reachable will help with delivery.',
-    delivered: language === 'tr' ? 'Teslimat tamamlandi. Destek gerektiginde siparis numaranizla hizli ilerlenebilir.' : 'Delivery is complete. Support can help faster when you share your order number.',
+    pending: language === 'tr' ? 'Siparişiniz kontrol aşamasında. Ekip kısa süre içinde işleme alır.' : 'Your order is in review. The team will move it into processing shortly.',
+    processing: language === 'tr' ? 'Hazırlama süreci devam ediyor. Teslimat ve paket içeriği netleştiriliyor.' : 'Preparation is underway. Delivery timing and package contents are being finalized.',
+    shipped: language === 'tr' ? 'Siparişiniz sevkte. Teslimat için telefonunuzu ulaşılabilir tutmanız iyi olur.' : 'Your order is in transit. Keeping your phone reachable will help with delivery.',
+    delivered: language === 'tr' ? 'Teslimat tamamlandı. Destek gerektiğinde sipariş numaranızla hızlı ilerlenebilir.' : 'Delivery is complete. Support can help faster when you share your order number.',
   } satisfies Record<Order['status'], string>;
 
   return copy[status];
@@ -86,8 +86,8 @@ export function OrdersPage() {
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <EmptyState
-            description={language === 'tr' ? 'Siparislerinizi gormek icin giris yapin.' : 'Log in to view your orders.'}
-            title={language === 'tr' ? 'Siparisler kullanilamiyor' : 'Orders unavailable'}
+            description={language === 'tr' ? 'Siparişlerinizi görmek için giriş yapın.' : 'Log in to view your orders.'}
+            title={language === 'tr' ? 'Siparişler kullanılamıyor' : 'Orders unavailable'}
           />
         </div>
       </section>
@@ -100,12 +100,12 @@ export function OrdersPage() {
         <div className="profile-card profile-card--full">
           <div className="section-header">
             <div>
-              <div className="detail-chip">{language === 'tr' ? 'Siparislerim' : 'My Orders'}</div>
-              <h2>{language === 'tr' ? 'Tum Siparis Gecmisiniz' : 'Your Full Order History'}</h2>
-              <p>{language === 'tr' ? 'Olusturdugunuz tum siparisleri, tutarlari ve detay ekranlarini buradan takip edebilirsiniz.' : 'Track every order, total, and detail screen from here.'}</p>
+              <div className="detail-chip">{language === 'tr' ? 'Siparişlerim' : 'My Orders'}</div>
+              <h2>{language === 'tr' ? 'Tüm Sipariş Geçmişiniz' : 'Your Full Order History'}</h2>
+              <p>{language === 'tr' ? 'Oluşturduğunuz tüm siparişleri, tutarları ve detay ekranlarını buradan takip edebilirsiniz.' : 'Track every order, total, and detail screen from here.'}</p>
             </div>
             <Link to="/profil">
-              <Button variant="secondary">{language === 'tr' ? 'Profile Don' : 'Back to Profile'}</Button>
+              <Button variant="secondary">{language === 'tr' ? 'Profile Dön' : 'Back to Profile'}</Button>
             </Link>
           </div>
         </div>
@@ -113,8 +113,8 @@ export function OrdersPage() {
         {orders.length === 0 ? (
           <div className="profile-card profile-card--full">
             <EmptyState
-              description={language === 'tr' ? 'Bu hesap icin henuz siparis yok.' : 'There are no orders for this account yet.'}
-              title={language === 'tr' ? 'Siparis bulunamadi' : 'No orders found'}
+              description={language === 'tr' ? 'Bu hesap için henüz sipariş yok.' : 'There are no orders for this account yet.'}
+              title={language === 'tr' ? 'Sipariş bulunamadı' : 'No orders found'}
             />
           </div>
         ) : (
@@ -158,8 +158,8 @@ export function OrderDetailPage() {
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <EmptyState
-            description={language === 'tr' ? 'Siparis detaylarini gormek icin giris yapin.' : 'Log in to view order details.'}
-            title={language === 'tr' ? 'Siparis detayi kullanilamiyor' : 'Order detail unavailable'}
+            description={language === 'tr' ? 'Sipariş detaylarını görmek için giriş yapın.' : 'Log in to view order details.'}
+            title={language === 'tr' ? 'Sipariş detayı kullanılamıyor' : 'Order detail unavailable'}
           />
         </div>
       </section>
@@ -173,7 +173,7 @@ export function OrderDetailPage() {
           <div className="profile-card profile-card--full">
             <EmptyState
               description={error}
-              title={language === 'tr' ? 'Siparis yuklenemedi' : 'Order could not be loaded'}
+              title={language === 'tr' ? 'Sipariş yüklenemedi' : 'Order could not be loaded'}
             />
           </div>
         </div>
@@ -186,7 +186,7 @@ export function OrderDetailPage() {
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <div className="profile-card profile-card--full">
-            <p className="text-muted">{language === 'tr' ? 'Siparis detaylari yukleniyor...' : 'Loading order details...'}</p>
+            <p className="text-muted">{language === 'tr' ? 'Sipariş detayları yükleniyor...' : 'Loading order details...'}</p>
           </div>
         </div>
       </section>
@@ -202,24 +202,24 @@ export function OrderDetailPage() {
         <div className={['profile-card', 'profile-card--full', 'order-detail-hero', state?.justPlaced ? 'order-success-card' : ''].filter(Boolean).join(' ')}>
           <div className="section-header">
             <div>
-              <div className="detail-chip">{state?.justPlaced ? (language === 'tr' ? 'Siparis Alindi' : 'Order Received') : order.orderNumber}</div>
-              <h2>{state?.justPlaced ? (language === 'tr' ? 'Tebrikler, siparisiniz alindi.' : 'Congratulations, your order has been received.') : order.orderNumber}</h2>
+              <div className="detail-chip">{state?.justPlaced ? (language === 'tr' ? 'Sipariş Alındı' : 'Order Received') : order.orderNumber}</div>
+              <h2>{state?.justPlaced ? (language === 'tr' ? 'Tebrikler, siparişiniz alındı.' : 'Congratulations, your order has been received.') : order.orderNumber}</h2>
               <p>
                 {state?.justPlaced
                   ? language === 'tr'
-                    ? 'Siparisiniz basariyla kaydedildi. Asagida siparis ozeti, urun satirlari ve teslimat detaylari yer aliyor.'
+                    ? 'Siparişiniz başarıyla kaydedildi. Aşağıda sipariş özeti, ürün satırları ve teslimat detayları yer alıyor.'
                     : 'Your order has been recorded successfully. The summary, item lines, and delivery details are shown below.'
                   : language === 'tr'
-                    ? 'Siparis detaylarinizi daha net bir akisla, surec durumu ve teslimat bilgileriyle birlikte burada gorebilirsiniz.'
+                    ? 'Sipariş detaylarınızı daha net bir akışla, süreç durumu ve teslimat bilgileriyle birlikte burada görebilirsiniz.'
                     : 'Review your order in a clearer flow here, including progress status and delivery details.'}
               </p>
             </div>
             <div className="auth-actions">
               <Link to="/siparislerim">
-                <Button variant="secondary">{language === 'tr' ? 'Tum Siparisler' : 'All Orders'}</Button>
+                <Button variant="secondary">{language === 'tr' ? 'Tüm Siparişler' : 'All Orders'}</Button>
               </Link>
               <Link to="/katalog">
-                <Button>{language === 'tr' ? 'Alisverise Don' : 'Continue Shopping'}</Button>
+                <Button>{language === 'tr' ? 'Alışverişe Dön' : 'Continue Shopping'}</Button>
               </Link>
             </div>
           </div>
@@ -230,11 +230,11 @@ export function OrderDetailPage() {
               <strong>{translateOrderStatus(language, order.status)}</strong>
             </div>
             <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Siparis Tarihi' : 'Order Date'}</span>
+              <span>{language === 'tr' ? 'Sipariş Tarihi' : 'Order Date'}</span>
               <strong>{formatDate(order.createdAt, language)}</strong>
             </div>
             <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Urun Adedi' : 'Item Count'}</span>
+              <span>{language === 'tr' ? 'Ürün Adedi' : 'Item Count'}</span>
               <strong>{itemCount}</strong>
             </div>
             <div className="order-hero-fact">
@@ -242,7 +242,7 @@ export function OrderDetailPage() {
               <strong>{formatCurrency(order.total, language)}</strong>
             </div>
             <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Odeme' : 'Payment'}</span>
+              <span>{language === 'tr' ? 'Ödeme' : 'Payment'}</span>
               <strong>
                 {translatePaymentStatus(language, order.paymentStatus)}
                 {order.paidAt ? ` · ${formatDate(order.paidAt, language)}` : ''}
@@ -272,7 +272,7 @@ export function OrderDetailPage() {
                 <h2>{language === 'tr' ? 'Kargo Takibi' : 'Shipment Tracking'}</h2>
                 <p>
                   {language === 'tr'
-                    ? 'Siparisiniz Yurtici Kargo ile yola cikti. Takip numaraniz kargo firmasi tarafindan SMS ile gonderilir; asagidaki buton sizi kargo firmasinin takip sayfasina goturur.'
+                    ? 'Siparişiniz Yurtiçi Kargo ile yola çıktı. Takip numaranız kargo firması tarafından SMS ile gönderilir; aşağıdaki buton sizi kargo firmasının takip sayfasına götürür.'
                     : 'Your order has been handed to Yurtici Kargo. The tracking number is sent to you by SMS; the button below opens the carrier’s tracking page.'}
                 </p>
               </div>
@@ -288,11 +288,11 @@ export function OrderDetailPage() {
         <div className="profile-card profile-card--full">
           <div className="order-kpi-grid">
             <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Siparis No' : 'Order Number'}</span>
+              <span>{language === 'tr' ? 'Sipariş No' : 'Order Number'}</span>
               <strong>{order.orderNumber}</strong>
             </div>
             <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Teslimat Kisisi' : 'Delivery Contact'}</span>
+              <span>{language === 'tr' ? 'Teslimat Kişisi' : 'Delivery Contact'}</span>
               <strong>{order.shippingName}</strong>
             </div>
             <div className="order-kpi-card">
@@ -300,7 +300,7 @@ export function OrderDetailPage() {
               <strong>{order.shippingPhone}</strong>
             </div>
             <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Surec Notu' : 'Progress Note'}</span>
+              <span>{language === 'tr' ? 'Süreç Notu' : 'Progress Note'}</span>
               <strong>{getOrderHeadline(order.status, language)}</strong>
             </div>
           </div>
@@ -311,8 +311,8 @@ export function OrderDetailPage() {
             <div className="profile-card">
               <div className="section-header">
                 <div>
-                  <h2>{language === 'tr' ? 'Urun Satirlari' : 'Order Items'}</h2>
-                  <p>{language === 'tr' ? 'Siparisinize eklenen urunler, adetler ve satir toplamlari.' : 'Products included in your order, quantities, and line totals.'}</p>
+                  <h2>{language === 'tr' ? 'Ürün Satırları' : 'Order Items'}</h2>
+                  <p>{language === 'tr' ? 'Siparişinize eklenen ürünler, adetler ve satır toplamları.' : 'Products included in your order, quantities, and line totals.'}</p>
                 </div>
               </div>
               <div className="order-item-list">
@@ -324,7 +324,7 @@ export function OrderDetailPage() {
                     <div className="order-item-card__body">
                       <div className="order-item-card__heading">
                         <strong>{item.productName}</strong>
-                        <span>{language === 'tr' ? 'Satir Toplami' : 'Line Total'}</span>
+                        <span>{language === 'tr' ? 'Satır Toplamı' : 'Line Total'}</span>
                       </div>
                       <div className="order-item-card__meta">
                         <div>
@@ -350,8 +350,8 @@ export function OrderDetailPage() {
               <div className="profile-card">
                 <div className="section-header">
                   <div>
-                    <h2>{language === 'tr' ? 'Siparis Notunuz' : 'Your Order Note'}</h2>
-                    <p>{language === 'tr' ? 'Checkout sirasinda eklediginiz not burada saklanir.' : 'The note you left during checkout is shown here.'}</p>
+                    <h2>{language === 'tr' ? 'Sipariş Notunuz' : 'Your Order Note'}</h2>
+                    <p>{language === 'tr' ? 'Checkout sırasında eklediğiniz not burada saklanır.' : 'The note you left during checkout is shown here.'}</p>
                   </div>
                 </div>
                 <div className="order-note-card">
@@ -365,18 +365,18 @@ export function OrderDetailPage() {
             <div className="profile-card">
               <div className="section-header">
                 <div>
-                  <h2>{language === 'tr' ? 'Siparis Ozetiniz' : 'Order Summary'}</h2>
+                  <h2>{language === 'tr' ? 'Sipariş Özetiniz' : 'Order Summary'}</h2>
                   <p>{formatDate(order.createdAt, language)}</p>
                 </div>
               </div>
               <div className="order-detail-stack">
                 <div className="checkout-summary-box">
-                  <strong>{language === 'tr' ? 'Urun Toplami' : 'Products Total'}</strong>
+                  <strong>{language === 'tr' ? 'Ürün Toplamı' : 'Products Total'}</strong>
                   <p>{formatCurrency(order.total, language)}</p>
                 </div>
                 <div className="checkout-summary-box">
                   <strong>{language === 'tr' ? 'Kargo' : 'Shipping'}</strong>
-                  <p>{language === 'tr' ? 'Siparis detayina dahil' : 'Included in the order detail'}</p>
+                  <p>{language === 'tr' ? 'Sipariş detayına dahil' : 'Included in the order detail'}</p>
                 </div>
                 <div className="checkout-summary-box">
                   <strong>{language === 'tr' ? 'Genel Toplam' : 'Grand Total'}</strong>
@@ -389,7 +389,7 @@ export function OrderDetailPage() {
               <div className="section-header">
                 <div>
                   <h2>{language === 'tr' ? 'Teslimat Bilgileri' : 'Delivery Details'}</h2>
-                  <p>{language === 'tr' ? 'Teslimat kisisi ve acik adres bilgileri.' : 'Delivery contact and full address details.'}</p>
+                  <p>{language === 'tr' ? 'Teslimat kişisi ve açık adres bilgileri.' : 'Delivery contact and full address details.'}</p>
                 </div>
               </div>
               <div className="order-detail-stack">
@@ -408,8 +408,8 @@ export function OrderDetailPage() {
             <div className="profile-card order-support-card">
               <div className="section-header">
                 <div>
-                  <h2>{language === 'tr' ? 'Surec ve Destek' : 'Progress and Support'}</h2>
-                  <p>{language === 'tr' ? 'Siparisiniz icin kisa durum ozeti ve yonlendirme.' : 'A short status summary and guidance for your order.'}</p>
+                  <h2>{language === 'tr' ? 'Süreç ve Destek' : 'Progress and Support'}</h2>
+                  <p>{language === 'tr' ? 'Siparişiniz için kısa durum özeti ve yönlendirme.' : 'A short status summary and guidance for your order.'}</p>
                 </div>
               </div>
               <div className="order-support-card__body">
@@ -417,7 +417,7 @@ export function OrderDetailPage() {
                 <p>{getOrderSupportCopy(order.status, language)}</p>
                 <div className="order-support-card__actions">
                   <Link to="/iletisim">
-                    <Button variant="secondary">{language === 'tr' ? 'Destekle Iletisime Gec' : 'Contact Support'}</Button>
+                    <Button variant="secondary">{language === 'tr' ? 'Destekle İletişime Geç' : 'Contact Support'}</Button>
                   </Link>
                   <Link to="/teslimat">
                     <Button variant="ghost">{language === 'tr' ? 'Teslimat Bilgisi' : 'Delivery Info'}</Button>

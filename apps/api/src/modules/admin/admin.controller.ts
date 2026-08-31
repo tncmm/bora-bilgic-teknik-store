@@ -70,6 +70,11 @@ export class AdminController {
     res.json(product);
   };
 
+  updateBestsellerStatus = async (req: Request, res: Response) => {
+    const product = await this.service.updateBestsellerStatus(String(req.params.id), req.body);
+    res.json(product);
+  };
+
   listOrders = async (_req: Request, res: Response) => {
     const orders = await this.service.listOrders();
     res.json(orders);

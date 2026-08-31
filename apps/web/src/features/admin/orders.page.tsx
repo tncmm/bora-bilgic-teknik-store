@@ -12,7 +12,7 @@ type AdminOrder = Order & { customer: string; email: string };
 
 const STATUS_OPTIONS = [
   { value: 'PENDING', label: 'Beklemede' },
-  { value: 'PROCESSING', label: 'Hazirlaniyor' },
+  { value: 'PROCESSING', label: 'Hazırlanıyor' },
   { value: 'SHIPPED', label: 'Kargoda' },
   { value: 'DELIVERED', label: 'Teslim Edildi' },
 ] as const;
@@ -41,13 +41,13 @@ export function AdminOrdersPage() {
       await loadOrders();
       showToast({
         tone: 'success',
-        title: 'Siparis durumu guncellendi',
-        description: `${order.orderNumber} artik "${STATUS_OPTIONS.find((s) => s.value === nextStatus)?.label ?? nextStatus}" olarak isaretli.`,
+        title: 'Sipariş durumu güncellendi',
+        description: `${order.orderNumber} artık "${STATUS_OPTIONS.find((s) => s.value === nextStatus)?.label ?? nextStatus}" olarak işaretli.`,
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: 'Durum guncellenemedi',
+        title: 'Durum güncellenemedi',
         description: (error as Error).message,
       });
       await loadOrders();
@@ -58,23 +58,23 @@ export function AdminOrdersPage() {
     <div className="admin-page">
       <div className="admin-headline">
         <div>
-          <h1>Siparisler</h1>
-          <p>Odemesi onaylanmis siparisler burada listelenir. Durumu degistirmek icin satirdaki secimi kullanin.</p>
+          <h1>Siparişler</h1>
+          <p>Ödemesi onaylanmış siparişler burada listelenir. Durumu değiştirmek için satırdaki seçimi kullanın.</p>
         </div>
       </div>
 
       <div className="admin-card">
         {orders.length === 0 ? (
-          <EmptyState description="Odenmis siparis geldiginde burada gorunecek." title="Henuz siparis yok" />
+          <EmptyState description="Ödenmiş sipariş geldiğinde burada görünecek." title="Henüz sipariş yok" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
               <thead>
                 <tr>
-                  <th>Siparis No</th>
-                  <th>Musteri</th>
+                  <th>Sipariş No</th>
+                  <th>Müşteri</th>
                   <th>Tarih</th>
-                  <th>Odeme</th>
+                  <th>Ödeme</th>
                   <th style={{ textAlign: 'right' }}>Tutar</th>
                   <th style={{ textAlign: 'right' }}>Durum</th>
                 </tr>

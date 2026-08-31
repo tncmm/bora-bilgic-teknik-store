@@ -27,12 +27,12 @@ export function PaytrIframe({ token }: { token: string }) {
 
   return (
     <iframe
+      className="paytr-iframe"
       frameBorder={0}
       id="paytriframe"
       scrolling="no"
       src={`https://www.paytr.com/odeme/guvenli/${token}`}
-      style={{ width: '100%', minHeight: 640, border: 0, borderRadius: '12px', background: '#fff' }}
-      title="PayTR guvenli odeme"
+      title="PayTR güvenli ödeme"
     />
   );
 }

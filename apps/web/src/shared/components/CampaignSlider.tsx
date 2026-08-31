@@ -71,7 +71,7 @@ export function CampaignSlider() {
           {campaigns.length > 1 ? (
             <>
               <button
-                aria-label="Onceki kampanya"
+                aria-label="Önceki kampanya"
                 className="campaign-slider__arrow campaign-slider__arrow--prev"
                 onClick={() => setIndex((index - 1 + campaigns.length) % campaigns.length)}
                 type="button"

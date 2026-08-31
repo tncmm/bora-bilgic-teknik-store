@@ -7,6 +7,8 @@ const router = Router();
 const controller = new AuthController();
 
 router.post('/register', controller.register);
+router.post('/verify-email', controller.verifyEmail);
+router.post('/resend-verification', controller.resendVerification);
 router.post('/login', controller.login);
 router.post('/refresh', controller.refresh);
 router.post('/logout', controller.logout);

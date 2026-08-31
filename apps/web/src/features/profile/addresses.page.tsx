@@ -39,7 +39,7 @@ export function AddressesPage() {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
-          <EmptyState description="Adreslerini gormek icin giris yapmalisin." title="Giris gerekli" />
+          <EmptyState description="Adreslerini görmek için giriş yapmalısın." title="Giriş gerekli" />
         </div>
       </section>
     );
@@ -51,7 +51,7 @@ export function AddressesPage() {
         <div className="admin-headline">
           <div>
             <h1>Adreslerim</h1>
-            <p>Teslimat adreslerin burada durur; yeni adres ekleme ayri ekrandadir.</p>
+            <p>Teslimat adreslerin burada durur; yeni adres ekleme ayrı ekrandadır.</p>
           </div>
           <div className="admin-headline__actions">
             <Link to="/profil/adresler/ekle">
@@ -62,7 +62,7 @@ export function AddressesPage() {
 
         {addresses.length === 0 ? (
           <div className="admin-card">
-            <EmptyState description="Ilk teslimat adresini ekleyerek checkout surecini hizlandir." title="Kayitli adres yok" />
+            <EmptyState description="İlk teslimat adresini ekleyerek checkout sürecini hızlandır." title="Kayıtlı adres yok" />
           </div>
         ) : (
           <div className="account-address-grid">
@@ -79,7 +79,7 @@ export function AddressesPage() {
                 </span>
                 <div className="account-address-card__actions">
                   <Link to={`/profil/adresler/${address.id}/duzenle`}>
-                    <Button variant="secondary">Duzenle</Button>
+                    <Button variant="secondary">Düzenle</Button>
                   </Link>
                   <Button onClick={() => void handleDelete(address)} variant="ghost">
                     Sil

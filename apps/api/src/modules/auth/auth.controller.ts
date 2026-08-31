@@ -14,8 +14,18 @@ export class AuthController {
 
   register = async (req: Request, res: Response) => {
     const result = await this.service.register(req.body);
+    res.status(201).json(result);
+  };
+
+  verifyEmail = async (req: Request, res: Response) => {
+    const result = await this.service.verifyEmail(req.body);
     res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
-    res.status(201).json({ accessToken: result.accessToken, user: result.user });
+    res.json({ accessToken: result.accessToken, user: result.user });
+  };
+
+  resendVerification = async (req: Request, res: Response) => {
+    const result = await this.service.resendVerification(req.body);
+    res.json(result);
   };
 
   login = async (req: Request, res: Response) => {

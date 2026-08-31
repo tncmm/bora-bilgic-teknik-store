@@ -38,7 +38,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
       await onAdded?.();
       showToast({
         tone: 'success',
-        title: language === 'tr' ? 'Urun sepete eklendi' : 'Product added to cart',
+        title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
         description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
       });
     } catch (error) {
@@ -66,7 +66,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
               ? 'Favorilere eklendi'
               : 'Added to favorites'
             : language === 'tr'
-              ? 'Favorilerden kaldirildi'
+              ? 'Favorilerden kaldırıldı'
               : 'Removed from favorites',
         description:
           action === 'added'
@@ -74,13 +74,13 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
               ? `${product.name} favorilerinize eklendi.`
               : `${product.name} was added to your favorites.`
             : language === 'tr'
-              ? `${product.name} favorilerinizden cikarildi.`
+              ? `${product.name} favorilerinizden çıkarıldı.`
               : `${product.name} was removed from your favorites.`,
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Favori islemi tamamlanamadi' : 'Favorite action failed',
+        title: language === 'tr' ? 'Favori işlemi tamamlanamadı' : 'Favorite action failed',
         description: (error as Error).message,
       });
     }
@@ -105,7 +105,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
 
   return (
     <Card
-      aria-label={language === 'tr' ? `${product.name} detayina git` : `Open ${product.name} details`}
+      aria-label={language === 'tr' ? `${product.name} detayına git` : `Open ${product.name} details`}
       className="product-card product-card--interactive"
       onClick={openDetails}
       onKeyDown={handleCardKeyDown}
@@ -116,7 +116,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
         <img alt={primaryImage?.alt ?? product.name} src={primaryImage?.url} loading="lazy" decoding="async" />
       </div>
       <button
-        aria-label={favoriteActive ? (language === 'tr' ? 'Favorilerden kaldir' : 'Remove from favorites') : language === 'tr' ? 'Favorilere ekle' : 'Add to favorites'}
+        aria-label={favoriteActive ? (language === 'tr' ? 'Favorilerden kaldır' : 'Remove from favorites') : language === 'tr' ? 'Favorilere ekle' : 'Add to favorites'}
         className={`product-card__wish ${favoriteActive ? 'product-card__wish--active' : ''}`}
         onClick={(event) => {
           stopCardNavigation(event);
@@ -134,14 +134,14 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
         <p>{product.shortDescription}</p>
         <div className="product-card__footer">
           <div>
-            <strong>{product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Teklif Uzerine' : 'Quote on Request'}</strong>
+            <strong>{product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Teklif Üzerine' : 'Quote on Request'}</strong>
             <span>
               {product.isPurchasable
                 ? language === 'tr'
                   ? `${product.stock} adet stokta`
                   : `${product.stock} units in stock`
                 : language === 'tr'
-                  ? 'Kurumsal teklif veya on siparis icin inceleyin'
+                  ? 'Kurumsal teklif veya ön sipariş için inceleyin'
                   : 'Review for quote-based or pre-order purchase'}
             </span>
           </div>
@@ -160,7 +160,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
               onClick={stopCardNavigation}
               to={`/urun/${product.slug}`}
             >
-              {language === 'tr' ? 'Incele' : 'View Details'}
+              {language === 'tr' ? 'İncele' : 'View Details'}
             </Link>
           )}
         </div>

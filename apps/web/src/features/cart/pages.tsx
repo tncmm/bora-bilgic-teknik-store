@@ -17,10 +17,10 @@ export function CartPage() {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell account-layout">
-          <EmptyState description="Katalogdan urun secerek sepetini doldurmaya baslayabilirsin." title="Sepetin bos" />
+          <EmptyState description="Katalogdan ürün seçerek sepetini doldurmaya başlayabilirsin." title="Sepetin boş" />
           <div style={{ textAlign: 'center' }}>
             <Link to="/katalog">
-              <Button>Kataloga Git</Button>
+              <Button>Kataloğa Git</Button>
             </Link>
           </div>
         </div>
@@ -35,7 +35,7 @@ export function CartPage() {
       await api.updateCartItem(token, itemId, quantity);
       await syncCart();
     } catch (error) {
-      showToast({ tone: 'error', title: 'Adet guncellenemedi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Adet güncellenemedi', description: (error as Error).message });
     }
   }
 
@@ -45,9 +45,9 @@ export function CartPage() {
     try {
       await api.removeCartItem(token, itemId);
       await syncCart();
-      showToast({ tone: 'info', title: 'Urun sepetten kaldirildi', description: productName });
+      showToast({ tone: 'info', title: 'Ürün sepetten kaldırıldı', description: productName });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Urun kaldirilamadi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Ürün kaldırılamadı', description: (error as Error).message });
     }
   }
 
@@ -61,9 +61,9 @@ export function CartPage() {
 
       await api.removeCartItem(token, itemId);
       await syncCart();
-      showToast({ tone: 'success', title: 'Favorilere tasindi', description: `${productName} favorilerine kaydedildi.` });
+      showToast({ tone: 'success', title: 'Favorilere taşındı', description: `${productName} favorilerine kaydedildi.` });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Islem tamamlanamadi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'İşlem tamamlanamadı', description: (error as Error).message });
     }
   }
 
@@ -73,7 +73,7 @@ export function CartPage() {
         <div className="admin-headline">
           <div>
             <h1>Sepet</h1>
-            <p>{cart.itemCount} urun · adetleri ayarla, sonra guvenli odemeye gec.</p>
+            <p>{cart.itemCount} ürün · adetleri ayarla, sonra güvenli ödemeye geç.</p>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export function CartPage() {
                         </strong>
                       </div>
                       <button
-                        aria-label="Sepetten kaldir"
+                        aria-label="Sepetten kaldır"
                         className="basket-item__remove"
                         onClick={() => void handleRemoveItem(item.id, item.product.name)}
                         type="button"
@@ -119,7 +119,7 @@ export function CartPage() {
                         </button>
                         <span>{item.quantity}</span>
                         <button
-                          aria-label="Adet arttir"
+                          aria-label="Adet artır"
                           disabled={item.quantity >= maxQty}
                           onClick={() => void handleQuantityChange(item.id, item.quantity + 1)}
                           type="button"
@@ -132,7 +132,7 @@ export function CartPage() {
                     </div>
 
                     <button className="basket-item__fav" onClick={() => void handleMoveToFavorites(item.id, item.product.id, item.product.name)} type="button">
-                      <span className="material-symbols-outlined">favorite</span> Favorilere tasi
+                      <span className="material-symbols-outlined">favorite</span> Favorilere taşı
                     </button>
                   </div>
                 </article>
@@ -143,11 +143,11 @@ export function CartPage() {
           <aside className="checkout-grid__aside">
             <div className="admin-card">
               <div className="admin-card__head">
-                <h2>Ozet</h2>
+                <h2>Özet</h2>
               </div>
               <div className="checkout-lines">
                 <div className="checkout-line">
-                  <span>Urunler ({cart.itemCount})</span>
+                  <span>Ürünler ({cart.itemCount})</span>
                   <strong>{formatCurrency(subtotal, 'tr')}</strong>
                 </div>
                 <div className="checkout-line checkout-line--muted">
@@ -161,10 +161,10 @@ export function CartPage() {
               </div>
 
               <Link to="/checkout">
-                <Button style={{ width: '100%', marginTop: '1rem' }}>Odemeye Gec</Button>
+                <Button style={{ width: '100%', marginTop: '1rem' }}>Ödemeye Geç</Button>
               </Link>
               <Link to="/katalog" style={{ display: 'block', marginTop: '0.5rem', textAlign: 'center' }}>
-                <Button variant="ghost" style={{ width: '100%' }}>Alisverise Devam Et</Button>
+                <Button variant="ghost" style={{ width: '100%' }}>Alışverişe Devam Et</Button>
               </Link>
             </div>
           </aside>

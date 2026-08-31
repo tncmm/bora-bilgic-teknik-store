@@ -40,11 +40,26 @@ export function AdminProductsPage() {
       await loadData();
       showToast({
         tone: 'success',
-        title: product.isPurchasable ? 'Satis kapatildi' : 'Satis acildi',
-        description: product.isPurchasable ? 'Urun artik satin alinamaz, vitrine teklif modunda cikar.' : 'Urun tekrar satin alinabilir.',
+        title: product.isPurchasable ? 'Satış kapatıldı' : 'Satış açıldı',
+        description: product.isPurchasable ? 'Ürün artık satın alınamaz, vitrine teklif modunda çıkar.' : 'Ürün tekrar satın alınabilir.',
       });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Islem basarisiz', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'İşlem başarısız', description: (error as Error).message });
+    }
+  }
+
+  async function toggleBestseller(product: Product) {
+    if (!token) return;
+    try {
+      await api.updateBestsellerStatus(token, product.id, !product.isBestseller);
+      await loadData();
+      showToast({
+        tone: 'success',
+        title: product.isBestseller ? 'Çok satan kaldırıldı' : 'Çok satan işaretlendi',
+        description: product.isBestseller ? 'Ürün çok satanlar listesinden çıkarıldı.' : 'Ürün çok satanlar listesine eklendi.',
+      });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'İşlem başarısız', description: (error as Error).message });
     }
   }
 
@@ -52,12 +67,12 @@ export function AdminProductsPage() {
     <div className="admin-page">
       <div className="admin-headline">
         <div>
-          <h1>Urunler</h1>
-          <p>DJI katalogundaki tum urunler. Duzenleme ve yeni urun olusturma ayri sayfada yapilir.</p>
+          <h1>Ürünler</h1>
+          <p>DJI katalogundaki tüm ürünler. Düzenleme ve yeni ürün oluşturma ayrı sayfada yapılır.</p>
         </div>
         <div className="admin-headline__actions">
           <Link to="/admin/urunler/yeni">
-            <Button>+ Yeni Urun</Button>
+            <Button>+ Yeni Ürün</Button>
           </Link>
         </div>
       </div>
@@ -67,24 +82,25 @@ export function AdminProductsPage() {
           <input
             className="ui-input admin-search"
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Urun adi veya SKU ara..."
+            placeholder="Ürün adı veya SKU ara..."
             value={search}
           />
-          <span className="text-muted">{visibleProducts.length} urun</span>
+          <span className="text-muted">{visibleProducts.length} ürün</span>
         </div>
 
         {visibleProducts.length === 0 ? (
-          <EmptyState description="Aradiginiz filtreyle eslesen urun bulunamadi." title="Urun bulunamadi" />
+          <EmptyState description="Aradığınız filtreyle eşleşen ürün bulunamadı." title="Ürün bulunamadı" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
               <thead>
                 <tr>
-                  <th>Urun</th>
+                  <th>Ürün</th>
                   <th>Kategori</th>
                   <th>Fiyat</th>
                   <th>Stok</th>
                   <th>Durum</th>
+                  <th style={{ textAlign: 'center' }}>Çok Satan</th>
                   <th style={{ textAlign: 'right' }}>Aksiyonlar</th>
                 </tr>
               </thead>
@@ -102,14 +118,19 @@ export function AdminProductsPage() {
                         {product.stock} adet
                       </span>
                     </td>
-                    <td>{product.isPurchasable ? 'Satista' : 'Satisa Kapali'}</td>
+                    <td>{product.isPurchasable ? 'Satışta' : 'Satışa Kapalı'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button className="admin-switch-wrap" onClick={() => void toggleBestseller(product)} type="button" aria-pressed={product.isBestseller}>
+                        <span className={product.isBestseller ? 'order-badge order-badge--payment-paid' : 'order-badge'}>{product.isBestseller ? 'Evet' : 'Hayır'}</span>
+                      </button>
+                    </td>
                     <td>
                       <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
                         <Link to={`/admin/urunler/${product.id}`}>
-                          <Button variant="secondary">Duzenle</Button>
+                          <Button variant="secondary">Düzenle</Button>
                         </Link>
                         <Button onClick={() => void toggleSale(product)} variant="ghost">
-                          {product.isPurchasable ? 'Satisi Kapat' : 'Satisi Ac'}
+                          {product.isPurchasable ? 'Satışı Kapat' : 'Satışı Aç'}
                         </Button>
                       </div>
                     </td>

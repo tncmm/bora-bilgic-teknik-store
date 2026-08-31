@@ -16,6 +16,7 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(24).default(6),
   saleMode: z.enum(['purchasable', 'all']).optional(),
+  bestseller: z.string().optional(),
 });
 
 export class CatalogService {
@@ -34,6 +35,7 @@ export class CatalogService {
       page: data.page,
       limit: data.limit,
       onlyPurchasable: data.saleMode === 'purchasable',
+      onlyBestseller: data.bestseller === 'true',
     });
 
     return {

@@ -38,9 +38,9 @@ export function AdminBrandsPage() {
       setRenamingId(null);
       setNewName('');
       await loadBrands();
-      showToast({ tone: 'success', title: 'Marka guncellendi', description: `${from} -> ${newName.trim()}` });
+      showToast({ tone: 'success', title: 'Marka güncellendi', description: `${from} -> ${newName.trim()}` });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Marka guncellenemedi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Marka güncellenemedi', description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -52,8 +52,8 @@ export function AdminBrandsPage() {
         <div>
           <h1>Markalar</h1>
           <p>
-            Markalar urun kartlarindaki serbest metin alanindan turer; burada listelenen her marka, o markayi tasiyan urun
-            sayisiyla birlikte gelir. Yeniden adlandirma tum urunlerde markayi degistirir.
+            Markalar ürün kartlarındaki serbest metin alanından türer; burada listelenen her marka, o markayı taşıyan ürün
+            sayısıyla birlikte gelir. Yeniden adlandırma tüm ürünlerde markayı değiştirir.
           </p>
         </div>
       </div>
@@ -61,18 +61,18 @@ export function AdminBrandsPage() {
       <div className="admin-card">
         <div className="admin-card__head">
           <h2>Mevcut Markalar</h2>
-          <p>Yeni marka eklemek icin yeni urun formunda Marka alanina istediginiz adi yazmaniz yeterlidir.</p>
+          <p>Yeni marka eklemek için yeni ürün formunda Marka alanına istediğiniz adı yazmanız yeterlidir.</p>
         </div>
         {brands.length === 0 ? (
-          <EmptyState description="Henuz urun eklenmemis." title="Marka yok" />
+          <EmptyState description="Henüz ürün eklenmemiş." title="Marka yok" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
               <thead>
                 <tr>
                   <th>Marka</th>
-                  <th style={{ textAlign: 'center' }}>Urun Sayisi</th>
-                  <th style={{ textAlign: 'right' }}>Islemler</th>
+                  <th style={{ textAlign: 'center' }}>Ürün Sayısı</th>
+                  <th style={{ textAlign: 'right' }}>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,7 +87,7 @@ export function AdminBrandsPage() {
                         <td style={{ textAlign: 'right' }}>
                           <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
                             <Button disabled={busy || !newName.trim()} onClick={() => void handleRename(item.brand)}>Kaydet</Button>
-                            <Button onClick={() => setRenamingId(null)} variant="ghost">Vazgec</Button>
+                            <Button onClick={() => setRenamingId(null)} variant="ghost">Vazgeç</Button>
                           </div>
                         </td>
                       </>
@@ -97,7 +97,7 @@ export function AdminBrandsPage() {
                         <td style={{ textAlign: 'center' }}>{item.productCount}</td>
                         <td style={{ textAlign: 'right' }}>
                           <Button onClick={() => { setRenamingId(item.brand); setNewName(item.brand); }} variant="secondary">
-                            Yeniden Adlandir
+                            Yeniden Adlandır
                           </Button>
                         </td>
                       </>

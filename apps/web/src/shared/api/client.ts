@@ -9,6 +9,8 @@ import type {
   CatalogListResponse,
   Category,
   DashboardMetrics,
+  HeroSlide,
+  MessageResponse,
   Order,
   PaytrTokenResponse,
   Product,
@@ -91,6 +93,9 @@ export const api = {
   listCampaigns() {
     return request<Campaign[]>('/campaigns');
   },
+  listHeroSlides() {
+    return request<HeroSlide[]>('/hero-slides');
+  },
   listAdminCampaigns(token: string) {
     return request<Campaign[]>('/admin/campaigns', {}, token);
   },
@@ -103,10 +108,34 @@ export const api = {
   deleteAdminCampaign(token: string, campaignId: string) {
     return request<void>(`/admin/campaigns/${campaignId}`, { method: 'DELETE' }, token);
   },
+  listAdminHeroSlides(token: string) {
+    return request<HeroSlide[]>('/admin/hero-slides', {}, token);
+  },
+  createAdminHeroSlide(token: string, payload: Record<string, unknown>) {
+    return request<HeroSlide>('/admin/hero-slides', { method: 'POST', body: JSON.stringify(payload) }, token);
+  },
+  updateAdminHeroSlide(token: string, slideId: string, payload: Record<string, unknown>) {
+    return request<HeroSlide>(`/admin/hero-slides/${slideId}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
+  },
+  deleteAdminHeroSlide(token: string, slideId: string) {
+    return request<void>(`/admin/hero-slides/${slideId}`, { method: 'DELETE' }, token);
+  },
   register(payload: { firstName: string; lastName: string; email: string; password: string }) {
-    return request<AuthResponse>('/auth/register', {
+    return request<MessageResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+  verifyEmail(token: string) {
+    return request<AuthResponse>('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+  resendVerification(email: string) {
+    return request<MessageResponse>('/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
     });
   },
   login(payload: { email: string; password: string }) {
@@ -245,6 +274,12 @@ export const api = {
     return request<Product>(`/admin/products/${productId}/sale-status`, {
       method: 'PATCH',
       body: JSON.stringify({ isPurchasable }),
+    }, token);
+  },
+  updateBestsellerStatus(token: string, productId: string, isBestseller: boolean) {
+    return request<Product>(`/admin/products/${productId}/bestseller-status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isBestseller }),
     }, token);
   },
   getAdminOrders(token: string) {

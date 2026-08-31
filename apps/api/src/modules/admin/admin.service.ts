@@ -140,6 +140,10 @@ const saleStatusSchema = z.object({
   isPurchasable: z.boolean(),
 });
 
+const bestsellerStatusSchema = z.object({
+  isBestseller: z.boolean(),
+});
+
 const categorySchema = z.object({
   name: z.string().trim().min(2),
   slug: z
@@ -317,6 +321,14 @@ export class AdminService {
     const data = saleStatusSchema.parse(payload);
     const product = await this.repository.updateProduct(id, {
       isPurchasable: data.isPurchasable,
+    });
+    return serializeProduct(product);
+  }
+
+  async updateBestsellerStatus(id: string, payload: unknown) {
+    const data = bestsellerStatusSchema.parse(payload);
+    const product = await this.repository.updateProduct(id, {
+      isBestseller: data.isBestseller,
     });
     return serializeProduct(product);
   }

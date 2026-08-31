@@ -12,19 +12,20 @@ import { PriceTag } from '../../shared/components/PriceTag';
 import { formatCurrency } from '../../shared/lib/format';
 import { findSectionBySlug, mapLegacyCategoryToSection, storefrontSections } from '../../shared/lib/storefront';
 import { translateCategoryName } from '../../shared/lib/i18n';
+import { HeroSlider } from './hero-slider';
 
 const serviceHighlights = [
-  { icon: 'verified_user', title: 'BORA BILGIÇ TEKNIK', description: 'Yetkili satici ve resmi urun akisi.' },
-  { icon: 'inventory_2', title: '%100 ORIJINAL', description: 'Tum urunler resmi dagitim kapsaminda.' },
-  { icon: 'local_shipping', title: 'HIZLI KARGO', description: 'Ayni gun cikis ve teknik hazirlik akisiyla.' },
-  { icon: 'support_agent', title: 'UZMAN DESTEK', description: '7/24 profesyonel teknik yonlendirme.' },
+  { icon: 'verified_user', title: 'BORA BİLGİÇ', description: 'Yetkili satıcı ve resmi ürün akışı.' },
+  { icon: 'inventory_2', title: '%100 ORİJİNAL', description: 'Tüm ürünler resmi dağıtım kapsamında.' },
+  { icon: 'local_shipping', title: 'HIZLI KARGO', description: 'Aynı gün çıkış ve teknik hazırlık akışıyla.' },
+  { icon: 'support_agent', title: 'UZMAN DESTEK', description: '7/24 profesyonel teknik yönlendirme.' },
 ];
 
 const listingRangePresets = [
   { label: '0 - 10.000 TL', min: '', max: '10000' },
   { label: '10.000 - 20.000 TL', min: '10000', max: '20000' },
   { label: '20.000 - 30.000 TL', min: '20000', max: '30000' },
-  { label: '30.000 TL ve uzeri', min: '30000', max: '' },
+  { label: '30.000 TL ve üzeri', min: '30000', max: '' },
 ];
 
 const storefrontCurationOrder: Record<string, string[]> = {
@@ -107,7 +108,7 @@ function StorefrontProductCard({ product }: { product: Product }) {
       await syncCart();
       showToast({
         tone: 'success',
-        title: language === 'tr' ? 'Urun sepete eklendi' : 'Product added to cart',
+        title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
         description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
       });
     } catch (error) {
@@ -135,13 +136,13 @@ function StorefrontProductCard({ product }: { product: Product }) {
               ? 'Favorilere eklendi'
               : 'Added to favorites'
             : language === 'tr'
-              ? 'Favorilerden kaldirildi'
+              ? 'Favorilerden kaldırıldı'
               : 'Removed from favorites',
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Favori islemi tamamlanamadi' : 'Favorite action failed',
+        title: language === 'tr' ? 'Favori işlemi tamamlanamadı' : 'Favorite action failed',
         description: (error as Error).message,
       });
     }
@@ -161,25 +162,22 @@ function StorefrontProductCard({ product }: { product: Product }) {
             {product.isPurchasable ? (
               <PriceTag discountPercent={product.discountPercent} effectivePrice={product.effectivePrice} price={product.price} />
             ) : (
-              'Teklif Uzerine'
+              'Teklif Üzerine'
             )}
           </div>
           <span className="dji-product-card__meta">
-            {product.isPurchasable ? `${product.stock} adet stokta` : 'Teklif ile satis'}
+            {product.isPurchasable ? `${product.stock} adet stokta` : 'Teklif ile satış'}
           </span>
         </div>
       </Link>
       <div className="dji-product-card__actions">
         <button
-          aria-label={favoriteActive ? 'Favorilerden kaldir' : 'Favorilere ekle'}
+          aria-label={favoriteActive ? 'Favorilerden kaldır' : 'Favorilere ekle'}
           className={`dji-icon-button ${favoriteActive ? 'is-active' : ''}`}
           onClick={() => void handleFavoriteToggle()}
           type="button"
         >
           <span className="material-symbols-outlined">{favoriteActive ? 'favorite' : 'favorite_border'}</span>
-        </button>
-        <button aria-label="Karsilastir" className="dji-icon-button" type="button">
-          <span className="material-symbols-outlined">compare_arrows</span>
         </button>
         <button
           aria-label="Sepete ekle"
@@ -195,7 +193,7 @@ function StorefrontProductCard({ product }: { product: Product }) {
   );
 }
 
-function ServiceBand({ overlay = false }: { overlay?: boolean }) {
+export function ServiceBand({ overlay = false }: { overlay?: boolean }) {
   return (
     <section className={`dji-service-band ${overlay ? 'dji-service-band--overlay' : ''}`}>
       <div className="ui-shell dji-service-band__grid">
@@ -213,43 +211,36 @@ function ServiceBand({ overlay = false }: { overlay?: boolean }) {
   );
 }
 
-function StoreFooter() {
+export function StoreFooter() {
   return (
     <footer className="dji-footer">
       <div className="ui-shell dji-footer__top">
         <div>
-          <div className="dji-wordmark dji-wordmark--footer">Bora Bilgiç Teknik</div>
-          <p>Bora Bilgiç Teknik, profesyonel goruntuleme teknolojileri ve creator ekipmanlarini tek vitrinde sunar.</p>
-          <div className="dji-footer__socials">
-            {['instagram', 'facebook', 'smart_display', 'slideshow'].map((icon) => (
-              <a href="/" key={icon}>
-                <span className="material-symbols-outlined">{icon}</span>
-              </a>
-            ))}
-          </div>
+          <div className="dji-wordmark dji-wordmark--footer">Bora Bilgiç</div>
+          <p>Bora Bilgiç, profesyonel görüntüleme teknolojileri ve creator ekipmanlarını tek vitrinde sunar.</p>
         </div>
         <div>
           <h4>KURUMSAL</h4>
           <nav>
-            <Link to="/kurumsal">Hakkimizda</Link>
+            <Link to="/kurumsal">Hakkımızda</Link>
             <Link to="/kurumsal">Yetki Belgeleri</Link>
             <Link to="/gizlilik">KVKK / Gizlilik</Link>
-            <Link to="/iletisim">Iletisim</Link>
+            <Link to="/iletisim">İletişim</Link>
           </nav>
         </div>
         <div>
-          <h4>MUSTERI HIZMETLERI</h4>
+          <h4>MÜŞTERİ HİZMETLERİ</h4>
           <nav>
             <Link to="/teslimat">Kargo & Teslimat</Link>
-            <Link to="/iade">Iade & Degisim</Link>
-            <Link to="/mesafeli-satis">Mesafeli Satis</Link>
-            <Link to="/iletisim">Garanti Sartlari</Link>
-            <Link to="/iletisim">Sikca Sorulan Sorular</Link>
+            <Link to="/iade">İade & Değişim</Link>
+            <Link to="/mesafeli-satis">Mesafeli Satış</Link>
+            <Link to="/garanti">Garanti Şartları</Link>
+            <Link to="/sss">Sıkça Sorulan Sorular</Link>
           </nav>
         </div>
         <div>
-          <h4>GUVENLI ALISVERIS</h4>
-          <p>256bit SSL ile bilgileriniz guvende.</p>
+          <h4>GÜVENLİ ALIŞVERİŞ</h4>
+          <p>256bit SSL ile bilgileriniz güvende.</p>
           <div className="dji-footer__payments">
             <span>VISA</span>
             <span>Mastercard</span>
@@ -258,80 +249,16 @@ function StoreFooter() {
         </div>
       </div>
       <div className="ui-shell dji-footer__bottom">
-        <span>© 2024 Bora Bilgiç Teknik. Tum haklari saklidir.</span>
+        <span>© 2024 Bora Bilgiç. Tüm hakları saklıdır.</span>
         <div>
-          <Link to="/mesafeli-satis">Mesafeli Satis</Link>
-          <Link to="/gizlilik">Gizlilik Politikasi</Link>
+          <Link to="/mesafeli-satis">Mesafeli Satış</Link>
+          <Link to="/gizlilik">Gizlilik Politikası</Link>
           <Link to="/teslimat">Teslimat</Link>
-          <Link to="/iade">Iade</Link>
-          <Link to="/iletisim">Site Haritasi</Link>
+          <Link to="/iade">İade</Link>
+          <Link to="/iletisim">Site Haritası</Link>
         </div>
       </div>
     </footer>
-  );
-}
-
-interface InfoSection {
-  heading: string;
-  body?: string;
-  bullets?: string[];
-}
-
-interface InfoPageProps {
-  title: string;
-  summary: string;
-  pathLabel: string;
-  highlights: Array<{ title: string; description: string }>;
-  sections: InfoSection[];
-}
-
-function InfoPage({ title, summary, pathLabel, highlights, sections }: InfoPageProps) {
-  return (
-    <>
-      <section className="dji-contact-hero">
-        <div className="ui-shell">
-          <div className="dji-breadcrumbs">
-            <Link to="/">Anasayfa</Link>
-            <span>›</span>
-            <span>{pathLabel}</span>
-          </div>
-          <h1>{title}</h1>
-          <p>{summary}</p>
-        </div>
-      </section>
-
-      <section className="dji-section">
-        <div className="ui-shell">
-          <div className="dji-info-grid">
-            {highlights.map((item) => (
-              <article className="dji-info-card" key={item.title}>
-                <h2>{item.title}</h2>
-                <p>{item.description}</p>
-              </article>
-            ))}
-          </div>
-
-          <div className="dji-info-stack">
-            {sections.map((section) => (
-              <article className="dji-info-section" key={section.heading}>
-                <h2>{section.heading}</h2>
-                {section.body ? <p>{section.body}</p> : null}
-                {section.bullets?.length ? (
-                  <ul>
-                    {section.bullets.map((bullet) => (
-                      <li key={bullet}>{bullet}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <ServiceBand />
-      <StoreFooter />
-    </>
   );
 }
 
@@ -372,40 +299,15 @@ function BestsellersRail({ products }: { products: Product[] }) {
 export function HomePage() {
   const { language } = useI18n();
   const categories = useCategories();
-  const { data: heroData, loading: heroLoading } = useCatalogProducts({ section: 'drone', limit: '6' });
-  const { data: featuredData, loading: featuredLoading } = useCatalogProducts({ saleMode: 'purchasable', sort: 'rating', limit: '5' });
-  const heroProducts = heroData?.items ?? [];
-  const featuredProducts = featuredData?.items ?? [];
-  const heroProduct = heroProducts.find((product) => product.slug === 'dji-mavic-3-pro') ?? heroProducts[0];
-  const heroCategory = categories.find((category) => category.slug === 'drone') ?? categories[0];
-  const heroImageUrl = heroProduct?.heroImageUrl ?? getPrimaryImage(heroProduct)?.url ?? heroCategory?.heroImageUrl;
-  const purchasable = featuredProducts.filter((product) => product.isPurchasable).slice(0, 5);
+  const { data: bestsellerData, loading: bestsellerLoading } = useCatalogProducts({ bestseller: 'true', limit: '10' });
+  const { data: fallbackData, loading: fallbackLoading } = useCatalogProducts({ saleMode: 'purchasable', sort: 'rating', limit: '5' });
+  const bestsellerProducts = bestsellerData?.items ?? [];
+  const railProducts = bestsellerProducts.length > 0 ? bestsellerProducts : (fallbackData?.items ?? []).filter((p) => p.isPurchasable).slice(0, 5);
+  const loading = bestsellerLoading || (bestsellerProducts.length === 0 && fallbackLoading);
 
   return (
     <>
-      <section className="dji-hero">
-        <div className="dji-hero__background">
-          {heroImageUrl ? <img alt={heroProduct?.name ?? heroCategory?.name ?? 'Bora Bilgiç Teknik vitrini'} src={heroImageUrl} /> : null}
-        </div>
-        <div className="ui-shell dji-hero__content">
-          <div className="dji-hero__copy">
-            <div className="dji-kicker">{heroProduct?.badge ?? 'YENI'}</div>
-            <h1>{heroProduct?.heroTitle ?? 'BORA BILGIÇ TEKNIK'}</h1>
-            <h2>{heroProduct?.heroTag ?? 'Ilham Veren Goruntuler'}</h2>
-            <p>{heroProduct?.heroDescription ?? heroProduct?.description}</p>
-            <div className="dji-hero__actions">
-              <Link to="/drone">
-                <Button>HEMEN KESFET</Button>
-              </Link>
-              {heroProduct ? (
-                <Link to={`/urun/${heroProduct.slug}`}>
-                  <Button variant="secondary">URUNU INCELE</Button>
-                </Link>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSlider />
 
       <ServiceBand overlay />
 
@@ -414,13 +316,23 @@ export function HomePage() {
       <section className="dji-section">
         <div className="ui-shell">
           <div className="dji-section__heading">
-            <h2>KATEGORILER</h2>
-            <Link to="/katalog">TUM KATEGORILER</Link>
+            <h2>ÇOK SATANLAR</h2>
+          </div>
+          {loading ? <p className="dji-muted">Ürünler yükleniyor...</p> : null}
+          <BestsellersRail products={railProducts} />
+        </div>
+      </section>
+
+      <section className="dji-section">
+        <div className="ui-shell">
+          <div className="dji-section__heading">
+            <h2>KATEGORİLER</h2>
+            <Link to="/katalog">TÜM KATEGORİLER</Link>
           </div>
           <div className="dji-category-grid">
             {storefrontSections.slice(0, 4).map((section) => {
               const category = categories.find((item) => item.slug === section.slug);
-              const categoryImageUrl = category?.heroImageUrl ?? heroImageUrl;
+              const categoryImageUrl = category?.heroImageUrl;
               return (
                 <Link className="dji-category-card" key={section.slug} to={section.path}>
                   <div className="dji-category-card__media">
@@ -434,16 +346,6 @@ export function HomePage() {
               );
             })}
           </div>
-        </div>
-      </section>
-
-      <section className="dji-section">
-        <div className="ui-shell">
-          <div className="dji-section__heading">
-            <h2>COK SATANLAR</h2>
-          </div>
-          {heroLoading || featuredLoading ? <p className="dji-muted">Urunler yukleniyor...</p> : null}
-          <BestsellersRail products={purchasable} />
         </div>
       </section>
 
@@ -478,9 +380,9 @@ function ListingSidebar({
   return (
     <aside className="dji-sidebar">
       <div className="dji-sidebar__group">
-        <h3>KATEGORILER</h3>
+        <h3>KATEGORİLER</h3>
         <button className={`dji-sidebar__link ${!activeSeries ? 'is-active' : ''}`} onClick={() => onSetSeries('')} type="button">
-          Tum Urunler
+          Tüm Ürünler
         </button>
         {availableSeries.map((series) => (
           <button
@@ -495,7 +397,7 @@ function ListingSidebar({
       </div>
 
       <div className="dji-sidebar__group">
-        <h3>FIYAT ARALIGI</h3>
+        <h3>FİYAT ARALIĞI</h3>
         <div className="dji-sidebar__range-list">
           {listingRangePresets.map((range) => (
             <button
@@ -515,7 +417,7 @@ function ListingSidebar({
       </div>
 
       <div className="dji-sidebar__group">
-        <h3>ONE CIKAN OZELLIKLER</h3>
+        <h3>ÖNE ÇIKAN ÖZELLİKLER</h3>
         <div className="dji-sidebar__checks">
           {availableFeatures.map((feature) => (
             <label className="dji-check-row" key={feature.value}>
@@ -527,7 +429,7 @@ function ListingSidebar({
       </div>
 
       <button className="dji-clear-button" onClick={onClear} type="button">
-        FILTRELERI TEMIZLE
+        FİLTRELERİ TEMİZLE
       </button>
     </aside>
   );
@@ -610,7 +512,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
     <>
       <section className="dji-listing-hero">
         <div className="dji-listing-hero__background">
-          <img alt={section?.label ?? 'Bora Bilgiç Teknik katalog'} src={activeCategory?.heroImageUrl ?? items[0]?.heroImageUrl ?? getPrimaryImage(items[0])?.url} />
+          <img alt={section?.label ?? 'Bora Bilgiç kataloğu'} src={activeCategory?.heroImageUrl ?? items[0]?.heroImageUrl ?? getPrimaryImage(items[0])?.url} />
         </div>
         <div className="ui-shell dji-listing-hero__content">
           <div className="dji-breadcrumbs">
@@ -619,7 +521,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
             <span>{activeCategory?.name ?? section?.label ?? 'Katalog'}</span>
           </div>
           <h1>{activeCategory?.heroTitle ?? section?.label?.toUpperCase() ?? 'KATALOG'}</h1>
-          <p>{activeCategory?.heroDescription ?? activeCategory?.description ?? 'Bora Bilgiç Teknik katalogunu teknik ve gorsel olarak tek akista kesfedin.'}</p>
+          <p>{activeCategory?.heroDescription ?? activeCategory?.description ?? 'Bora Bilgiç kataloğunu teknik ve görsel olarak tek akışta keşfedin.'}</p>
         </div>
       </section>
 
@@ -637,7 +539,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
                 ))}
               </select>
               <select className="ui-select" onChange={(event) => updateParam('minPrice', event.target.value)} value={searchParams.get('minPrice') ?? ''}>
-                <option value="">Fiyat Araligi</option>
+                <option value="">Fiyat Aralığı</option>
                 {listingRangePresets.map((range) => (
                   <option key={range.label} value={range.min}>
                     {range.label}
@@ -645,17 +547,17 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
                 ))}
               </select>
               <select className="ui-select" onChange={(event) => updateParam('saleMode', event.target.value)} value={searchParams.get('saleMode') ?? ''}>
-                <option value="">Tum urunler</option>
+                <option value="">Tüm ürünler</option>
                 <option value="purchasable">Sepete eklenebilir</option>
               </select>
             </div>
             <div className="dji-toolbar__right">
-              <span>Siralama:</span>
+              <span>Sıralama:</span>
               <select className="ui-select" onChange={(event) => updateParam('sort', event.target.value)} value={searchParams.get('sort') ?? 'newest'}>
                 <option value="newest">En Yeniler</option>
                 <option value="price-asc">Fiyat Artan</option>
                 <option value="price-desc">Fiyat Azalan</option>
-                <option value="rating">En Yuksek Puan</option>
+                <option value="rating">En Yüksek Puan</option>
               </select>
             </div>
           </div>
@@ -675,12 +577,12 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
             />
 
             <div className="dji-listing-grid-shell">
-              {loading ? <p className="dji-muted">Urunler yukleniyor...</p> : null}
+              {loading ? <p className="dji-muted">Ürünler yükleniyor...</p> : null}
               {error ? <p className="dji-muted">{error}</p> : null}
               {!loading && renderedItems.length === 0 ? (
                 <EmptyState
-                  description="Filtreleri degistirerek tekrar deneyin."
-                  title="Urun bulunamadi"
+                  description="Filtreleri değiştirerek tekrar deneyin."
+                  title="Ürün bulunamadı"
                 />
               ) : (
                 <>
@@ -692,7 +594,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
                   <div className="dji-pagination">
                     <span>
                       {Math.min((Number(params.page ?? '1') - 1) * Number(params.limit ?? '6') + 1, data?.total ?? 0)} -{' '}
-                      {Math.min(Number(params.page ?? '1') * Number(params.limit ?? '6'), data?.total ?? 0)} / {data?.total ?? 0} urun gosteriliyor
+                      {Math.min(Number(params.page ?? '1') * Number(params.limit ?? '6'), data?.total ?? 0)} / {data?.total ?? 0} ürün gösteriliyor
                     </span>
                     <div className="dji-pagination__buttons">
                       <button
@@ -743,7 +645,7 @@ function ProductTabContent({ section }: { section?: ProductDetailSection }) {
       </div>
       {section.imageUrl ? (
         <div className="dji-detail-tabpanel__media">
-          <img alt={section.heading ?? 'Bora Bilgiç Teknik visual'} src={section.imageUrl} />
+          <img alt={section.heading ?? 'Bora Bilgiç görseli'} src={section.imageUrl} />
         </div>
       ) : null}
     </div>
@@ -788,7 +690,7 @@ export function ProductDetailPage() {
       await syncCart();
       showToast({
         tone: 'success',
-        title: language === 'tr' ? 'Urun sepete eklendi' : 'Product added to cart',
+        title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
         description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
       });
     } catch (nextError) {
@@ -812,7 +714,7 @@ export function ProductDetailPage() {
     } catch (nextError) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Favori islemi tamamlanamadi' : 'Favorite action failed',
+        title: language === 'tr' ? 'Favori işlemi tamamlanamadı' : 'Favorite action failed',
         description: (nextError as Error).message,
       });
     }
@@ -822,7 +724,7 @@ export function ProductDetailPage() {
     return (
       <section className="page-section">
         <div className="ui-shell">
-          <EmptyState description={error} title="Urun bulunamadi" />
+          <EmptyState description={error} title="Ürün bulunamadı" />
         </div>
       </section>
     );
@@ -832,7 +734,7 @@ export function ProductDetailPage() {
     return (
       <section className="page-section">
         <div className="ui-shell">
-          <p className="dji-muted">Urun yukleniyor...</p>
+          <p className="dji-muted">Ürün yükleniyor...</p>
         </div>
       </section>
     );
@@ -940,13 +842,13 @@ export function ProductDetailPage() {
                 ) : (
                   <PriceTag discountPercent={product.discountPercent} effectivePrice={product.effectivePrice} price={product.price} />
                 )}
-                <span>{product.isPurchasable ? 'KDV dahil' : 'Teklif akisi'}</span>
+                <span>{product.isPurchasable ? 'KDV dahil' : 'Teklif akışı'}</span>
                 <em>{product.stock > 0 ? 'Stokta var' : 'Stok bekleniyor'}</em>
               </div>
               <p className="dji-detail__purchase-note">
                 {product.isPurchasable
-                  ? 'Sepet, teslimat formu ve odeme oncesi siparis ozeti adimlari ile satin alma sureci net olarak ilerler.'
-                  : 'Bu urun kurumsal teklif akisi ile satilir; termin ve fiyat bilgisi talep sonrasi netlestirilir.'}
+                  ? 'Sepet, teslimat formu ve ödeme öncesi sipariş özeti adımları ile satın alma süreci net olarak ilerler.'
+                  : 'Bu ürün kurumsal teklif akışı ile satılır; termin ve fiyat bilgisi talep sonrası netleştirilir.'}
               </p>
               <ul className="dji-detail__features">
                 {product.specs.map((spec) => (
@@ -959,7 +861,7 @@ export function ProductDetailPage() {
 
               {packageOptions.length > 0 ? (
                 <div className="dji-detail__packages">
-                  <h3>Paket Secimi</h3>
+                  <h3>Paket Seçimi</h3>
                   <div className="dji-detail__package-grid">
                     {packageOptions.map((option: ProductPackageOption) => (
                       <button
@@ -1026,10 +928,10 @@ export function ContactPage() {
           <div className="dji-breadcrumbs">
             <Link to="/">Anasayfa</Link>
             <span>›</span>
-            <span>Iletisim</span>
+            <span>İletişim</span>
           </div>
-          <h1>ILETISIM</h1>
-          <p>Kurumsal projeler, teknik kesif, stok teyidi ve satis sonrasi destek icin bizimle hizla iletisime gecin.</p>
+          <h1>İLETİŞİM</h1>
+          <p>Kurumsal projeler, teknik keşif, stok teyidi ve satış sonrası destek için bizimle hızla iletişime geçin.</p>
         </div>
       </section>
 
@@ -1037,20 +939,20 @@ export function ContactPage() {
         <div className="ui-shell dji-contact-grid">
           <div className="dji-contact-card">
             <h2>Merkez Ofis</h2>
-            <p>Maslak Mah. Teknik Plaza No: 18 / Istanbul</p>
+            <p>Maslak Mah. Teknik Plaza No: 18 / İstanbul</p>
             <p>+90 212 555 00 00</p>
             <p>info@borabilgicteknik.com</p>
           </div>
           <div className="dji-contact-card">
-            <h2>Kurumsal Satis</h2>
-            <p>Drone filolari, inspection ihtiyaclari ve kurumsal demo akislari icin uzman ekip.</p>
+            <h2>Kurumsal Satış</h2>
+            <p>Drone filoları, inspection ihtiyaçları ve kurumsal demo akışları için uzman ekip.</p>
             <Badge>Enterprise Discovery</Badge>
           </div>
           <div className="dji-contact-card">
             <h2>Destek Saatleri</h2>
             <p>Pazartesi - Cumartesi</p>
             <p>09:00 - 19:00</p>
-            <p>Uzaktan teknik destek: 7/24 kayit olusturma</p>
+            <p>Uzaktan teknik destek: 7/24 kayıt oluşturma</p>
           </div>
         </div>
       </section>
@@ -1058,173 +960,5 @@ export function ContactPage() {
       <ServiceBand />
       <StoreFooter />
     </>
-  );
-}
-
-export function DeliveryPage() {
-  return (
-    <InfoPage
-      highlights={[
-        { title: 'Ayni Gun Isleme', description: 'Hafta ici mesai saatlerinde onaylanan stoklu siparisler ayni gun operasyon sirasina alinabilir.' },
-        { title: 'Turkiye Geneli Gonderim', description: 'Anlasmali kargo firmalari ile Turkiye geneline teslimat yapilir; kurumsal sevklerde ozel planlama sunulur.' },
-        { title: 'Takip Bilgisi', description: 'Kargo cikisi sonrasi takip numarasi musteriye iletilir ve teslimat sureci bilgi mesajlari ile desteklenir.' },
-      ]}
-      pathLabel="Teslimat"
-      sections={[
-        {
-          heading: 'Siparis Hazirlama',
-          body: 'Stokta bulunan urunler, odeme ve siparis onayi sonrasinda operasyon ekibi tarafindan paketlenir ve sevke hazir hale getirilir.',
-          bullets: [
-            'Hafta ici mesai saatlerinde onaylanan siparisler operasyon yogunluguna gore ayni gun veya ertesi is gunu kargoya verilir.',
-            'Kurumsal veya teklif ile satilan urunlerde sevk tarihi teklif ve termin bilgisi ile ayrica netlestirilir.',
-            'Kutu icerigi, aksesuar ve garanti durumu paketleme oncesi kontrol edilir.',
-          ],
-        },
-        {
-          heading: 'Teslimat Sureleri',
-          bullets: [
-            'Istanbul ici standart sevkiyatlar genellikle 1 is gunu icinde teslim edilir.',
-            'Sehir disi teslimatlar, kargo firmasinin operasyonuna bagli olarak 1-3 is gunu arasinda tamamlanir.',
-            'Resmi tatil, kampanya donemi veya olumsuz hava kosullarinda sureler uzayabilir.',
-          ],
-        },
-        {
-          heading: 'Teslimatta Kontrol',
-          bullets: [
-            'Kargo paketi teslim alinirken fiziksel hasar kontrol edilmelidir.',
-            'Hasarli paketlerde kargo gorevlisi ile tutanak tutulmasi ve urunun teslim alinmamasi onerilir.',
-            'Teslimat sonrasi fark edilen eksik veya hasarli durumlarda destek ekibi ile ayni gun icinde iletisime gecilmelidir.',
-          ],
-        },
-      ]}
-      summary="Siparis hazirlama, kargo cikisi ve teslimat adimlari burada acikca belirtilir. Stoklu urunlerde kisa termin, kurumsal urunlerde ise teklif bazli sevk planlamasi uygulanir."
-      title="TESLIMAT BILGILERI"
-    />
-  );
-}
-
-export function ReturnPage() {
-  return (
-    <InfoPage
-      highlights={[
-        { title: '14 Gun Cayma Hakki', description: 'Mesafeli satis kapsaminda, mevzuata uygun urunlerde teslimattan itibaren 14 gun icinde cayma hakki uygulanir.' },
-        { title: 'Hizli Inceleme', description: 'Iade talebi olusturulan urunler operasyon ve teknik ekip tarafindan en kisa surede incelenir.' },
-        { title: 'Destek Kaydi', description: 'Iade, degisim ve servis sureci icin info@borabilgicteknik.com veya telefon hatti uzerinden kayit acilabilir.' },
-      ]}
-      pathLabel="Iade"
-      sections={[
-        {
-          heading: 'Iade Kosullari',
-          bullets: [
-            'Urunun orijinal kutusu, aksesuar ve faturasi ile birlikte eksiksiz olarak gonderilmesi gerekir.',
-            'Kullanim izi, fiziksel zarar veya eksik aksesuar bulunan iadeler yeniden degerlendirmeye alinabilir.',
-            'Hijyen, lisans veya tekil aktivasyon gerektiren urunlerde ilgili mevzuat kapsamindaki istisnalar uygulanir.',
-          ],
-        },
-        {
-          heading: 'Iade Sureci',
-          bullets: [
-            'Musteri hizmetlerine siparis numarasi ile basvuru yapilir.',
-            'Onay sonrasinda urun anlasmali kargo ile geri gonderilir.',
-            'Kontrol tamamlandiginda uygun iadeler icin geri odeme sureci baslatilir.',
-          ],
-        },
-        {
-          heading: 'Degisim ve Teknik Durumlar',
-          body: 'Hasarli, yanlis gonderilen veya ilk kullanimda sorun olusturan urunler icin degisim ya da teknik inceleme sureci ayrica ele alinir.',
-          bullets: [
-            'Ilk 24 saat icinde bildirilen sevkiyat hatalari oncelikli olarak degerlendirilir.',
-            'Garanti kapsamindaki teknik sorunlarda yetkili servis sureci devreye alinabilir.',
-            'Kurumsal teklif urunlerinde degisim ve iade kosullari teklif dokumaniyla birlikte degerlendirilir.',
-          ],
-        },
-      ]}
-      summary="Iade, degisim ve cayma hakki surecinde hangi adimlarin izlenecegi, urunlerin hangi kosullarda kabul edilecegi ve destek kaydinin nasil acilacagi burada yer alir."
-      title="IADE VE DEGİSIM"
-    />
-  );
-}
-
-export function DistanceSalesPage() {
-  return (
-    <InfoPage
-      highlights={[
-        { title: 'Siparis Ozeti', description: 'Urun adi, fiyat, kargo ve toplam tutar siparis oncesi net bicimde gosterilir.' },
-        { title: 'Cayma Hakki', description: 'Mevzuat kapsamindaki urunlerde 14 gunluk cayma hakki ve iade sureci uygulanir.' },
-        { title: 'Satici Bilgileri', description: 'Bora Bilgiç Teknik iletisimi, teslimat ve destek bilgileri kamuya acik sekilde sunulur.' },
-      ]}
-      pathLabel="Mesafeli Satis"
-      sections={[
-        {
-          heading: 'Sozlesme Konusu',
-          body: 'Bu sayfa, elektronik ortamda verilen siparislerde satici ile alici arasindaki mesafeli satis iliskisine dair genel bilgilendirme metnidir.',
-          bullets: [
-            'Urunun temel nitelikleri, fiyati ve varsa teklif akisi satin alma oncesi gorunur.',
-            'Alici, siparisi onaylamadan once toplami, teslimat bilgisini ve siparis ozeti ekranini gorur.',
-            'Satici, siparisi stok ve operasyon kosullarina gore hazirlayarak sevk eder.',
-          ],
-        },
-        {
-          heading: 'Odeme ve Teslim',
-          bullets: [
-            'Odeme adiminda kart bilgileri guvenli odeme altyapisi uzerinden islenir.',
-            'Stoklu urunlerde teslimat bilgisi kargo sureci ile birlikte musterinin erisimine sunulur.',
-            'Teklif ile satilan urunlerde siparisin ticari kosullari ayrica teyit edilir.',
-          ],
-        },
-        {
-          heading: 'Iptal ve Cayma Hakki',
-          bullets: [
-            'Alici, kanunen istisna sayilmayan urunlerde teslimattan itibaren 14 gun icinde cayma hakkini kullanabilir.',
-            'Iade sureci, urunun eksiksiz ve yeniden satilabilir durumda olmasi sartiyla isletilir.',
-            'Ozel siparis, kurumsal proje veya lisans bazli urunlerde farkli ticari kosullar uygulanabilir.',
-          ],
-        },
-      ]}
-      summary="Mesafeli satis, siparis onayi, odeme, teslimat ve cayma hakki ile ilgili temel ticari kosullar bu sayfada kamuya acik sekilde ozetlenir."
-      title="MESAFELI SATIS"
-    />
-  );
-}
-
-export function PrivacyPage() {
-  return (
-    <InfoPage
-      highlights={[
-        { title: 'Veri Toplama', description: 'Siparis, iletisim ve destek sureclerinde gerekli olan temel kimlik ve iletisim bilgileri islenir.' },
-        { title: 'Kullanim Amaci', description: 'Toplanan veriler siparis yonetimi, teslimat, destek ve yasal yukumluluklerin yerine getirilmesi icin kullanilir.' },
-        { title: 'Koruma', description: 'Veri guvenligi icin teknik ve idari tedbirler uygulanir; odeme verileri guvenli odeme saglayicilari uzerinden islenir.' },
-      ]}
-      pathLabel="Gizlilik"
-      sections={[
-        {
-          heading: 'Islenen Veriler',
-          bullets: [
-            'Ad, soyad, e-posta, telefon, teslimat ve fatura adresi',
-            'Siparis icerigi, urun tercihleri ve destek kayitlari',
-            'Yasal zorunluluk halinde islem kayitlari ve finansal hareket ozetleri',
-          ],
-        },
-        {
-          heading: 'Kullanim Amaclari',
-          bullets: [
-            'Siparis alma, kargo planlama ve musteri hizmetleri sunma',
-            'Iade, degisim ve teknik destek surecini yurutme',
-            'Yasal, ticari ve mali yukumlulukleri yerine getirme',
-          ],
-        },
-        {
-          heading: 'Saklama ve Haklar',
-          body: 'Kisisel veriler, ilgili mevzuat ve ticari zorunluluklar cercevesinde gerekli oldugu sure kadar saklanir.',
-          bullets: [
-            'Kullanici, verilerine iliskin bilgi talep edebilir ve gerekli durumlarda guncelleme isteyebilir.',
-            'Mevzuata uygun hallerde silme, duzeltme veya itiraz basvurulari yapilabilir.',
-            'Basvurular info@borabilgicteknik.com uzerinden yazili olarak iletilebilir.',
-          ],
-        },
-      ]}
-      summary="Kisisel verilerin hangi kapsamda toplandigi, ne amacla kullanildigi ve hangi guvenlik tedbirleriyle korundugu bu sayfada acikca belirtilir."
-      title="GIZLILIK POLITIKASI"
-    />
   );
 }

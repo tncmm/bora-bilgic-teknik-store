@@ -72,9 +72,9 @@ export function AdminCategoriesPage() {
       });
       setEditingId(null);
       await loadCategories();
-      showToast({ tone: 'success', title: 'Kategori guncellendi' });
+      showToast({ tone: 'success', title: 'Kategori güncellendi' });
     } catch (error) {
-      showToast({ tone: 'error', title: 'Kategori guncellenemedi', description: (error as Error).message });
+      showToast({ tone: 'error', title: 'Kategori güncellenemedi', description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -82,7 +82,7 @@ export function AdminCategoriesPage() {
 
   async function handleDelete(category: AdminCategory) {
     if (!token) return;
-    if (!window.confirm(`"${category.name}" kategorisini silmek istediginize emin misiniz?`)) return;
+    if (!window.confirm(`"${category.name}" kategorisini silmek istediğinize emin misiniz?`)) return;
 
     try {
       await api.deleteAdminCategory(token, category.id);
@@ -102,7 +102,7 @@ export function AdminCategoriesPage() {
       <div className="admin-headline">
         <div>
           <h1>Kategoriler</h1>
-          <p>Gereksiz kategori karmaşası olmadan, mağazanın kategori omurgasini buradan yonetin.</p>
+          <p>Gereksiz kategori karmaşası olmadan, mağazanın kategori omurgasını buradan yönetin.</p>
         </div>
       </div>
 
@@ -112,9 +112,9 @@ export function AdminCategoriesPage() {
         </div>
         <div className="spec-row" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) auto' }}>
           <InputField
-            label="Kategori Adi"
+            label="Kategori Adı"
             onChange={(event) => setNewName(event.target.value)}
-            placeholder="Ornegin: Aksesuarlar"
+            placeholder="Örneğin: Aksesuarlar"
             value={newName}
           />
           <div>
@@ -134,7 +134,7 @@ export function AdminCategoriesPage() {
           <h2>Mevcut Kategoriler</h2>
         </div>
         {categories.length === 0 ? (
-          <EmptyState description="Henuz kategori eklenmemis." title="Kategori yok" />
+          <EmptyState description="Henüz kategori eklenmemiş." title="Kategori yok" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
@@ -142,8 +142,8 @@ export function AdminCategoriesPage() {
                 <tr>
                   <th>Ad</th>
                   <th>Slug</th>
-                  <th style={{ textAlign: 'center' }}>Urun</th>
-                  <th style={{ textAlign: 'right' }}>Islemler</th>
+                  <th style={{ textAlign: 'center' }}>Ürün</th>
+                  <th style={{ textAlign: 'right' }}>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -161,7 +161,7 @@ export function AdminCategoriesPage() {
                         <td style={{ textAlign: 'right' }}>
                           <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
                             <Button disabled={busy} onClick={() => void handleUpdate(category.id)}>Kaydet</Button>
-                            <Button onClick={() => setEditingId(null)} variant="ghost">Vazgec</Button>
+                            <Button onClick={() => setEditingId(null)} variant="ghost">Vazgeç</Button>
                           </div>
                         </td>
                       </>
@@ -172,7 +172,7 @@ export function AdminCategoriesPage() {
                         <td style={{ textAlign: 'center' }}>{category._count?.products ?? 0}</td>
                         <td style={{ textAlign: 'right' }}>
                           <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
-                            <Button onClick={() => startEdit(category)} variant="secondary">Duzenle</Button>
+                            <Button onClick={() => startEdit(category)} variant="secondary">Düzenle</Button>
                             <Button onClick={() => void handleDelete(category)} variant="ghost">Sil</Button>
                           </div>
                         </td>

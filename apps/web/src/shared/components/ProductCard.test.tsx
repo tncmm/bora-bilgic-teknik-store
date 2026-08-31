@@ -37,7 +37,7 @@ const baseProduct: Product = {
     id: 'category-1',
     name: 'Camera Drones',
     slug: 'camera-drones',
-    description: 'Aciklama',
+    description: 'Açıklama',
   },
   shortDescription: 'Short',
   description: 'Long description',
@@ -46,6 +46,7 @@ const baseProduct: Product = {
   sku: 'SKU',
   isPublished: true,
   isPurchasable: true,
+  isBestseller: false,
   discountPercent: 0,
   effectivePrice: 1000,
   images: [{ id: 'image-1', url: 'https://example.com/image.jpg', alt: 'Image', isPrimary: true, kind: 'image', thumbnailUrl: 'https://example.com/image.jpg' }],
@@ -70,6 +71,6 @@ describe('ProductCard', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: /incele/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /İncele/i })).toBeInTheDocument();
   });
 });

@@ -36,6 +36,7 @@ export interface CatalogQuery {
   page: number;
   limit: number;
   onlyPurchasable?: boolean;
+  onlyBestseller?: boolean;
 }
 
 export class CatalogRepository {
@@ -66,6 +67,7 @@ export class CatalogRepository {
         : {}),
       ...(filters.features?.length ? { featureTags: { hasEvery: filters.features } } : {}),
       ...(filters.onlyPurchasable ? { isPurchasable: true } : {}),
+      ...(filters.onlyBestseller ? { isBestseller: true } : {}),
     } satisfies Prisma.ProductWhereInput;
   }
 
