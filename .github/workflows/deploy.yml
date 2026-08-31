@@ -1,0 +1,101 @@
+name: Deploy Storefront
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  DEPLOY_PATH: /opt/bora-bilgic-teknik-store
+  API_SERVICE_NAME: bora-bilgic-teknik-api
+  DEPLOY_HOST: 185.183.158.63
+  DEPLOY_USER: deploy
+  DEFAULT_API_BASE_URL: https://borabilgic.net.tr/api/v1
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bora_bilgic_teknik_store?schema=public
+      WEB_URL: http://localhost:5173
+      JWT_ACCESS_SECRET: github-actions-access-secret
+      JWT_REFRESH_SECRET: github-actions-refresh-secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Build packages and apps
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || env.DEFAULT_API_BASE_URL }}
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Prepare deployment bundle
+        run: |
+          set -euo pipefail
+          rm -rf .deploy
+          mkdir -p .deploy/app/apps/api .deploy/app/apps/web .deploy/app/packages .deploy/app/scripts/deploy
+
+          cp package.json package-lock.json .deploy/app/
+          cp -R apps/api/dist apps/api/package.json apps/api/prisma .deploy/app/apps/api/
+          cp -R apps/web/dist apps/web/package.json .deploy/app/apps/web/
+          cp -R packages/config packages/types packages/ui .deploy/app/packages/
+          cp scripts/deploy/remote-deploy.sh .deploy/app/scripts/deploy/
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST || env.DEPLOY_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload bundle
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST || env.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER || env.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          RELEASE_PATH: /opt/bora-bilgic-teknik-store/releases/${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$RELEASE_PATH'"
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key -p $SSH_PORT" .deploy/app/ "$SSH_USER@$SSH_HOST:$RELEASE_PATH/"
+
+      - name: Activate release
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST || env.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER || env.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          RELEASE_PATH: /opt/bora-bilgic-teknik-store/releases/${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "bash '$RELEASE_PATH/scripts/deploy/remote-deploy.sh' '$RELEASE_PATH' '${{ env.DEPLOY_PATH }}' '${{ env.API_SERVICE_NAME }}'"

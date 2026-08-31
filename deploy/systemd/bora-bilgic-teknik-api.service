@@ -1,0 +1,17 @@
+[Unit]
+Description=Bora Bilgic Teknik API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/bora-bilgic-teknik-store/current
+EnvironmentFile=/etc/bora-bilgic-teknik-store/api.env
+ExecStart=/usr/bin/npm run start:api
+Restart=always
+RestartSec=5
+SyslogIdentifier=bora-bilgic-teknik-api
+
+[Install]
+WantedBy=multi-user.target
