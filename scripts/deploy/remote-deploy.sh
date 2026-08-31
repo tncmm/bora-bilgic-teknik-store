@@ -16,21 +16,6 @@ npm ci
 npm run prisma:generate
 npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
 
-PRODUCT_COUNT=$(
-  node --input-type=module <<'NODE'
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-const count = await prisma.product.count();
-await prisma.$disconnect();
-console.log(count);
-NODE
-)
-
-if [ "$PRODUCT_COUNT" = "0" ]; then
-  npm run prisma:seed
-fi
-
 ln -sfn "$RELEASE_PATH" "$DEPLOY_PATH/current"
 sudo systemctl restart "$SERVICE_NAME"
 
