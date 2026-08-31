@@ -377,13 +377,15 @@ export function HomePage() {
   const heroProducts = heroData?.items ?? [];
   const featuredProducts = featuredData?.items ?? [];
   const heroProduct = heroProducts.find((product) => product.slug === 'dji-mavic-3-pro') ?? heroProducts[0];
+  const heroCategory = categories.find((category) => category.slug === 'drone') ?? categories[0];
+  const heroImageUrl = heroProduct?.heroImageUrl ?? getPrimaryImage(heroProduct)?.url ?? heroCategory?.heroImageUrl;
   const purchasable = featuredProducts.filter((product) => product.isPurchasable).slice(0, 5);
 
   return (
     <>
       <section className="dji-hero">
         <div className="dji-hero__background">
-          <img alt={heroProduct?.name ?? 'Bora Bilgiç Teknik vitrini'} src={heroProduct?.heroImageUrl ?? getPrimaryImage(heroProduct)?.url} />
+          {heroImageUrl ? <img alt={heroProduct?.name ?? heroCategory?.name ?? 'Bora Bilgiç Teknik vitrini'} src={heroImageUrl} /> : null}
         </div>
         <div className="ui-shell dji-hero__content">
           <div className="dji-hero__copy">
@@ -418,10 +420,11 @@ export function HomePage() {
           <div className="dji-category-grid">
             {storefrontSections.slice(0, 4).map((section) => {
               const category = categories.find((item) => item.slug === section.slug);
+              const categoryImageUrl = category?.heroImageUrl ?? heroImageUrl;
               return (
                 <Link className="dji-category-card" key={section.slug} to={section.path}>
                   <div className="dji-category-card__media">
-                    <img alt={section.label} src={category?.heroImageUrl ?? heroProduct?.heroImageUrl ?? getPrimaryImage(heroProduct)?.url} />
+                    {categoryImageUrl ? <img alt={section.label} src={categoryImageUrl} /> : null}
                   </div>
                   <div className="dji-category-card__content">
                     <h3>{section.label}</h3>

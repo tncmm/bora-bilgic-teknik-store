@@ -146,13 +146,6 @@ export class CatalogRepository {
 
   listCategories() {
     return prisma.category.findMany({
-      where: {
-        products: {
-          some: {
-            isPublished: true,
-          },
-        },
-      },
       include: {
         products: {
           where: {

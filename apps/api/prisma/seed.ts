@@ -68,11 +68,11 @@ function detailSections(name: string, narrative: string, bullets: string[], imag
 }
 
 const media = {
-  heroDrone: '/storefront/hero-drone.png',
-  heroGimbal: '/storefront/hero-gimbal.png',
-  heroAction: '/storefront/hero-action.png',
-  heroAccessory: '/storefront/hero-accessory.png',
-  heroEnterprise: '/storefront/hero-enterprise.png',
+  heroDrone: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/drone.png',
+  heroGimbal: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/gimbal.png',
+  heroAction: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/aksiyon-kamera.png',
+  heroAccessory: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/aksesuar.png',
+  heroEnterprise: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/kurumsal.png',
   productDrone: '/storefront/product-drone.png',
   productDroneCompact: '/storefront/product-drone-compact.png',
   productGimbal: '/storefront/product-gimbal.png',
