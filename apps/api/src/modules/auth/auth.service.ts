@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { Role } from '@prisma/client';
 import { z } from 'zod';
 
+import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt.js';
 import { sendMail } from '../../lib/mail/transport.js';
@@ -60,8 +61,9 @@ export class AuthService {
     void this.sendVerificationMail(user.firstName, user.email, verifyToken);
 
     return {
-      message:
-        'Hesabınız oluşturuldu. Giriş yapabilmek için e-posta adresinize gönderilen doğrulama bağlantısına tıklayın.',
+      message: env.requireEmailVerification
+        ? 'Hesabınız oluşturuldu. Giriş yapabilmek için e-posta adresinize gönderilen doğrulama bağlantısına tıklayın.'
+        : 'Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.',
     };
   }
 
@@ -119,7 +121,7 @@ export class AuthService {
       throw new AppError('Kullanıcı bulunamadı.', 404);
     }
 
-    if (!user.emailVerified) {
+    if (env.requireEmailVerification && !user.emailVerified) {
       throw new AppError(
         'Giriş yapmadan önce e-posta adresinizi doğrulamanız gerekiyor.',
         403,

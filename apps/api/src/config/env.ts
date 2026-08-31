@@ -43,6 +43,14 @@ const envSchema = z.object({
   SMTP_USER: optionalText,
   SMTP_PASS: optionalText,
   SMTP_FROM: optionalText,
+  // Only '1' enforces email verification before login. Until SMTP delivery
+  // is configured, unverified accounts must not be locked out.
+  REQUIRE_EMAIL_VERIFICATION: z.preprocess(blankToUndefined, z.enum(['0', '1']).optional()),
 });
 
-export const env = envSchema.parse(process.env);
+const parsed = envSchema.parse(process.env);
+
+export const env = {
+  ...parsed,
+  requireEmailVerification: parsed.REQUIRE_EMAIL_VERIFICATION === '1',
+};
