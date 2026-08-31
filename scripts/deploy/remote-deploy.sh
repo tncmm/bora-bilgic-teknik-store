@@ -19,4 +19,8 @@ npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
 ln -sfn "$RELEASE_PATH" "$DEPLOY_PATH/current"
 sudo systemctl restart "$SERVICE_NAME"
 
-find "$DEPLOY_PATH/releases" -mindepth 1 -maxdepth 1 -type d | sort -r | tail -n +4 | xargs -r rm -rf
+current_release="$(readlink -f "$DEPLOY_PATH/current")"
+find "$DEPLOY_PATH/releases" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
+  sort -rn |
+  awk -v current="$current_release" 'NR > 3 && $2 != current { print $2 }' |
+  xargs -r rm -rf
