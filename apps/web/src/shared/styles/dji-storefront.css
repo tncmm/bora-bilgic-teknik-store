@@ -692,6 +692,36 @@ body {
   min-width: 150px;
 }
 
+.dji-filter-toggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(9, 14, 20, 0.9);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.dji-filter-toggle__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dji-filter-toggle__chevron {
+  transition: transform 0.2s ease;
+}
+
+.dji-filter-toggle__chevron.is-open {
+  transform: rotate(180deg);
+}
+
 .dji-listing-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -1778,6 +1808,18 @@ body {
 
   .dji-toolbar {
     flex-wrap: wrap;
+  }
+
+  .dji-filter-toggle {
+    display: flex;
+  }
+
+  .dji-sidebar {
+    display: none;
+  }
+
+  .dji-sidebar.is-open {
+    display: block;
   }
 
   .dji-contact-grid,

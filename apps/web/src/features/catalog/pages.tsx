@@ -365,6 +365,7 @@ function ListingSidebar({
   selectedFeatures,
   onSelectRange,
   onClear,
+  open,
 }: {
   activeSeries: string;
   availableFeatures: Array<{ value: string; count: number }>;
@@ -376,9 +377,10 @@ function ListingSidebar({
   selectedFeatures: string[];
   onSelectRange: (min: string, max: string) => void;
   onClear: () => void;
+  open: boolean;
 }) {
   return (
-    <aside className="dji-sidebar">
+    <aside className={`dji-sidebar${open ? ' is-open' : ''}`}>
       <div className="dji-sidebar__group">
         <h3>KATEGORİLER</h3>
         <button className={`dji-sidebar__link ${!activeSeries ? 'is-active' : ''}`} onClick={() => onSetSeries('')} type="button">
@@ -464,6 +466,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
   const { data, error, loading } = useCatalogProducts(params);
   const activeCategory = categories.find((item) => item.slug === sectionSlug);
   const selectedFeatures = searchParams.get('features')?.split(',').filter(Boolean) ?? [];
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(searchParams);
@@ -562,6 +565,21 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
             </div>
           </div>
 
+          <button
+            aria-expanded={filtersOpen}
+            className="dji-filter-toggle"
+            onClick={() => setFiltersOpen((value) => !value)}
+            type="button"
+          >
+            <span className="dji-filter-toggle__label">
+              <span aria-hidden="true" className="material-symbols-outlined">tune</span>
+              Filtreler
+            </span>
+            <span aria-hidden="true" className={`material-symbols-outlined dji-filter-toggle__chevron${filtersOpen ? ' is-open' : ''}`}>
+              expand_more
+            </span>
+          </button>
+
           <div className="dji-listing-layout">
             <ListingSidebar
               activeSeries={searchParams.get('series') ?? ''}
@@ -573,6 +591,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
               onSelectRange={selectRange}
               onSetSeries={(value) => updateParam('series', value)}
               onToggleFeature={toggleFeature}
+              open={filtersOpen}
               selectedFeatures={selectedFeatures}
             />
 
