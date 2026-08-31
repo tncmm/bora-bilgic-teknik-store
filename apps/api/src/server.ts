@@ -4,8 +4,8 @@ import { isR2Configured } from './lib/r2.js';
 
 const app = createApp();
 
-app.listen(env.PORT, () => {
-  console.log(`API listening on http://localhost:${env.PORT}`);
+app.listen(env.PORT, env.HOST, () => {
+  console.log(`API listening on http://${env.HOST}:${env.PORT}`);
 
   if (!isR2Configured()) {
     // Surface the gap at boot rather than as a failed upload later. Product
