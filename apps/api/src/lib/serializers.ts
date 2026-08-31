@@ -14,6 +14,18 @@ import type {
 } from '@bora/types';
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 
+import { env } from '../config/env.js';
+
+const r2PublicBaseUrl = env.R2_PUBLIC_BASE_URL?.replace(/\/+$/, '') ?? null;
+
+function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (!r2PublicBaseUrl) return url;
+  const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+  return `${r2PublicBaseUrl}${normalizedPath}`;
+}
+
 export function decimalToNumber(value: Prisma.Decimal | number) {
   return Number(value);
 }
@@ -52,7 +64,7 @@ export function serializeCategory(category: {
     description: category.description,
     heroTitle: category.heroTitle ?? null,
     heroDescription: category.heroDescription ?? null,
-    heroImageUrl: category.heroImageUrl ?? null,
+    heroImageUrl: resolveMediaUrl(category.heroImageUrl),
     sortOrder: category.sortOrder ?? 0,
     productCount: products.length,
     series,
@@ -63,11 +75,11 @@ export function serializeCategory(category: {
 export function serializeProduct(product: any): Product {
   const images: ProductImage[] = product.images.map((image: any) => ({
     id: image.id,
-    url: image.url,
+    url: resolveMediaUrl(image.url),
     alt: image.alt,
     isPrimary: image.isPrimary,
     kind: image.kind ?? 'image',
-    thumbnailUrl: image.thumbnailUrl ?? null,
+    thumbnailUrl: resolveMediaUrl(image.thumbnailUrl),
     mimeType: image.mimeType ?? null,
   }));
 
@@ -88,7 +100,7 @@ export function serializeProduct(product: any): Product {
       heading: product.name,
       body: product.description,
       bullets: product.specs.slice(0, 5).map((spec: any) => `${spec.name}: ${spec.value}`),
-      imageUrl: product.heroImageUrl ?? images[0]?.url ?? null,
+      imageUrl: resolveMediaUrl(product.heroImageUrl) ?? resolveMediaUrl(images[0]?.url) ?? null,
     },
   ];
 
@@ -116,7 +128,7 @@ export function serializeProduct(product: any): Product {
     ratingAverage: decimalToNumber(product.ratingAverage ?? 0),
     reviewCount: product.reviewCount ?? 0,
     featureTags: product.featureTags ?? [],
-    heroImageUrl: product.heroImageUrl ?? null,
+    heroImageUrl: resolveMediaUrl(product.heroImageUrl),
     heroTitle: product.heroTitle ?? null,
     heroDescription: product.heroDescription ?? null,
     images,

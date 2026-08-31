@@ -67,18 +67,20 @@ function detailSections(name: string, narrative: string, bullets: string[], imag
   ];
 }
 
+const r2Base = 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev';
+
 const media = {
-  heroDrone: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/drone.png',
-  heroGimbal: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/gimbal.png',
-  heroAction: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/aksiyon-kamera.png',
-  heroAccessory: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/aksesuar.png',
-  heroEnterprise: 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev/storefront/categories/kurumsal.png',
-  productDrone: '/storefront/product-drone.png',
-  productDroneCompact: '/storefront/product-drone-compact.png',
-  productGimbal: '/storefront/product-gimbal.png',
-  productAction: '/storefront/product-action.png',
-  productAccessory: '/storefront/product-accessory.png',
-  productEnterprise: '/storefront/product-enterprise.png',
+  heroDrone: `${r2Base}/storefront/categories/drone.png`,
+  heroGimbal: `${r2Base}/storefront/categories/gimbal.png`,
+  heroAction: `${r2Base}/storefront/categories/aksiyon-kamera.png`,
+  heroAccessory: `${r2Base}/storefront/categories/aksesuar.png`,
+  heroEnterprise: `${r2Base}/storefront/categories/kurumsal.png`,
+  productDrone: `${r2Base}/storefront/product-drone.png`,
+  productDroneCompact: `${r2Base}/storefront/product-drone-compact.png`,
+  productGimbal: `${r2Base}/storefront/product-gimbal.png`,
+  productAction: `${r2Base}/storefront/product-action.png`,
+  productAccessory: `${r2Base}/storefront/product-accessory.png`,
+  productEnterprise: `${r2Base}/storefront/product-enterprise.png`,
   demoVideo: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 };
 
