@@ -19,6 +19,7 @@ vi.mock('../../lib/crypto.js', () => ({
   hashTrackingToken: vi.fn((value: string) => `hash:${value}`),
 }));
 
+const { decryptBillingIdentity } = await import('../../lib/crypto.js');
 const { isPaytrConfigured, requestIframeToken, verifyCallbackHash } = await import('../../lib/paytr.js');
 
 const checkoutPayload = {
@@ -246,5 +247,36 @@ describe('PaymentsService.handleCallback', () => {
       expect.objectContaining({ status: 'FAILED' }),
     );
     expect(repository.completeAttempt).not.toHaveBeenCalled();
+  });
+});
+
+describe('PaymentsService.getStatus', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does not fail the payment status response when tracking token decrypt fails', async () => {
+    const repository = createRepository();
+    repository.findAttemptStatus.mockResolvedValue({ ...baseAttempt, status: 'COMPLETED' });
+    repository.findOrderByPaymentRef.mockResolvedValue({ id: 'order-1' });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.mocked(decryptBillingIdentity).mockImplementationOnce(() => {
+      throw new Error('bad key');
+    });
+    const service = new PaymentsService(repository as never);
+
+    const result = await service.getStatus(baseAttempt.merchantOid, 'user-1');
+
+    expect(result).toEqual({
+      merchantOid: baseAttempt.merchantOid,
+      status: 'completed',
+      orderId: 'order-1',
+      trackingUrl: undefined,
+    });
+    expect(consoleError).toHaveBeenCalledWith(
+      '[PAYTR] Payment status tracking token decrypt failed',
+      expect.objectContaining({ merchantOid: baseAttempt.merchantOid }),
+    );
+    consoleError.mockRestore();
   });
 });

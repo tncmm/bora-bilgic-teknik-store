@@ -1511,7 +1511,21 @@
 
 .rich-text-editor {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
+}
+
+.rich-text-editor__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rich-text-editor__header p {
+  margin: 0.2rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .rich-text-editor__label {
@@ -1520,43 +1534,105 @@
   font-weight: 700;
 }
 
+.rich-text-editor__preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  padding: 0.5rem 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--primary, #ff6a21) 35%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary, #ff6a21) 12%, transparent);
+  color: var(--text-strong);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.rich-text-editor__preview-toggle .material-symbols-outlined {
+  font-size: 1rem;
+}
+
 .rich-text-editor__toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
-  padding: 0.55rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.62rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--surface-muted, #16181d) 60%, transparent);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--surface-muted, #16181d) 80%, transparent), color-mix(in srgb, var(--surface, #0f1115) 72%, transparent)),
+    color-mix(in srgb, var(--surface-muted, #16181d) 60%, transparent);
+}
+
+.rich-text-editor__toolbar select {
+  min-height: 34px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface, #0f1115) 88%, transparent);
+  color: var(--text-strong);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.rich-text-editor__toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, #000 12%, transparent);
 }
 
 .rich-text-editor__toolbar button {
-  padding: 0.42rem 0.68rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface, #0f1115) 80%, transparent);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
   color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 700;
   cursor: pointer;
 }
 
 .rich-text-editor__toolbar button:hover {
-  border-color: color-mix(in srgb, var(--primary, #ff6a21) 60%, var(--border));
+  background: color-mix(in srgb, var(--primary, #ff6a21) 16%, transparent);
   color: var(--text-strong);
 }
 
+.rich-text-editor__toolbar .material-symbols-outlined {
+  font-size: 1.12rem;
+}
+
+.rich-text-editor__canvas {
+  position: relative;
+  border-radius: 18px;
+}
+
 .rich-text-editor__surface {
-  min-height: 220px;
-  padding: 0.95rem 1rem;
+  min-height: 300px;
+  padding: 1.2rem 1.25rem;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   outline: none;
-  background: color-mix(in srgb, var(--surface, #0f1115) 82%, transparent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--primary, #ff6a21) 8%, transparent), transparent 34%),
+    color-mix(in srgb, var(--surface, #0f1115) 84%, transparent);
   color: var(--text);
   font-size: 0.95rem;
   line-height: 1.65;
   overflow-wrap: anywhere;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.rich-text-editor__surface.is-hidden {
+  display: none;
 }
 
 .rich-text-editor__surface:focus {
@@ -1565,8 +1641,9 @@
 }
 
 .rich-text-editor__surface :is(h2, h3, h4) {
-  margin: 0.85rem 0 0.45rem;
+  margin: 1rem 0 0.45rem;
   color: var(--text-strong);
+  line-height: 1.22;
 }
 
 .rich-text-editor__surface p {
@@ -1596,6 +1673,25 @@
   margin: 1rem auto;
   border-radius: 14px;
   object-fit: contain;
+}
+
+.rich-text-editor__preview {
+  min-height: 300px;
+  padding: 1.2rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--primary, #ff6a21) 25%, var(--border));
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--primary, #ff6a21) 10%, transparent), transparent 36%),
+    color-mix(in srgb, var(--surface, #0f1115) 88%, transparent);
+}
+
+.rich-text-editor__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.7rem;
+  color: var(--text-soft);
+  font-size: 0.74rem;
 }
 
 .admin-alert-error {

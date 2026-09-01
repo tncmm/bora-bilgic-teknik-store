@@ -1,5 +1,5 @@
 import { Button, EmptyState } from '@bora/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useI18n } from '../../app/providers/I18nProvider';
@@ -17,6 +17,7 @@ export function PaymentSuccessPage() {
   const navigate = useNavigate();
   const merchantOid = useMerchantOid();
   const [message, setMessage] = useState('Ödeme onayı bekleniyor; siparişiniz birkaç saniye içinde hazırlanacak.');
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!merchantOid) return;
@@ -27,6 +28,7 @@ export function PaymentSuccessPage() {
     const oid = merchantOid;
 
     async function poll() {
+      if (cancelled) return;
       attempts += 1;
       try {
         const status = await api.getPaymentStatus(oid, token);
@@ -51,11 +53,14 @@ export function PaymentSuccessPage() {
 
         setMessage('Ödeme alındı; PayTR onayı bekleniyor. Bu genelde birkaç saniye sürer.');
       } catch (error) {
-        if (!cancelled) setMessage((error as Error).message);
+        if (!cancelled) {
+          setMessage((error as Error).message);
+          return;
+        }
       }
 
       if (!cancelled && attempts < 20) {
-        window.setTimeout(poll, 2000);
+        timeoutRef.current = window.setTimeout(poll, 2500);
       }
     }
 
@@ -63,6 +68,10 @@ export function PaymentSuccessPage() {
 
     return () => {
       cancelled = true;
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
   }, [isAuthenticated, merchantOid, navigate, token]);
 

@@ -272,11 +272,20 @@ export class PaymentsService {
     }
 
     const order = await this.repository.findOrderByPaymentRef(merchantOid);
+    let trackingUrl: string | undefined;
+    if (attempt.trackingTokenEncrypted) {
+      try {
+        trackingUrl = `/siparis-takip/${decryptBillingIdentity(attempt.trackingTokenEncrypted)}`;
+      } catch (error) {
+        console.error('[PAYTR] Payment status tracking token decrypt failed', { merchantOid, error });
+      }
+    }
+
     return {
       merchantOid,
       status: attempt.status.toLowerCase(),
       orderId: order?.id,
-      trackingUrl: attempt.trackingTokenEncrypted ? `/siparis-takip/${decryptBillingIdentity(attempt.trackingTokenEncrypted)}` : undefined,
+      trackingUrl,
     };
   }
 }
