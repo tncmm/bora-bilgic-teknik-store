@@ -127,6 +127,26 @@ export class AdminRepository {
     });
   }
 
+  updateOrderInvoice(id: string, input: { invoicePdfUrl: string; invoiceFileName: string }) {
+    return prisma.order.update({
+      where: { id },
+      data: {
+        invoicePdfUrl: input.invoicePdfUrl,
+        invoiceFileName: input.invoiceFileName,
+        invoiceUploadedAt: new Date(),
+      },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+    });
+  }
+
+  markInvoiceSent(id: string) {
+    return prisma.order.update({
+      where: { id },
+      data: { invoiceSentAt: new Date() },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+    });
+  }
+
   createRefund(orderId: string, adminId: string | undefined, input: { merchantOid: string; amount: number; reason?: string; restock: boolean }) {
     return prisma.refund.create({
       data: {

@@ -253,6 +253,10 @@ export function serializeOrder(order: any): Order {
       identityNumberLast4: order.identityNumberLast4,
     },
     notes: order.notes ?? null,
+    invoicePdfUrl: resolveMediaUrl(order.invoicePdfUrl) ?? null,
+    invoiceFileName: order.invoiceFileName ?? null,
+    invoiceUploadedAt: order.invoiceUploadedAt ? order.invoiceUploadedAt.toISOString() : null,
+    invoiceSentAt: order.invoiceSentAt ? order.invoiceSentAt.toISOString() : null,
     items: order.items.map((item: any) => ({
       id: item.id,
       productName: item.productName,

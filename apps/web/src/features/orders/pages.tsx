@@ -382,6 +382,18 @@ export function OrderDetailPage() {
                   <strong>{language === 'tr' ? 'Genel Toplam' : 'Grand Total'}</strong>
                   <p>{formatCurrency(order.total, language)}</p>
                 </div>
+                <div className="checkout-summary-box">
+                  <strong>{language === 'tr' ? 'Fatura' : 'Invoice'}</strong>
+                  {order.invoicePdfUrl ? (
+                    <p>
+                      <a href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
+                        {order.invoiceFileName ?? (language === 'tr' ? 'PDF faturayı indir' : 'Download PDF invoice')}
+                      </a>
+                    </p>
+                  ) : (
+                    <p>{language === 'tr' ? 'Fatura hazırlandığında burada görünecek.' : 'The invoice will appear here when it is ready.'}</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -514,6 +526,15 @@ export function GuestOrderTrackingPage() {
               <span>Fatura</span>
               <strong>{order.billing.name}</strong>
               <p>TC Kimlik: ***{order.billing.identityNumberLast4}</p>
+              {order.invoicePdfUrl ? (
+                <p>
+                  <a href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
+                    PDF faturayı indir
+                  </a>
+                </p>
+              ) : (
+                <p>Fatura hazırlandığında burada görünecek.</p>
+              )}
             </div>
           </aside>
         </div>

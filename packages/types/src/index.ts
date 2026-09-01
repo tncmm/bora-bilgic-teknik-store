@@ -24,6 +24,7 @@ export const PRODUCT_MEDIA_LIMITS = {
   imageBytes: 10 * 1024 * 1024,
   posterBytes: 3 * 1024 * 1024,
   videoBytes: 100 * 1024 * 1024,
+  invoicePdfBytes: 10 * 1024 * 1024,
 } as const;
 
 export interface ProductMediaInput {
@@ -233,6 +234,10 @@ export interface Order {
   shippingAddressLine: string;
   billing: OrderBillingSummary;
   notes?: string | null;
+  invoicePdfUrl?: string | null;
+  invoiceFileName?: string | null;
+  invoiceUploadedAt?: string | null;
+  invoiceSentAt?: string | null;
   items: OrderItem[];
   refunds?: Refund[];
 }

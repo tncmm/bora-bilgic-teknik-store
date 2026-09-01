@@ -2,9 +2,11 @@ import { OrderStatus } from '@prisma/client';
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
+import { sendMail } from '../../lib/mail/transport.js';
+import { invoiceReadyEmail } from '../../lib/mail/templates.js';
 import { requestRefund } from '../../lib/paytr.js';
 import { serializeDashboardMetrics, serializeOrder, serializeProduct, serializeUser } from '../../lib/serializers.js';
-import { deleteManyMediaFromR2, extractR2KeyFromUrl, uploadMediaToR2 } from '../../lib/r2.js';
+import { deleteManyMediaFromR2, extractR2KeyFromUrl, uploadInvoicePdfToR2, uploadMediaToR2 } from '../../lib/r2.js';
 import { AdminRepository } from './admin.repository.js';
 
 const specSchema = z.object({
@@ -61,6 +63,12 @@ const refundSchema = z.object({
   amount: z.number().positive(),
   reason: z.string().max(500).optional(),
   restock: z.boolean().default(false),
+});
+
+const invoiceUploadSchema = z.object({
+  fileName: z.string().trim().min(1),
+  mimeType: z.literal('application/pdf'),
+  base64: z.string().min(1),
 });
 
 const mediaSchema = z.object({
@@ -283,6 +291,13 @@ export class AdminService {
     const data = updateProductSchema.parse(payload);
     const nextData: Record<string, unknown> = { ...data };
 
+    if (data.specs) {
+      nextData.specs = {
+        deleteMany: {},
+        create: data.specs,
+      };
+    }
+
     if (data.images) {
       const existing = await this.repository.getProduct(id);
       const previousUrls = existing ? this.collectMediaUrls(existing.images) : [];
@@ -298,13 +313,6 @@ export class AdminService {
       await this.removeOrphanedMedia(previousUrls.filter((url) => !nextUrls.has(url)));
 
       return serializeProduct(product);
-    }
-
-    if (data.specs) {
-      nextData.specs = {
-        deleteMany: {},
-        create: data.specs,
-      };
     }
 
     const product = await this.repository.updateProduct(id, nextData);
@@ -409,6 +417,41 @@ export class AdminService {
       await this.repository.markRefundFailed(refund.id, error instanceof Error ? error.message : 'PayTR iadesi basarisiz.');
       throw error;
     }
+  }
+
+  async uploadOrderInvoice(id: string, payload: unknown) {
+    const data = invoiceUploadSchema.parse(payload);
+    const order = await this.repository.getOrder(id);
+
+    if (!order) {
+      throw new AppError('Siparis bulunamadi.', 404);
+    }
+
+    if (!['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(order.paymentStatus)) {
+      throw new AppError('Fatura yalnizca odemesi tamamlanmis siparise yuklenebilir.', 409);
+    }
+
+    const uploaded = await uploadInvoicePdfToR2({
+      orderNumber: order.orderNumber,
+      fileName: data.fileName,
+      mimeType: data.mimeType,
+      base64: data.base64,
+    });
+
+    const updatedOrder = await this.repository.updateOrderInvoice(id, {
+      invoicePdfUrl: uploaded.url,
+      invoiceFileName: data.fileName,
+    });
+
+    const email = invoiceReadyEmail({
+      name: updatedOrder.shippingName,
+      orderNumber: updatedOrder.orderNumber,
+      invoiceUrl: uploaded.url,
+    });
+
+    await sendMail({ to: updatedOrder.customerEmail, ...email });
+    const sentOrder = await this.repository.markInvoiceSent(id);
+    return serializeOrder(sentOrder);
   }
 
   async listUsers() {

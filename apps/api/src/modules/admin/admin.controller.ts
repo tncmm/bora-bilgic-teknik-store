@@ -90,6 +90,11 @@ export class AdminController {
     res.status(201).json(order);
   };
 
+  uploadOrderInvoice = async (req: Request, res: Response) => {
+    const order = await this.service.uploadOrderInvoice(String(req.params.id), req.body);
+    res.status(201).json(order);
+  };
+
   listUsers = async (_req: Request, res: Response) => {
     const users = await this.service.listUsers();
     res.json(users);

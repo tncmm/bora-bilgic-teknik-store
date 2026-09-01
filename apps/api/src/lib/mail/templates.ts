@@ -120,6 +120,34 @@ Buton çalışmıyorsa bu bağlantıyı kullanabilirsiniz:
   return { subject, html, text };
 }
 
+export function invoiceReadyEmail(input: { name: string; orderNumber: string; invoiceUrl: string }) {
+  const subject = `Faturanız hazır — ${input.orderNumber}`;
+  const safeName = escapeHtml(input.name);
+  const safeOrderNumber = escapeHtml(input.orderNumber);
+  const safeInvoiceUrl = escapeHtml(input.invoiceUrl);
+
+  const html = wrapEmail(`
+<h2 style="margin:0 0 16px;font-size:20px;color:#1a1a2e;">Faturanız hazır, ${safeName}</h2>
+<p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#333;">
+${safeOrderNumber} numaralı siparişinizin faturası sisteme yüklendi. PDF faturayı aşağıdaki bağlantıdan indirebilirsiniz.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+<tr><td style="background-color:#1a1a2e;border-radius:6px;">
+<a href="${safeInvoiceUrl}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">
+Faturayı İndir
+</a>
+</td></tr>
+</table>
+<p style="margin:0;font-size:13px;color:#1a1a2e;word-break:break-all;">
+<a href="${safeInvoiceUrl}" style="color:#1a1a2e;text-decoration:underline;">${safeInvoiceUrl}</a>
+</p>
+`);
+
+  const text = `Merhaba ${input.name},\n\n${input.orderNumber} numaralı siparişinizin faturası hazır. PDF faturayı buradan indirebilirsiniz:\n\n${input.invoiceUrl}`;
+
+  return { subject, html, text };
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')

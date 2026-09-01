@@ -26,6 +26,13 @@ interface UploadMediaInput {
   base64: string;
 }
 
+interface UploadInvoiceInput {
+  orderNumber: string;
+  fileName: string;
+  mimeType: string;
+  base64: string;
+}
+
 interface R2Config {
   bucketName: string;
   publicBaseUrl: string;
@@ -173,6 +180,18 @@ function buildObjectKey(kind: AdminUploadKind, fileName: string, mimeType: strin
   ].join('/');
 }
 
+function buildInvoiceObjectKey(orderNumber: string, fileName: string) {
+  const now = new Date();
+  const baseName = sanitizeBaseName(`${orderNumber}-${fileName}`);
+
+  return [
+    'orders/invoices',
+    String(now.getUTCFullYear()),
+    String(now.getUTCMonth() + 1).padStart(2, '0'),
+    `${baseName}-${randomUUID()}.pdf`,
+  ].join('/');
+}
+
 function validateUpload(kind: AdminUploadKind, mimeType: string, size: number) {
   if (!getAllowedMimeTypes(kind).includes(mimeType as never)) {
     throw new AppError(getUploadFormatMessage(kind), 400);
@@ -210,6 +229,47 @@ export async function uploadMediaToR2(input: UploadMediaInput) {
     // useful signal when credentials or bucket permissions are wrong.
     const detail = error instanceof Error ? error.message : '';
     throw new AppError(`R2 yuklemesi basarisiz oldu.${detail ? ` ${detail}` : ''}`, 502);
+  }
+
+  return {
+    url: `${config.publicBaseUrl}/${key}`,
+    key,
+    mimeType: input.mimeType,
+    size: buffer.length,
+  };
+}
+
+export async function uploadInvoicePdfToR2(input: UploadInvoiceInput) {
+  const config = requireR2Config();
+  const buffer = Buffer.from(input.base64, 'base64');
+
+  if (!buffer.length) {
+    throw new AppError('Bos fatura dosyasi yuklenemez.', 400);
+  }
+
+  if (input.mimeType !== 'application/pdf') {
+    throw new AppError('Fatura yalnizca PDF formatinda yuklenebilir.', 400);
+  }
+
+  if (buffer.length > PRODUCT_MEDIA_LIMITS.invoicePdfBytes) {
+    throw new AppError('Fatura PDF boyutu 10 MB sinirini asamaz.', 400);
+  }
+
+  const key = buildInvoiceObjectKey(input.orderNumber, input.fileName);
+
+  try {
+    await getClient().send(
+      new PutObjectCommand({
+        Bucket: config.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: input.mimeType,
+        CacheControl: IMMUTABLE_CACHE_CONTROL,
+      }),
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : '';
+    throw new AppError(`Fatura R2 yuklemesi basarisiz oldu.${detail ? ` ${detail}` : ''}`, 502);
   }
 
   return {

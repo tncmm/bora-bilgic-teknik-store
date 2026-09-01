@@ -116,6 +116,59 @@ describe('AdminService', () => {
       }),
     ).rejects.toThrow();
   });
+
+  it('updates images and specs together using nested writes', async () => {
+    const product = {
+      id: 'product-1',
+      name: 'Demo Product',
+      slug: 'demo-product',
+      brand: 'DJI',
+      categoryId: 'category-1',
+      category: { id: 'category-1', name: 'Drone', slug: 'drone', description: 'Drone' },
+      shortDescription: 'Kisa aciklama',
+      description: 'Bu daha detayli bir aciklamadir.',
+      sku: 'SKU-001',
+      price: 100,
+      discountPercent: 0,
+      stock: 1,
+      isPublished: true,
+      isPurchasable: true,
+      isBestseller: false,
+      images: [{ id: 'image-1', url: 'https://example.com/image.jpg', alt: 'Demo image', isPrimary: true, kind: 'image' }],
+      specs: [{ id: 'spec-1', name: 'Sensor', value: '1 inch' }],
+    };
+    const repository = {
+      getProduct: vi.fn().mockResolvedValue(product),
+      updateProduct: vi.fn().mockResolvedValue(product),
+    };
+
+    const service = new AdminService(repository as any);
+
+    await service.updateProduct('product-1', {
+      name: product.name,
+      slug: product.slug,
+      brand: product.brand,
+      categoryId: product.categoryId,
+      shortDescription: product.shortDescription,
+      description: product.description,
+      sku: product.sku,
+      price: product.price,
+      stock: product.stock,
+      isPublished: product.isPublished,
+      isPurchasable: product.isPurchasable,
+      images: [{ url: 'https://example.com/image.jpg', alt: 'Demo image', isPrimary: true, kind: 'image' }],
+      specs: [{ name: 'Sensor', value: '1 inch' }],
+    });
+
+    expect(repository.updateProduct).toHaveBeenCalledWith(
+      'product-1',
+      expect.objectContaining({
+        images: expect.objectContaining({ deleteMany: {}, create: expect.any(Array) }),
+        specs: expect.objectContaining({ deleteMany: {}, create: expect.any(Array) }),
+      }),
+    );
+  });
+
   it('rejects duplicate category slugs with 409', async () => {
     const repository = {
       findCategoryBySlug: vi.fn().mockResolvedValue({ id: 'category-1' }),

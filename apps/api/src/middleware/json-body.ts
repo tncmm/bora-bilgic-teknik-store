@@ -24,7 +24,7 @@ const LARGE_BODY_PATHS = new Set(['/api/v1/admin/media/upload']);
  * upload with a 413 before the route-specific parser ever ran.
  */
 export function jsonBodyUnlessLarge(req: Request, res: Response, next: NextFunction) {
-  if (LARGE_BODY_PATHS.has(req.path)) {
+  if (LARGE_BODY_PATHS.has(req.path) || /^\/api\/v1\/admin\/orders\/[^/]+\/invoice$/.test(req.path)) {
     next();
     return;
   }

@@ -317,6 +317,12 @@ export const api = {
       body: JSON.stringify(payload),
     }, token);
   },
+  uploadAdminOrderInvoice(token: string, orderId: string, payload: { fileName: string; mimeType: 'application/pdf'; base64: string }) {
+    return request<Order>(`/admin/orders/${orderId}/invoice`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
+  },
   getAdminUsers(token: string) {
     return request<User[]>('/admin/users', {}, token);
   },

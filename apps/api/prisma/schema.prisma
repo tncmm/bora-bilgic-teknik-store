@@ -315,6 +315,10 @@ model Order {
   paymentFailureMessage String?
   refundedAmount        Decimal       @default(0) @db.Decimal(10, 2)
   lastRefundedAt        DateTime?
+  invoicePdfUrl         String?
+  invoiceFileName       String?
+  invoiceUploadedAt     DateTime?
+  invoiceSentAt         DateTime?
 
   items OrderItem[]
   user  User?      @relation(fields: [userId], references: [id], onDelete: Restrict)

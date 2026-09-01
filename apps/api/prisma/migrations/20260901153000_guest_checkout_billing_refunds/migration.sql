@@ -61,7 +61,11 @@ ALTER TABLE "Order"
   ADD COLUMN "identityNumberEncrypted" TEXT,
   ADD COLUMN "identityNumberLast4" TEXT,
   ADD COLUMN "refundedAmount" DECIMAL(10,2) NOT NULL DEFAULT 0,
-  ADD COLUMN "lastRefundedAt" TIMESTAMP(3);
+  ADD COLUMN "lastRefundedAt" TIMESTAMP(3),
+  ADD COLUMN "invoicePdfUrl" TEXT,
+  ADD COLUMN "invoiceFileName" TEXT,
+  ADD COLUMN "invoiceUploadedAt" TIMESTAMP(3),
+  ADD COLUMN "invoiceSentAt" TIMESTAMP(3);
 
 UPDATE "Order"
 SET

@@ -1,5 +1,5 @@
 import { EmptyState, InputField } from '@bora/ui';
-import type { Order } from '@bora/types';
+import { PRODUCT_MEDIA_LIMITS, type Order } from '@bora/types';
 import { useEffect, useState } from 'react';
 
 import { useSession } from '../../app/providers/SessionProvider';
@@ -17,6 +17,19 @@ const STATUS_OPTIONS = [
   { value: 'DELIVERED', label: 'Teslim Edildi' },
 ] as const;
 
+function readFileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result ?? '');
+      const [, base64 = ''] = dataUrl.split(',');
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export function AdminOrdersPage() {
   const { token } = useSession();
   const { showToast } = useToast();
@@ -26,6 +39,7 @@ export function AdminOrdersPage() {
   const [refundReason, setRefundReason] = useState('');
   const [refundRestock, setRefundRestock] = useState(false);
   const [refunding, setRefunding] = useState(false);
+  const [invoiceUploadingOrderId, setInvoiceUploadingOrderId] = useState<string | null>(null);
   const refundAmountNumber = Number(refundAmount);
   const canRestockRefund = Boolean(refundOrder && refundAmountNumber === refundOrder.refundableAmount);
 
@@ -97,6 +111,37 @@ export function AdminOrdersPage() {
     }
   }
 
+  async function handleInvoiceUpload(order: AdminOrder, file: File | undefined) {
+    if (!token || !file) return;
+
+    if (file.type !== 'application/pdf') {
+      showToast({ tone: 'error', title: 'Fatura yüklenemedi', description: 'Fatura yalnızca PDF formatında yüklenebilir.' });
+      return;
+    }
+
+    if (file.size > PRODUCT_MEDIA_LIMITS.invoicePdfBytes) {
+      showToast({ tone: 'error', title: 'Fatura yüklenemedi', description: 'PDF boyutu 10 MB sınırını aşamaz.' });
+      return;
+    }
+
+    setInvoiceUploadingOrderId(order.id);
+    try {
+      const base64 = await readFileAsBase64(file);
+      await api.uploadAdminOrderInvoice(token, order.id, {
+        fileName: file.name,
+        mimeType: 'application/pdf',
+        base64,
+      });
+      await loadOrders();
+      showToast({ tone: 'success', title: 'Fatura gönderildi', description: `${order.orderNumber} faturası yüklendi ve müşteriye mail gönderildi.` });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'Fatura gönderilemedi', description: (error as Error).message });
+      await loadOrders();
+    } finally {
+      setInvoiceUploadingOrderId(null);
+    }
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-headline">
@@ -121,6 +166,7 @@ export function AdminOrdersPage() {
                   <th style={{ textAlign: 'right' }}>Tutar</th>
                   <th style={{ textAlign: 'right' }}>İade</th>
                   <th style={{ textAlign: 'right' }}>Durum</th>
+                  <th>Fatura</th>
                   <th style={{ textAlign: 'right' }}>Aksiyon</th>
                 </tr>
               </thead>
@@ -160,7 +206,29 @@ export function AdminOrdersPage() {
                         ))}
                       </select>
                     </td>
+                    <td>
+                      {order.invoicePdfUrl ? (
+                        <a className="admin-table-action" href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
+                          PDF Aç
+                        </a>
+                      ) : (
+                        <span className="text-muted">Yok</span>
+                      )}
+                      <div className="text-muted">{order.invoiceSentAt ? 'Mail gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</div>
+                    </td>
                     <td style={{ textAlign: 'right' }}>
+                      <label className={`admin-table-action ${invoiceUploadingOrderId === order.id ? 'is-disabled' : ''}`}>
+                        {invoiceUploadingOrderId === order.id ? 'Yükleniyor...' : 'Fatura Yükle'}
+                        <input
+                          accept="application/pdf"
+                          hidden
+                          onChange={(event) => {
+                            void handleInvoiceUpload(order, event.target.files?.[0]);
+                            event.currentTarget.value = '';
+                          }}
+                          type="file"
+                        />
+                      </label>
                       <button className="admin-table-action" disabled={order.refundableAmount <= 0 || order.paymentStatus === 'refunded'} onClick={() => openRefundModal(order)} type="button">
                         İade Et
                       </button>
