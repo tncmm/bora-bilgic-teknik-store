@@ -121,4 +121,63 @@ describe('CatalogService', () => {
     expect(categories[0].series).toEqual(['Mavic Serisi', 'Air Serisi']);
     expect(categories[0].featureTags).toContain('4K Video');
   });
+
+  it('does not repeat the primary product image in the fallback description tab', async () => {
+    const repository = {
+      listProducts: vi.fn(),
+      listCategories: vi.fn(),
+      findProductBySlug: vi.fn().mockResolvedValue({
+        id: 'product-1',
+        name: 'DJI Mavic 3 Pro',
+        slug: 'dji-mavic-3-pro',
+        brand: 'DJI',
+        series: 'Mavic Serisi',
+        shortDescription: 'Drone',
+        description: 'Detayli drone aciklamasi',
+        sku: 'SKU-1',
+        badge: null,
+        heroTag: null,
+        price: 88999,
+        discountPercent: 0,
+        stock: 4,
+        isPublished: true,
+        isPurchasable: true,
+        isBestseller: false,
+        featureTags: [],
+        ratingAverage: 0,
+        reviewCount: 0,
+        heroImageUrl: 'https://example.com/hero.jpg',
+        heroTitle: null,
+        heroDescription: null,
+        categoryId: 'category-1',
+        category: {
+          id: 'category-1',
+          name: 'Drone',
+          slug: 'drone',
+          description: 'Drone category',
+        },
+        images: [
+          {
+            id: 'image-1',
+            url: 'https://example.com/image.jpg',
+            alt: 'Image',
+            isPrimary: true,
+            kind: 'image',
+            thumbnailUrl: 'https://example.com/image.jpg',
+          },
+        ],
+        specs: [{ id: 'spec-1', name: 'Camera', value: '4/3 CMOS' }],
+        packageOptions: null,
+        detailSections: null,
+      }),
+    };
+
+    const service = new CatalogService(repository as any);
+    const product = await service.getProduct('dji-mavic-3-pro');
+
+    expect(product.detailSections?.[0]).toMatchObject({
+      id: 'aciklama',
+      imageUrl: null,
+    });
+  });
 });

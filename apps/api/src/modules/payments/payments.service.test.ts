@@ -154,6 +154,17 @@ describe('PaymentsService.createCheckout', () => {
     expect(result.iframeToken).toBe('iframe-token-123');
   });
 
+  it('uses the checkout email when it is provided for an authenticated payment', async () => {
+    const repository = createRepository();
+    repository.findCart.mockResolvedValue(cartWithItem);
+    const service = new PaymentsService(repository as never);
+
+    await service.createCheckout('user-1', 'hesap@example.com', { ...checkoutPayload, email: 'siparis@example.com' }, '127.0.0.1');
+
+    expect(repository.createAttempt).toHaveBeenCalledWith(expect.objectContaining({ customerEmail: 'siparis@example.com' }));
+    expect(requestIframeToken).toHaveBeenCalledWith(expect.objectContaining({ email: 'siparis@example.com' }));
+  });
+
   it('releases stock and fails the attempt when PayTR rejects the token request', async () => {
     const repository = createRepository();
     repository.findCart.mockResolvedValue(cartWithItem);

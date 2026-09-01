@@ -91,8 +91,9 @@ export function CheckoutPage() {
         billingAddressLine: form.billingAddressLine ?? '',
       };
 
+  const contactEmail = (form.email || user?.email || '').trim();
   const formReady = Boolean(
-    (isAuthenticated || form.email?.trim()) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) &&
       shipping.shippingName.trim() &&
       shipping.shippingPhone.trim() &&
       shipping.shippingCity.trim() &&
@@ -113,7 +114,7 @@ export function CheckoutPage() {
     setSubmitting(true);
     try {
       const payload: CheckoutPayload = {
-        email: isAuthenticated ? undefined : form.email,
+        email: contactEmail,
         items: isAuthenticated ? undefined : cart.items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
         ...shipping,
         billingSameAsShipping: form.billingSameAsShipping,
@@ -181,22 +182,21 @@ export function CheckoutPage() {
 
         <form className="checkout-grid" onSubmit={handleSubmit}>
           <div className="checkout-grid__main">
-            {!isAuthenticated ? (
-              <div className="admin-card">
-                <div className="checkout-step-head">
-                  <span className="checkout-step-no">1</span>
-                  <div>
-                    <h2>İletişim</h2>
-                    <p>Sipariş takip linkini gönderebilmemiz için e-posta adresin gerekli.</p>
-                  </div>
+            <div className="admin-card">
+              <div className="checkout-step-head">
+                <span className="checkout-step-no">1</span>
+                <div>
+                  <h2>İletişim</h2>
+                  <p>Sipariş takip linki ve fatura bilgilendirmesi bu e-posta adresine gönderilir.</p>
                 </div>
-                <InputField label="E-posta" onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} type="email" value={form.email} />
               </div>
-            ) : null}
+              <InputField label="E-posta" onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} placeholder="ornek@mail.com" type="email" value={form.email || user?.email || ''} />
+              {isAuthenticated ? <p className="admin-field-hint">Hesap e-postan otomatik dolduruldu; istersen bu sipariş için farklı bir e-posta yazabilirsin.</p> : null}
+            </div>
 
             <div className="admin-card">
               <div className="checkout-step-head">
-                <span className="checkout-step-no">{isAuthenticated ? 1 : 2}</span>
+                <span className="checkout-step-no">2</span>
                 <div>
                   <h2>Teslimat Adresi</h2>
                   <p>Kayıtlı adreslerinden seç veya bu sipariş için yeni adres gir.</p>
@@ -244,7 +244,7 @@ export function CheckoutPage() {
 
             <div className="admin-card">
               <div className="checkout-step-head">
-                <span className="checkout-step-no">{isAuthenticated ? 2 : 3}</span>
+                <span className="checkout-step-no">3</span>
                 <div>
                   <h2>Fatura Bilgileri</h2>
                   <p>TC kimlik numarası şifrelenerek saklanır ve ekranda tam gösterilmez.</p>
@@ -286,7 +286,7 @@ export function CheckoutPage() {
 
             <div className="admin-card">
               <div className="checkout-step-head">
-                <span className="checkout-step-no">{isAuthenticated ? 3 : 4}</span>
+                <span className="checkout-step-no">4</span>
                 <div>
                   <h2>Sipariş Notu ve Ödeme</h2>
                   <p>Not opsiyonel; kart bilgilerin PayTR tarafından alınır.</p>
@@ -331,7 +331,7 @@ export function CheckoutPage() {
               <Button disabled={!formReady || submitting} style={{ width: '100%', marginTop: '1rem' }} type="submit">
                 {submitting ? 'Ödeme Hazırlanıyor...' : 'Güvenli Ödemeye Geç'}
               </Button>
-              {!formReady ? <p className="admin-field-hint">Devam için iletişim, teslimat, fatura ve TC kimlik bilgilerini tamamla.</p> : null}
+              {!formReady ? <p className="admin-field-hint">Devam için geçerli e-posta, teslimat, fatura ve TC kimlik bilgilerini tamamla.</p> : null}
             </div>
           </aside>
         </form>

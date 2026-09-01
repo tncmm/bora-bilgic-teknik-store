@@ -63,7 +63,7 @@ export class PaymentsService {
     }
 
     const data = checkoutSchema.parse(payload);
-    const customerEmail = userEmail ?? data.email;
+    const customerEmail = data.email ?? userEmail;
 
     if (!customerEmail) {
       throw new AppError('Siparis takibi icin e-posta adresi zorunludur.', 400);

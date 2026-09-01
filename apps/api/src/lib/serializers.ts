@@ -120,7 +120,7 @@ export function serializeProduct(product: any): Product {
       heading: product.name,
       body: product.description,
       bullets: product.specs.slice(0, 5).map((spec: any) => `${spec.name}: ${spec.value}`),
-      imageUrl: resolveMediaUrl(product.heroImageUrl) ?? resolveMediaUrl(images[0]?.url) ?? null,
+      imageUrl: null,
     },
   ];
 
