@@ -1,4 +1,4 @@
-import type { AuthResponse, Cart, ThemeMode, User, Wishlist } from '@bora/types';
+import type { AuthResponse, Cart, Product, ThemeMode, User, Wishlist } from '@bora/types';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { api } from '../../shared/api/client';
@@ -18,6 +18,9 @@ interface SessionContextValue {
   applyAuthResponse: (response: AuthResponse) => void;
   logout: () => void;
   syncCart: () => Promise<void>;
+  addCartItem: (product: Product, quantity: number) => Promise<void>;
+  updateCartItem: (itemId: string, quantity: number) => Promise<void>;
+  removeCartItem: (itemId: string) => Promise<void>;
   syncWishlist: () => Promise<void>;
   toggleFavorite: (productId: string) => Promise<'added' | 'removed'>;
   isFavorite: (productId: string) => boolean;
@@ -30,6 +33,12 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 const TOKEN_KEY = 'bora-session-token';
 const USER_KEY = 'bora-session-user';
 const THEME_KEY = 'bora-theme-mode';
+const GUEST_CART_KEY = 'bora-guest-cart';
+
+interface GuestCartLine {
+  product: Product;
+  quantity: number;
+}
 
 function readStorage<T>(key: string): T | null {
   const value = window.localStorage.getItem(key);
@@ -52,10 +61,36 @@ function applyTheme(mode: ThemeMode) {
   document.documentElement.dataset.theme = theme;
 }
 
+function buildGuestCart(lines: GuestCartLine[]): Cart {
+  const items = lines.map((line) => ({
+    id: `guest-${line.product.id}`,
+    productId: line.product.id,
+    quantity: line.quantity,
+    product: line.product,
+    lineTotal: line.product.effectivePrice * line.quantity,
+  }));
+
+  return {
+    id: 'guest-cart',
+    items,
+    subtotal: items.reduce((sum, item) => sum + item.lineTotal, 0),
+    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+  };
+}
+
+function readGuestCart() {
+  return buildGuestCart(readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? []);
+}
+
+function writeGuestCart(lines: GuestCartLine[]) {
+  window.localStorage.setItem(GUEST_CART_KEY, JSON.stringify(lines));
+  return buildGuestCart(lines);
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() => window.localStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState<User | null>(() => readStorage<User>(USER_KEY));
-  const [cart, setCart] = useState<Cart | null>(null);
+  const [cart, setCart] = useState<Cart | null>(() => (window.localStorage.getItem(TOKEN_KEY) ? null : readGuestCart()));
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
     return (window.localStorage.getItem(THEME_KEY) as ThemeMode | null) ?? 'light';
@@ -110,6 +145,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   async function login(payload: { email: string; password: string }) {
     const response = await api.login(payload);
     applyAuthResponse(response);
+    const guestLines = readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? [];
+    for (const line of guestLines) {
+      await api.addToCart(response.accessToken, { productId: line.product.id, quantity: line.quantity });
+    }
+    if (guestLines.length > 0) {
+      window.localStorage.removeItem(GUEST_CART_KEY);
+      await syncCartInternal(response.accessToken);
+    }
   }
 
   async function register(payload: { firstName: string; lastName: string; email: string; password: string }) {
@@ -125,11 +168,58 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
     void api.logout();
+    setCart(readGuestCart());
   }
 
   async function syncCart() {
-    if (!token) return;
+    if (!token) {
+      setCart(readGuestCart());
+      return;
+    }
     await syncCartInternal(token);
+  }
+
+  async function addCartItem(product: Product, quantity: number) {
+    if (token) {
+      await api.addToCart(token, { productId: product.id, quantity });
+      await syncCartInternal(token);
+      return;
+    }
+
+    const lines = readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? [];
+    const existing = lines.find((line) => line.product.id === product.id);
+    if (existing) {
+      existing.quantity = Math.min(10, existing.quantity + quantity);
+    } else {
+      lines.push({ product, quantity });
+    }
+    setCart(writeGuestCart(lines));
+  }
+
+  async function updateCartItem(itemId: string, quantity: number) {
+    if (token) {
+      await api.updateCartItem(token, itemId, quantity);
+      await syncCartInternal(token);
+      return;
+    }
+
+    const productId = itemId.replace(/^guest-/, '');
+    const lines = (readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? []).map((line) =>
+      line.product.id === productId ? { ...line, quantity } : line,
+    );
+    setCart(writeGuestCart(lines));
+  }
+
+  async function removeCartItem(itemId: string) {
+    if (token) {
+      await api.removeCartItem(token, itemId);
+      await syncCartInternal(token);
+      return;
+    }
+
+    const productId = itemId.replace(/^guest-/, '');
+    const lines = (readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? []).filter((line) => line.product.id !== productId);
+    setCart(writeGuestCart(lines));
   }
 
   async function syncWishlist() {
@@ -180,6 +270,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       applyAuthResponse,
       logout,
       syncCart,
+      addCartItem,
+      updateCartItem,
+      removeCartItem,
       syncWishlist,
       toggleFavorite,
       isFavorite,

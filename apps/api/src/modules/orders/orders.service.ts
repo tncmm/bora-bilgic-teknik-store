@@ -19,4 +19,14 @@ export class OrdersService {
 
     return serializeOrder(order);
   }
+
+  async getOrderByTrackingToken(token: string) {
+    const order = await this.repository.findOrderByTrackingToken(token);
+
+    if (!order) {
+      throw new AppError('Siparis takip linki gecersiz veya siparis henuz olusmadi.', 404);
+    }
+
+    return serializeOrder(order);
+  }
 }

@@ -12,6 +12,7 @@ import type {
   HeroSlide,
   MessageResponse,
   Order,
+  PaymentStatusResponse,
   PaytrTokenResponse,
   Product,
   ThemeMode,
@@ -31,11 +32,24 @@ interface AdminMediaUploadResponse {
 export type AdminCategory = Category & { _count?: { products: number } };
 
 export interface CheckoutPayload {
+  email?: string;
+  items?: Array<{ productId: string; quantity: number }>;
   shippingName: string;
   shippingPhone: string;
   shippingCity: string;
   shippingDistrict: string;
   shippingAddressLine: string;
+  billingSameAsShipping?: boolean;
+  billingType: 'individual' | 'corporate';
+  billingName?: string;
+  billingPhone?: string;
+  billingCity?: string;
+  billingDistrict?: string;
+  billingAddressLine?: string;
+  companyName?: string;
+  taxOffice?: string;
+  taxNumber?: string;
+  identityNumber: string;
   notes?: string;
 }
 
@@ -204,17 +218,23 @@ export const api = {
   removeCartItem(token: string, itemId: string) {
     return request<Cart>(`/cart/items/${itemId}`, { method: 'DELETE' }, token);
   },
-  startPayment(token: string, payload: CheckoutPayload) {
+  startPayment(token: string | null, payload: CheckoutPayload) {
     return request<PaytrTokenResponse>('/payments/paytr/checkout', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }, token);
+    }, token ?? undefined);
+  },
+  getPaymentStatus(merchantOid: string, token?: string | null) {
+    return request<PaymentStatusResponse>(`/payments/paytr/status/${merchantOid}`, {}, token ?? undefined);
   },
   getMyOrders(token: string) {
     return request<Order[]>('/orders/me', {}, token);
   },
   getMyOrder(token: string, orderId: string) {
     return request<Order>(`/orders/me/${orderId}`, {}, token);
+  },
+  trackOrder(trackingToken: string) {
+    return request<Order>(`/orders/track/${trackingToken}`);
   },
   getAdminDashboard(token: string) {
     return request<DashboardMetrics>('/admin/dashboard', {}, token);
@@ -289,6 +309,12 @@ export const api = {
     return request<Order>(`/admin/orders/${orderId}`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    }, token);
+  },
+  refundAdminOrder(token: string, orderId: string, payload: { amount: number; reason?: string; restock: boolean }) {
+    return request<Order>(`/admin/orders/${orderId}/refunds`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }, token);
   },
   getAdminUsers(token: string) {

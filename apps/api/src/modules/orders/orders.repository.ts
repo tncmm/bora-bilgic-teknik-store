@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
 import { prisma } from '../../db/prisma.js';
+import { hashTrackingToken } from '../../lib/crypto.js';
 
 export function generateOrderNumber() {
   return `BBT-${Date.now().toString(36).toUpperCase()}${randomBytes(3).toString('hex').toUpperCase()}`;
@@ -14,8 +15,8 @@ export function generateOrderNumber() {
 export class OrdersRepository {
   listOrdersForUser(userId: string) {
     return prisma.order.findMany({
-      where: { userId, paymentStatus: 'PAID' },
-      include: { items: true },
+      where: { userId, paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -25,9 +26,16 @@ export class OrdersRepository {
       where: {
         id: orderId,
         userId,
-        paymentStatus: 'PAID',
+        paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] },
       },
-      include: { items: true },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+    });
+  }
+
+  findOrderByTrackingToken(token: string) {
+    return prisma.order.findUnique({
+      where: { trackingTokenHash: hashTrackingToken(token) },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
     });
   }
 }

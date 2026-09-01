@@ -25,6 +25,28 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   }
 }
 
+export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : undefined;
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+    req.auth = {
+      userId: payload.sub,
+      role: payload.role,
+      email: payload.email,
+    };
+  } catch {
+    // Guest checkout should still work if an old token is present in storage.
+  }
+
+  return next();
+}
+
 export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
   if (!req.auth || req.auth.role !== Role.ADMIN) {
     return next(new AppError('Bu alan icin admin yetkisi gerekiyor.', 403));

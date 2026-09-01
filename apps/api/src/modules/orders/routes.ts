@@ -6,6 +6,8 @@ import { OrdersController } from './orders.controller.js';
 const router = Router();
 const controller = new OrdersController();
 
+router.get('/track/:token', controller.trackOrder);
+
 router.use(requireAuth);
 router.get('/me', controller.listMyOrders);
 router.get('/me/:orderId', controller.getMyOrder);

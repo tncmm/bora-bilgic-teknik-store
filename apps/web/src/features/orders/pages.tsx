@@ -431,3 +431,93 @@ export function OrderDetailPage() {
     </section>
   );
 }
+
+export function GuestOrderTrackingPage() {
+  const { token = '' } = useParams();
+  const { language } = useI18n();
+  const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    void api.trackOrder(token).then(setOrder).catch((nextError: Error) => setError(nextError.message));
+  }, [token]);
+
+  if (error) {
+    return (
+      <section className="page-section" style={{ paddingTop: '140px' }}>
+        <div className="ui-shell account-layout">
+          <EmptyState description={error} title="Sipariş takip edilemiyor" />
+          <Link to="/iletisim">
+            <Button>Destek Al</Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (!order) {
+    return (
+      <section className="page-section" style={{ paddingTop: '140px' }}>
+        <div className="ui-shell account-layout">
+          <EmptyState description="Sipariş bilgileri yükleniyor." title="Lütfen bekleyin" />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="page-section" style={{ paddingTop: '140px' }}>
+      <div className="ui-shell orders-layout">
+        <div className="order-confirmation-card">
+          <div>
+            <div className="detail-chip">Sipariş Takibi</div>
+            <h1>{order.orderNumber}</h1>
+            <p>Ödeme ve teslimat sürecini bu güvenli bağlantıdan takip edebilirsin.</p>
+          </div>
+          <span className={`order-badge order-badge--payment-${order.paymentStatus}`}>{translatePaymentStatus(language, order.paymentStatus)}</span>
+        </div>
+
+        <div className="order-detail-grid">
+          <div className="admin-card">
+            <div className="admin-card__head">
+              <h2>Ürünler</h2>
+              <p>{order.items.length} satır</p>
+            </div>
+            <div className="checkout-lines">
+              {order.items.map((item) => (
+                <div className="checkout-line" key={item.id}>
+                  <span>
+                    {item.productName} × {item.quantity}
+                  </span>
+                  <strong>{formatCurrency(item.lineTotal, language)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <aside className="admin-card">
+            <div className="checkout-summary-box">
+              <span>Durum</span>
+              <strong>{translateOrderStatus(language, order.status)}</strong>
+            </div>
+            <div className="checkout-summary-box">
+              <span>Toplam</span>
+              <strong>{formatCurrency(order.total, language)}</strong>
+            </div>
+            <div className="checkout-summary-box">
+              <span>Teslimat</span>
+              <strong>{order.shippingCity}</strong>
+              <p>{order.shippingAddressLine}</p>
+            </div>
+            <div className="checkout-summary-box">
+              <span>Fatura</span>
+              <strong>{order.billing.name}</strong>
+              <p>TC Kimlik: ***{order.billing.identityNumberLast4}</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  );
+}

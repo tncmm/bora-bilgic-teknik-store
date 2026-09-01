@@ -4,7 +4,7 @@ export type UserRole = 'customer' | 'admin';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'partially_refunded' | 'refunded';
 
 /** Products are no longer DJI-only; the brand is a free-form label. */
 export type BrandName = string;
@@ -190,6 +190,31 @@ export interface OrderItem {
   lineTotal: number;
 }
 
+export interface OrderBillingSummary {
+  type: 'individual' | 'corporate';
+  name: string;
+  phone: string;
+  city: string;
+  district: string;
+  addressLine: string;
+  companyName?: string | null;
+  taxOffice?: string | null;
+  taxNumber?: string | null;
+  identityNumberLast4: string;
+}
+
+export interface Refund {
+  id: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'failed' | 'expired';
+  reason?: string | null;
+  restock: boolean;
+  paytrReference?: string | null;
+  failureReason?: string | null;
+  createdAt: string;
+  completedAt?: string | null;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -198,18 +223,31 @@ export interface Order {
   createdAt: string;
   paidAt: string | null;
   total: number;
+  customerEmail: string;
+  refundedAmount: number;
+  refundableAmount: number;
   shippingName: string;
   shippingPhone: string;
   shippingCity: string;
   shippingDistrict: string;
   shippingAddressLine: string;
+  billing: OrderBillingSummary;
   notes?: string | null;
   items: OrderItem[];
+  refunds?: Refund[];
 }
 
 export interface PaytrTokenResponse {
   iframeToken: string;
   merchantOid: string;
+  trackingUrl?: string;
+}
+
+export interface PaymentStatusResponse {
+  merchantOid: string;
+  status: 'pending' | 'completed' | 'failed' | 'expired';
+  orderId?: string;
+  trackingUrl?: string;
 }
 
 export interface User {

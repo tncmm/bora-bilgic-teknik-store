@@ -24,6 +24,8 @@ function useCountdown(seconds: number, active: boolean) {
 
   useEffect(() => {
     if (!active) {
+      // Countdown state mirrors an external resend window; reset immediately when it closes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRemaining(0);
       return;
     }

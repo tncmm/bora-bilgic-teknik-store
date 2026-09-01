@@ -7,8 +7,8 @@ export class AdminRepository {
     // Unpaid orders are payment attempts, not sales: they never reach the
     // dashboard totals.
     return Promise.all([
-      prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: 'PAID' } }),
-      prisma.order.count({ where: { status: OrderStatus.PENDING, paymentStatus: 'PAID' } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } } }),
+      prisma.order.count({ where: { status: OrderStatus.PENDING, paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] } } }),
       prisma.product.aggregate({ _sum: { stock: true } }),
       prisma.product.count({ where: { stock: { lte: 3 } } }),
     ]);
@@ -102,9 +102,10 @@ export class AdminRepository {
     // Operations only ever deal with paid orders. Pending-payment attempts
     // expire on their own and failed ones are kept for the customer's sake.
     return prisma.order.findMany({
-      where: { paymentStatus: 'PAID' },
+      where: { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } },
       include: {
         items: true,
+        refunds: { orderBy: { createdAt: 'desc' } },
         user: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -114,7 +115,7 @@ export class AdminRepository {
   getOrder(id: string) {
     return prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
     });
   }
 
@@ -122,7 +123,65 @@ export class AdminRepository {
     return prisma.order.update({
       where: { id },
       data: { status },
-      include: { items: true },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+    });
+  }
+
+  createRefund(orderId: string, adminId: string | undefined, input: { merchantOid: string; amount: number; reason?: string; restock: boolean }) {
+    return prisma.refund.create({
+      data: {
+        orderId,
+        adminId,
+        merchantOid: input.merchantOid,
+        amount: input.amount,
+        reason: input.reason,
+        restock: input.restock,
+      },
+    });
+  }
+
+  markRefundFailed(refundId: string, reason: string) {
+    return prisma.refund.update({
+      where: { id: refundId },
+      data: { status: 'FAILED', failureReason: reason },
+    });
+  }
+
+  completeRefund(refundId: string, input: { paytrReference?: string | null; restock: boolean }) {
+    return prisma.$transaction(async (tx) => {
+      const refund = await tx.refund.update({
+        where: { id: refundId },
+        data: {
+          status: 'COMPLETED',
+          paytrReference: input.paytrReference,
+          completedAt: new Date(),
+        },
+        include: { order: { include: { items: true, refunds: true } } },
+      });
+
+      const order = refund.order;
+      const completedRefunds = order.refunds.filter((entry) => entry.status === 'COMPLETED');
+      const refundedAmount = completedRefunds.reduce((sum, entry) => sum + Number(entry.amount), 0);
+      const nextPaymentStatus = refundedAmount >= Number(order.total) ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
+
+      if (input.restock) {
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+      }
+
+      return tx.order.update({
+        where: { id: order.id },
+        data: {
+          refundedAmount,
+          paymentStatus: nextPaymentStatus,
+          lastRefundedAt: new Date(),
+        },
+        include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      });
     });
   }
 

@@ -221,6 +221,9 @@ export function serializeWishlist(wishlist: any): Wishlist {
 }
 
 export function serializeOrder(order: any): Order {
+  const total = decimalToNumber(order.total);
+  const refundedAmount = decimalToNumber(order.refundedAmount ?? 0);
+
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -228,12 +231,27 @@ export function serializeOrder(order: any): Order {
     paymentStatus: (order.paymentStatus ?? 'PENDING').toLowerCase() as PaymentStatus,
     createdAt: order.createdAt.toISOString(),
     paidAt: order.paidAt ? new Date(order.paidAt).toISOString() : null,
-    total: decimalToNumber(order.total),
+    total,
+    customerEmail: order.customerEmail,
+    refundedAmount,
+    refundableAmount: Math.max(0, total - refundedAmount),
     shippingName: order.shippingName,
     shippingPhone: order.shippingPhone,
     shippingCity: order.shippingCity,
     shippingDistrict: order.shippingDistrict,
     shippingAddressLine: order.shippingAddressLine,
+    billing: {
+      type: order.billingType === 'corporate' ? 'corporate' : 'individual',
+      name: order.billingName,
+      phone: order.billingPhone,
+      city: order.billingCity,
+      district: order.billingDistrict,
+      addressLine: order.billingAddressLine,
+      companyName: order.companyName ?? null,
+      taxOffice: order.taxOffice ?? null,
+      taxNumber: order.taxNumber ?? null,
+      identityNumberLast4: order.identityNumberLast4,
+    },
     notes: order.notes ?? null,
     items: order.items.map((item: any) => ({
       id: item.id,
@@ -242,6 +260,19 @@ export function serializeOrder(order: any): Order {
       unitPrice: decimalToNumber(item.unitPrice),
       lineTotal: decimalToNumber(item.lineTotal),
     })),
+    refunds: Array.isArray(order.refunds)
+      ? order.refunds.map((refund: any) => ({
+          id: refund.id,
+          amount: decimalToNumber(refund.amount),
+          status: refund.status.toLowerCase(),
+          reason: refund.reason ?? null,
+          restock: refund.restock,
+          paytrReference: refund.paytrReference ?? null,
+          failureReason: refund.failureReason ?? null,
+          createdAt: refund.createdAt.toISOString(),
+          completedAt: refund.completedAt ? refund.completedAt.toISOString() : null,
+        }))
+      : undefined,
   };
 }
 

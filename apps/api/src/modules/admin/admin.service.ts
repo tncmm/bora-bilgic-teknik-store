@@ -2,6 +2,7 @@ import { OrderStatus } from '@prisma/client';
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
+import { requestRefund } from '../../lib/paytr.js';
 import { serializeDashboardMetrics, serializeOrder, serializeProduct, serializeUser } from '../../lib/serializers.js';
 import { deleteManyMediaFromR2, extractR2KeyFromUrl, uploadMediaToR2 } from '../../lib/r2.js';
 import { AdminRepository } from './admin.repository.js';
@@ -55,6 +56,12 @@ function emptyStringToNull(value: unknown) {
 
 const optionalMediaUrlSchema = z.preprocess(emptyStringToNull, mediaUrlSchema.nullable().optional());
 const optionalMimeTypeSchema = z.preprocess(emptyStringToNull, z.string().nullable().optional());
+
+const refundSchema = z.object({
+  amount: z.number().positive(),
+  reason: z.string().max(500).optional(),
+  restock: z.boolean().default(false),
+});
 
 const mediaSchema = z.object({
   url: mediaUrlSchema,
@@ -337,8 +344,8 @@ export class AdminService {
     const orders = await this.repository.listOrders();
     return orders.map((order) => ({
       ...serializeOrder(order),
-      customer: `${order.user.firstName} ${order.user.lastName}`,
-      email: order.user.email,
+      customer: order.user ? `${order.user.firstName} ${order.user.lastName}` : order.shippingName,
+      email: order.user?.email ?? order.customerEmail,
     }));
   }
 
@@ -361,6 +368,47 @@ export class AdminService {
 
     const order = await this.repository.updateOrderStatus(id, data.status as OrderStatus);
     return serializeOrder(order);
+  }
+
+  async refundOrder(id: string, adminId: string | undefined, payload: unknown) {
+    const data = refundSchema.parse(payload);
+    const order = await this.repository.getOrder(id);
+
+    if (!order) {
+      throw new AppError('Siparis bulunamadi.', 404);
+    }
+
+    if (!order.paymentRef || !['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus)) {
+      throw new AppError('Bu siparis icin iade baslatilamaz.', 409);
+    }
+
+    const refundableAmount = Number(order.total) - Number(order.refundedAmount ?? 0);
+    if (data.amount > refundableAmount) {
+      throw new AppError('Iade tutari kalan iade edilebilir tutari asamaz.', 400);
+    }
+
+    if (data.restock && Math.round(data.amount * 100) !== Math.round(refundableAmount * 100)) {
+      throw new AppError('Stok geri ekleme yalnizca kalan tutarin tamami iade edilirken kullanilabilir.', 400);
+    }
+
+    const refund = await this.repository.createRefund(id, adminId, {
+      merchantOid: order.paymentRef,
+      amount: data.amount,
+      reason: data.reason,
+      restock: data.restock,
+    });
+
+    try {
+      const paytrResult = await requestRefund({ merchantOid: order.paymentRef, amount: data.amount });
+      const updatedOrder = await this.repository.completeRefund(refund.id, {
+        paytrReference: paytrResult.referenceNo,
+        restock: data.restock,
+      });
+      return serializeOrder(updatedOrder);
+    } catch (error) {
+      await this.repository.markRefundFailed(refund.id, error instanceof Error ? error.message : 'PayTR iadesi basarisiz.');
+      throw error;
+    }
   }
 
   async listUsers() {

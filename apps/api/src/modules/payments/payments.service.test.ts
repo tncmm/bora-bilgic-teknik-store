@@ -13,6 +13,12 @@ vi.mock('../../lib/paytr.js', async (importOriginal) => {
   };
 });
 
+vi.mock('../../lib/crypto.js', () => ({
+  decryptBillingIdentity: vi.fn((value: string) => value.replace(/^enc:/, '')),
+  encryptBillingIdentity: vi.fn((value: string) => `enc:${value}`),
+  hashTrackingToken: vi.fn((value: string) => `hash:${value}`),
+}));
+
 const { isPaytrConfigured, requestIframeToken, verifyCallbackHash } = await import('../../lib/paytr.js');
 
 const checkoutPayload = {
@@ -21,6 +27,9 @@ const checkoutPayload = {
   shippingCity: 'Istanbul',
   shippingDistrict: 'Kadikoy',
   shippingAddressLine: 'Moda Caddesi No: 1',
+  billingSameAsShipping: true,
+  billingType: 'individual',
+  identityNumber: '12345678901',
 };
 
 const cartWithItem = {
@@ -47,6 +56,8 @@ const baseAttempt = {
   merchantOid: 'BBTMTE1234ABCDEF',
   status: 'PENDING',
   total: 2999,
+  customerEmail: 'musteri@example.com',
+  trackingTokenEncrypted: 'enc:test-token',
   shippingName: checkoutPayload.shippingName,
   shippingPhone: checkoutPayload.shippingPhone,
   shippingCity: checkoutPayload.shippingCity,
@@ -65,6 +76,9 @@ function createRepository() {
     createAttempt: vi.fn(async () => baseAttempt),
     settleAttempt: vi.fn(async () => 0),
     findAttemptByOid: vi.fn(),
+    findAttemptStatus: vi.fn(),
+    findOrderByPaymentRef: vi.fn(),
+    findProductsForCheckout: vi.fn(),
     completeAttempt: vi.fn(async () => null),
   };
 }
@@ -90,7 +104,7 @@ describe('PaymentsService.createCheckout', () => {
     const repository = createRepository();
     const service = new PaymentsService(repository as never);
 
-    await expect(service.createCheckout('user-1', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
+    await expect(service.createCheckout('user-1', 'musteri@example.com', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
       statusCode: 503,
     });
     expect(repository.createAttempt).not.toHaveBeenCalled();
@@ -101,7 +115,7 @@ describe('PaymentsService.createCheckout', () => {
     repository.findCart.mockResolvedValue(null);
     const service = new PaymentsService(repository as never);
 
-    await expect(service.createCheckout('user-1', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
+    await expect(service.createCheckout('user-1', 'musteri@example.com', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
       statusCode: 409,
     });
     expect(repository.createAttempt).not.toHaveBeenCalled();
@@ -115,7 +129,7 @@ describe('PaymentsService.createCheckout', () => {
     });
     const service = new PaymentsService(repository as never);
 
-    await expect(service.createCheckout('user-1', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
+    await expect(service.createCheckout('user-1', 'musteri@example.com', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
       statusCode: 409,
     });
     expect(repository.createAttempt).not.toHaveBeenCalled();
@@ -126,7 +140,7 @@ describe('PaymentsService.createCheckout', () => {
     repository.findCart.mockResolvedValue(cartWithItem);
     const service = new PaymentsService(repository as never);
 
-    const result = await service.createCheckout('user-1', checkoutPayload, '127.0.0.1');
+    const result = await service.createCheckout('user-1', 'musteri@example.com', checkoutPayload, '127.0.0.1');
 
     expect(repository.expireStaleAttempts).toHaveBeenCalledWith('user-1', expect.any(Date));
     expect(repository.supersedeOpenAttempts).toHaveBeenCalledWith('user-1');
@@ -145,7 +159,7 @@ describe('PaymentsService.createCheckout', () => {
     vi.mocked(requestIframeToken).mockRejectedValueOnce(new Error('kapali'));
     const service = new PaymentsService(repository as never);
 
-    await expect(service.createCheckout('user-1', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
+    await expect(service.createCheckout('user-1', 'musteri@example.com', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
       statusCode: 502,
     });
     expect(repository.settleAttempt).toHaveBeenCalledWith(expect.any(String), {

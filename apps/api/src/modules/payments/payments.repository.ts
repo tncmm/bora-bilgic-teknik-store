@@ -13,8 +13,11 @@ export interface AttemptItem {
 }
 
 export interface AttemptPayload {
-  userId: string;
+  userId?: string;
   merchantOid: string;
+  customerEmail: string;
+  trackingTokenHash?: string;
+  trackingTokenEncrypted?: string;
   total: number;
   items: AttemptItem[];
   shippingName: string;
@@ -22,6 +25,17 @@ export interface AttemptPayload {
   shippingCity: string;
   shippingDistrict: string;
   shippingAddressLine: string;
+  billingType: string;
+  billingName: string;
+  billingPhone: string;
+  billingCity: string;
+  billingDistrict: string;
+  billingAddressLine: string;
+  companyName?: string;
+  taxOffice?: string;
+  taxNumber?: string;
+  identityNumberEncrypted: string;
+  identityNumberLast4: string;
   notes?: string;
 }
 
@@ -43,6 +57,27 @@ export class PaymentsRepository {
     return prisma.paymentAttempt.findUnique({
       where: { merchantOid },
       include: { user: true },
+    });
+  }
+
+  findProductsForCheckout(items: Array<{ productId: string }>) {
+    const ids = [...new Set(items.map((item) => item.productId))];
+    return prisma.product.findMany({
+      where: { id: { in: ids } },
+    });
+  }
+
+  findAttemptStatus(merchantOid: string) {
+    return prisma.paymentAttempt.findUnique({
+      where: { merchantOid },
+      include: { user: true },
+    });
+  }
+
+  findOrderByPaymentRef(paymentRef: string) {
+    return prisma.order.findUnique({
+      where: { paymentRef },
+      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
     });
   }
 
@@ -141,6 +176,20 @@ export class PaymentsRepository {
           shippingCity: payload.shippingCity,
           shippingDistrict: payload.shippingDistrict,
           shippingAddressLine: payload.shippingAddressLine,
+          customerEmail: payload.customerEmail,
+          trackingTokenHash: payload.trackingTokenHash,
+          trackingTokenEncrypted: payload.trackingTokenEncrypted,
+          billingType: payload.billingType,
+          billingName: payload.billingName,
+          billingPhone: payload.billingPhone,
+          billingCity: payload.billingCity,
+          billingDistrict: payload.billingDistrict,
+          billingAddressLine: payload.billingAddressLine,
+          companyName: payload.companyName,
+          taxOffice: payload.taxOffice,
+          taxNumber: payload.taxNumber,
+          identityNumberEncrypted: payload.identityNumberEncrypted,
+          identityNumberLast4: payload.identityNumberLast4,
           notes: payload.notes,
           userId: payload.userId,
         },
@@ -184,11 +233,25 @@ export class PaymentsRepository {
           paymentMethod: 'card',
           paymentType: 'card',
           total: attempt.total,
+          customerEmail: attempt.customerEmail,
+          trackingTokenHash: attempt.trackingTokenHash,
+          trackingTokenEncrypted: attempt.trackingTokenEncrypted,
           shippingName: attempt.shippingName,
           shippingPhone: attempt.shippingPhone,
           shippingCity: attempt.shippingCity,
           shippingDistrict: attempt.shippingDistrict,
           shippingAddressLine: attempt.shippingAddressLine,
+          billingType: attempt.billingType,
+          billingName: attempt.billingName,
+          billingPhone: attempt.billingPhone,
+          billingCity: attempt.billingCity,
+          billingDistrict: attempt.billingDistrict,
+          billingAddressLine: attempt.billingAddressLine,
+          companyName: attempt.companyName,
+          taxOffice: attempt.taxOffice,
+          taxNumber: attempt.taxNumber,
+          identityNumberEncrypted: attempt.identityNumberEncrypted,
+          identityNumberLast4: attempt.identityNumberLast4,
           notes: attempt.notes,
           items: {
             create: items.map((item) => ({
@@ -200,7 +263,7 @@ export class PaymentsRepository {
             })),
           },
         },
-        include: { items: true },
+        include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
       });
 
       await tx.paymentAttempt.update({
@@ -208,9 +271,11 @@ export class PaymentsRepository {
         data: { status: 'COMPLETED' },
       });
 
-      await tx.cartItem.deleteMany({
-        where: { cart: { userId: attempt.userId } },
-      });
+      if (attempt.userId) {
+        await tx.cartItem.deleteMany({
+          where: { cart: { userId: attempt.userId } },
+        });
+      }
 
       return order;
     });

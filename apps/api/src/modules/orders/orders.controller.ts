@@ -14,4 +14,9 @@ export class OrdersController {
     const order = await this.service.getOrderForUser(req.auth!.userId, String(req.params.orderId));
     res.json(order);
   };
+
+  trackOrder = async (req: Request, res: Response) => {
+    const order = await this.service.getOrderByTrackingToken(String(req.params.token));
+    res.json(order);
+  };
 }

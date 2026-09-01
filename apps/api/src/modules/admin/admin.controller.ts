@@ -85,6 +85,11 @@ export class AdminController {
     res.json(order);
   };
 
+  refundOrder = async (req: Request, res: Response) => {
+    const order = await this.service.refundOrder(String(req.params.id), req.auth?.userId, req.body);
+    res.status(201).json(order);
+  };
+
   listUsers = async (_req: Request, res: Response) => {
     const users = await this.service.listUsers();
     res.json(users);

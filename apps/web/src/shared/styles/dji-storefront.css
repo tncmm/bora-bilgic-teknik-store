@@ -198,7 +198,8 @@ body {
 }
 
 .dji-hero {
-  min-height: 760px;
+  min-height: unset;
+  height: clamp(420px, 52vw, 760px);
 }
 
 .dji-listing-hero,
@@ -1781,7 +1782,7 @@ body {
 
 @media (max-width: 780px) {
   .dji-hero {
-    min-height: 480px;
+    height: clamp(330px, 64vw, 480px);
   }
 
   .dji-service-band__grid,
@@ -1987,7 +1988,7 @@ body {
   }
 
   .dji-hero {
-    min-height: 380px;
+    height: clamp(280px, 76vw, 380px);
   }
 
   .dji-service-band__grid,

@@ -38,6 +38,7 @@ router.delete('/products/:id', controller.deleteProduct);
 router.patch('/products/:id/sale-status', controller.updateSaleStatus);
 router.patch('/products/:id/bestseller-status', controller.updateBestsellerStatus);
 router.get('/orders', controller.listOrders);
+router.post('/orders/:id/refunds', controller.refundOrder);
 router.patch('/orders/:id', controller.updateOrderStatus);
 router.get('/users', controller.listUsers);
 

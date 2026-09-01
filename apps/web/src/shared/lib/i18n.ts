@@ -57,6 +57,8 @@ export function translatePaymentStatus(language: Language, status?: string) {
     pending: { tr: 'Ödeme Bekleniyor', en: 'Awaiting Payment' },
     paid: { tr: 'Ödendi', en: 'Paid' },
     failed: { tr: 'Ödeme Başarısız', en: 'Payment Failed' },
+    partially_refunded: { tr: 'Kısmi İade', en: 'Partially Refunded' },
+    refunded: { tr: 'İade Edildi', en: 'Refunded' },
   };
 
   return dictionary[normalized]?.[language] ?? status;

@@ -4,12 +4,11 @@ import { Link } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
-import { api } from '../../shared/api/client';
 import { formatCurrency } from '../../shared/lib/format';
 import { translateCategoryName } from '../../shared/lib/i18n';
 
 export function CartPage() {
-  const { cart, token, syncCart, toggleFavorite, isFavorite } = useSession();
+  const { cart, token, updateCartItem, removeCartItem, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
   const subtotal = useMemo(() => cart?.subtotal ?? 0, [cart]);
 
@@ -29,22 +28,16 @@ export function CartPage() {
   }
 
   async function handleQuantityChange(itemId: string, quantity: number) {
-    if (!token) return;
-
     try {
-      await api.updateCartItem(token, itemId, quantity);
-      await syncCart();
+      await updateCartItem(itemId, quantity);
     } catch (error) {
       showToast({ tone: 'error', title: 'Adet güncellenemedi', description: (error as Error).message });
     }
   }
 
   async function handleRemoveItem(itemId: string, productName: string) {
-    if (!token) return;
-
     try {
-      await api.removeCartItem(token, itemId);
-      await syncCart();
+      await removeCartItem(itemId);
       showToast({ tone: 'info', title: 'Ürün sepetten kaldırıldı', description: productName });
     } catch (error) {
       showToast({ tone: 'error', title: 'Ürün kaldırılamadı', description: (error as Error).message });
@@ -59,8 +52,7 @@ export function CartPage() {
         await toggleFavorite(productId);
       }
 
-      await api.removeCartItem(token, itemId);
-      await syncCart();
+      await removeCartItem(itemId);
       showToast({ tone: 'success', title: 'Favorilere taşındı', description: `${productName} favorilerine kaydedildi.` });
     } catch (error) {
       showToast({ tone: 'error', title: 'İşlem tamamlanamadı', description: (error as Error).message });

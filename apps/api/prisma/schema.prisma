@@ -31,6 +31,8 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
 }
 
 model User {
@@ -50,6 +52,7 @@ model User {
   wishlist         Wishlist?
   orders           Order[]
   paymentAttempts  PaymentAttempt[]
+  refunds          Refund[]
   themePreference  ThemePreference?
 }
 
@@ -92,26 +95,41 @@ model HeroSlide {
 // while PayTR collects the card. An Order row is only created once the
 // callback confirms the money, so unpaid checkouts never become "orders".
 model PaymentAttempt {
-  id                 String        @id @default(cuid())
-  merchantOid        String        @unique
-  status             AttemptStatus @default(PENDING)
-  total              Decimal       @db.Decimal(10, 2)
-  currency           String        @default("TL")
-  shippingName       String
-  shippingPhone      String
-  shippingCity       String
-  shippingDistrict   String
+  id                  String        @id @default(cuid())
+  merchantOid         String        @unique
+  status              AttemptStatus @default(PENDING)
+  total               Decimal       @db.Decimal(10, 2)
+  currency            String        @default("TL")
+  customerEmail       String
+  trackingTokenHash   String?       @unique
+  trackingTokenEncrypted String?
+  shippingName        String
+  shippingPhone       String
+  shippingCity        String
+  shippingDistrict    String
   shippingAddressLine String
-  notes              String?
-  items              Json
-  failureReason      String?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  userId             String
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billingType         String        @default("individual")
+  billingName         String
+  billingPhone        String
+  billingCity         String
+  billingDistrict     String
+  billingAddressLine  String
+  companyName         String?
+  taxOffice           String?
+  taxNumber           String?
+  identityNumberEncrypted String
+  identityNumberLast4 String
+  notes               String?
+  items               Json
+  failureReason       String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  userId              String?
+  user                User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
   @@index([status, createdAt])
+  @@index([customerEmail, createdAt])
 }
 
 model ThemePreference {
@@ -257,13 +275,27 @@ model Order {
   orderNumber         String       @unique
   status              OrderStatus  @default(PENDING)
   total               Decimal      @db.Decimal(10, 2)
+  customerEmail       String
+  trackingTokenHash   String?      @unique
+  trackingTokenEncrypted String?
   shippingName        String
   shippingPhone       String
   shippingCity        String
   shippingDistrict    String
   shippingAddressLine String
+  billingType         String       @default("individual")
+  billingName         String
+  billingPhone        String
+  billingCity         String
+  billingDistrict     String
+  billingAddressLine  String
+  companyName         String?
+  taxOffice           String?
+  taxNumber           String?
+  identityNumberEncrypted String
+  identityNumberLast4 String
   notes               String?
-  userId              String
+  userId              String?
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 
@@ -281,12 +313,16 @@ model Order {
   paymentNotifiedAt     DateTime?
   paymentFailureCode    String?
   paymentFailureMessage String?
+  refundedAmount        Decimal       @default(0) @db.Decimal(10, 2)
+  lastRefundedAt        DateTime?
 
   items OrderItem[]
-  user  User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  refunds Refund[]
 
   @@index([paymentStatus, createdAt]) // expiry sweep
   @@index([userId, paymentStatus]) // "my orders" filtering
+  @@index([customerEmail, createdAt])
 }
 
 model OrderItem {
@@ -299,4 +335,25 @@ model OrderItem {
   lineTotal   Decimal  @db.Decimal(10, 2)
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+model Refund {
+  id             String        @id @default(cuid())
+  orderId        String
+  adminId        String?
+  merchantOid    String
+  amount         Decimal       @db.Decimal(10, 2)
+  status         AttemptStatus @default(PENDING)
+  reason         String?
+  restock        Boolean       @default(false)
+  paytrReference String?
+  failureReason  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  completedAt    DateTime?
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  admin          User?         @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
 }

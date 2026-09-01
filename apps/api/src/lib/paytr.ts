@@ -21,6 +21,7 @@ import { AppError } from './app-error.js';
  *   plain text "OK" — anything else makes PayTR retry the callback.
  */
 const PAYTR_TOKEN_URL = 'https://www.paytr.com/odeme/api/get-token';
+const PAYTR_REFUND_URL = 'https://www.paytr.com/odeme/iade';
 
 export interface PaytrBasketItem {
   name: string;
@@ -113,8 +114,8 @@ export async function requestIframeToken(input: TokenRequestInput): Promise<stri
   const noInstallment = '0';
   const maxInstallment = '0';
   const currency = 'TL';
-  const okUrl = `${env.WEB_URL}/odeme/basarili`;
-  const failUrl = `${env.WEB_URL}/odeme/basarisiz`;
+  const okUrl = `${env.WEB_URL}/odeme/basarili?merchant_oid=${encodeURIComponent(input.merchantOid)}`;
+  const failUrl = `${env.WEB_URL}/odeme/basarisiz?merchant_oid=${encodeURIComponent(input.merchantOid)}`;
 
   const hashSource =
     config.merchantId +
@@ -170,6 +171,47 @@ export async function requestIframeToken(input: TokenRequestInput): Promise<stri
   }
 
   return data.token;
+}
+
+export interface PaytrRefundInput {
+  merchantOid: string;
+  amount: number;
+}
+
+export async function requestRefund(input: PaytrRefundInput) {
+  const config = requirePaytrConfig();
+  const returnAmount = input.amount.toFixed(2);
+  const paytrToken = createHmac('sha256', config.merchantKey)
+    .update(config.merchantId + input.merchantOid + returnAmount + config.merchantSalt)
+    .digest('base64');
+
+  const body = new URLSearchParams({
+    merchant_id: config.merchantId,
+    merchant_oid: input.merchantOid,
+    return_amount: returnAmount,
+    paytr_token: paytrToken,
+  });
+
+  let response: Response;
+  try {
+    response = await fetch(PAYTR_REFUND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+  } catch {
+    throw new AppError('PayTR iade servisine ulasilamadi.', 502);
+  }
+
+  const data = (await response.json().catch(() => null)) as { status?: string; reference_no?: string; err_no?: string; err_msg?: string } | null;
+
+  if (!response.ok || !data || data.status !== 'success') {
+    throw new AppError(`PayTR iadesi basarisiz.${data?.err_msg ? ` ${data.err_msg}` : ''}`, 502);
+  }
+
+  return {
+    referenceNo: data.reference_no ?? null,
+  };
 }
 
 export function verifyCallbackHash(payload: PaytrCallbackPayload) {

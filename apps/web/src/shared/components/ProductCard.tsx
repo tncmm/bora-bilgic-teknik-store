@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
-import { api } from '../api/client';
 import { formatCurrency } from '../lib/format';
 import { translateCategoryName } from '../lib/i18n';
 import { useI18n } from '../../app/providers/I18nProvider';
@@ -18,23 +17,14 @@ interface ProductCardProps {
 export function ProductCard({ product, onAdded }: ProductCardProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, isAuthenticated, syncCart, toggleFavorite, isFavorite } = useSession();
+  const { isAuthenticated, addCartItem, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
   const { language } = useI18n();
   const favoriteActive = isFavorite(product.id);
 
   async function handleAddToCart() {
-    if (!isAuthenticated || !token) {
-      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
-      return;
-    }
-
     try {
-      await api.addToCart(token, {
-        productId: product.id,
-        quantity: 1,
-      });
-      await syncCart();
+      await addCartItem(product, 1);
       await onAdded?.();
       showToast({
         tone: 'success',

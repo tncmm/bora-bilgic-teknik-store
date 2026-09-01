@@ -89,23 +89,14 @@ function StorefrontProductCard({ product }: { product: Product }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useI18n();
-  const { token, isAuthenticated, syncCart, toggleFavorite, isFavorite } = useSession();
+  const { isAuthenticated, addCartItem, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
   const primaryImage = getPrimaryImage(product);
   const favoriteActive = isFavorite(product.id);
 
   async function handleAddToCart() {
-    if (!isAuthenticated || !token) {
-      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
-      return;
-    }
-
     try {
-      await api.addToCart(token, {
-        productId: product.id,
-        quantity: 1,
-      });
-      await syncCart();
+      await addCartItem(product, 1);
       showToast({
         tone: 'success',
         title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
@@ -674,7 +665,7 @@ function ProductTabContent({ section }: { section?: ProductDetailSection }) {
 export function ProductDetailPage() {
   const { slug = '' } = useParams();
   const { language } = useI18n();
-  const { token, isAuthenticated, syncCart, toggleFavorite, isFavorite } = useSession();
+  const { isAuthenticated, addCartItem, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -699,14 +690,9 @@ export function ProductDetailPage() {
 
   async function handleAddToCart() {
     if (!product) return;
-    if (!isAuthenticated || !token) {
-      navigate('/giris', { state: { from: `${location.pathname}${location.search}${location.hash}` } });
-      return;
-    }
 
     try {
-      await api.addToCart(token, { productId: product.id, quantity });
-      await syncCart();
+      await addCartItem(product, quantity);
       showToast({
         tone: 'success',
         title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',

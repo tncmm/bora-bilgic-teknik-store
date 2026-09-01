@@ -89,6 +89,37 @@ Sorularınız olursa bizimle iletişime geçmekten çekinmeyin.
   return { subject, html, text };
 }
 
+export function guestOrderTrackingEmail(input: { name: string; orderNumber: string; trackingUrl: string }) {
+  const subject = `Siparişiniz alındı — ${input.orderNumber}`;
+  const safeName = escapeHtml(input.name);
+  const safeOrderNumber = escapeHtml(input.orderNumber);
+  const safeTrackingUrl = escapeHtml(input.trackingUrl);
+
+  const html = wrapEmail(`
+<h2 style="margin:0 0 16px;font-size:20px;color:#1a1a2e;">Siparişiniz alındı, ${safeName}</h2>
+<p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#333;">
+${safeOrderNumber} numaralı siparişinizin ödemesi onaylandı. Sipariş durumunu aşağıdaki güvenli bağlantıdan takip edebilirsiniz.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+<tr><td style="background-color:#1a1a2e;border-radius:6px;">
+<a href="${safeTrackingUrl}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">
+Siparişimi Takip Et
+</a>
+</td></tr>
+</table>
+<p style="margin:0 0 8px;font-size:13px;color:#666;">
+Buton çalışmıyorsa bu bağlantıyı kullanabilirsiniz:
+</p>
+<p style="margin:0;font-size:13px;color:#1a1a2e;word-break:break-all;">
+<a href="${safeTrackingUrl}" style="color:#1a1a2e;text-decoration:underline;">${safeTrackingUrl}</a>
+</p>
+`);
+
+  const text = `Merhaba ${input.name},\n\n${input.orderNumber} numaralı siparişinizin ödemesi onaylandı. Siparişinizi bu bağlantıdan takip edebilirsiniz:\n\n${input.trackingUrl}`;
+
+  return { subject, html, text };
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')

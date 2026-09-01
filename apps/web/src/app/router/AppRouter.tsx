@@ -5,7 +5,7 @@ import { LoginPage, RegisterPage, VerifyEmailPage } from '../../features/auth/pa
 import { CartPage, CheckoutPage } from '../../features/cart/pages';
 import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
 import { DeliveryPage, DistanceSalesPage, FaqPage, PrivacyPage, ReturnPage, WarrantyPage } from '../../features/catalog/info-pages';
-import { OrderDetailPage, OrdersPage } from '../../features/orders/pages';
+import { GuestOrderTrackingPage, OrderDetailPage, OrdersPage } from '../../features/orders/pages';
 import { PaymentFailPage, PaymentSuccessPage } from '../../features/orders/payment-pages';
 import { AddressFormPage, AddressesPage, FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
@@ -66,6 +66,7 @@ export function AppRouter() {
           <Route element={<CheckoutPage />} path="/checkout" />
           <Route element={<PaymentSuccessPage />} path="/odeme/basarili" />
           <Route element={<PaymentFailPage />} path="/odeme/basarisiz" />
+          <Route element={<GuestOrderTrackingPage />} path="/siparis-takip/:token" />
           <Route element={<LoginPage />} path="/giris" />
           <Route element={<RegisterPage />} path="/kayit" />
           <Route element={<VerifyEmailPage />} path="/dogrula" />

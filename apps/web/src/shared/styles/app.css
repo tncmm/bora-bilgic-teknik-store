@@ -1365,6 +1365,12 @@
   color: #ff5f56;
 }
 
+.order-badge--payment-partially_refunded,
+.order-badge--payment-refunded {
+  border-color: rgba(95, 180, 255, 0.45);
+  color: #5fb4ff;
+}
+
 /* --- Sade admin yapisi (v2) ------------------------------------------- */
 .admin-page {
   display: grid;
@@ -2020,6 +2026,50 @@
   color: var(--text-soft);
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+.checkout-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.checkout-check input {
+  accent-color: var(--primary, #ff6a1a);
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(8px);
+}
+
+.admin-modal {
+  width: min(520px, 100%);
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-table-action--danger {
+  border-color: rgba(255, 96, 64, 0.35);
+  color: #ff8f72;
 }
 
 @media (max-width: 980px) {
