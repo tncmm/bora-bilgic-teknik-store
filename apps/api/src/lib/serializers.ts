@@ -18,7 +18,7 @@ import { env } from '../config/env.js';
 
 const r2PublicBaseUrl = env.R2_PUBLIC_BASE_URL?.replace(/\/+$/, '') ?? null;
 
-function resolveMediaUrl(url: string | null | undefined): string | null {
+export function resolveMediaUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   if (!r2PublicBaseUrl) return url;
 
@@ -53,6 +53,13 @@ export function computeEffectivePrice(price: Prisma.Decimal | number, discountPe
 function readJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
   if (!Array.isArray(value)) return fallback;
   return value as T[];
+}
+
+function normalizeDetailSections(sections: ProductDetailSection[]) {
+  return sections.map((section) => ({
+    ...section,
+    imageUrl: resolveMediaUrl(section.imageUrl),
+  }));
 }
 
 export function serializeCategory(category: {
@@ -151,7 +158,7 @@ export function serializeProduct(product: any): Product {
       value: spec.value,
     })),
     packageOptions: readJsonArray<ProductPackageOption>(product.packageOptions, fallbackPackageOptions),
-    detailSections: readJsonArray<ProductDetailSection>(product.detailSections, fallbackDetailSections),
+    detailSections: normalizeDetailSections(readJsonArray<ProductDetailSection>(product.detailSections, fallbackDetailSections)),
   };
 }
 

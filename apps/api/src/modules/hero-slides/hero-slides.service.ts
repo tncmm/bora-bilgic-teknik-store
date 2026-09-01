@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
+import { resolveMediaUrl } from '../../lib/serializers.js';
 import { HeroSlidesRepository } from './hero-slides.repository.js';
 
 const heroSlideSchema = z.object({
@@ -16,17 +17,24 @@ const heroSlideSchema = z.object({
 export class HeroSlidesService {
   constructor(private readonly repository = new HeroSlidesRepository()) {}
 
-  listActive() {
-    return this.repository.listActive();
+  private serializeSlide<T extends { imageUrl: string }>(slide: T) {
+    return { ...slide, imageUrl: resolveMediaUrl(slide.imageUrl) ?? slide.imageUrl };
   }
 
-  listAll() {
-    return this.repository.listAll();
+  async listActive() {
+    const slides = await this.repository.listActive();
+    return slides.map((slide) => this.serializeSlide(slide));
   }
 
-  create(payload: unknown) {
+  async listAll() {
+    const slides = await this.repository.listAll();
+    return slides.map((slide) => this.serializeSlide(slide));
+  }
+
+  async create(payload: unknown) {
     const data = heroSlideSchema.parse(payload);
-    return this.repository.create(data);
+    const slide = await this.repository.create(data);
+    return this.serializeSlide(slide);
   }
 
   async update(id: string, payload: unknown) {
@@ -36,7 +44,8 @@ export class HeroSlidesService {
       throw new AppError('Guncellenecek alan gonderilmedi.', 400);
     }
 
-    return this.repository.update(id, data);
+    const slide = await this.repository.update(id, data);
+    return this.serializeSlide(slide);
   }
 
   async delete(id: string) {

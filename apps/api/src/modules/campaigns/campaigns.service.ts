@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
+import { resolveMediaUrl } from '../../lib/serializers.js';
 import { CampaignsRepository } from './campaigns.repository.js';
 
 const optionalLinkOrPath = z
@@ -25,17 +26,24 @@ const campaignSchema = z.object({
 export class CampaignsService {
   constructor(private readonly repository = new CampaignsRepository()) {}
 
-  listActive() {
-    return this.repository.listActive();
+  private serializeCampaign<T extends { imageUrl: string | null }>(campaign: T) {
+    return { ...campaign, imageUrl: resolveMediaUrl(campaign.imageUrl) };
   }
 
-  listAll() {
-    return this.repository.listAll();
+  async listActive() {
+    const campaigns = await this.repository.listActive();
+    return campaigns.map((campaign) => this.serializeCampaign(campaign));
   }
 
-  create(payload: unknown) {
+  async listAll() {
+    const campaigns = await this.repository.listAll();
+    return campaigns.map((campaign) => this.serializeCampaign(campaign));
+  }
+
+  async create(payload: unknown) {
     const data = campaignSchema.parse(payload);
-    return this.repository.create(data);
+    const campaign = await this.repository.create(data);
+    return this.serializeCampaign(campaign);
   }
 
   async update(id: string, payload: unknown) {
@@ -45,7 +53,8 @@ export class CampaignsService {
       throw new AppError('Guncellenecek alan gonderilmedi.', 400);
     }
 
-    return this.repository.update(id, data);
+    const campaign = await this.repository.update(id, data);
+    return this.serializeCampaign(campaign);
   }
 
   async delete(id: string) {
