@@ -320,7 +320,16 @@ export function extractR2KeyFromUrl(url: string | null | undefined): string | nu
   const { publicBaseUrl } = requireR2Config();
 
   if (!url.startsWith(`${publicBaseUrl}/`)) {
-    return null;
+    try {
+      const parsed = new URL(url);
+      if (!parsed.hostname.endsWith('.r2.dev')) {
+        return null;
+      }
+
+      return parsed.pathname.replace(/^\/+/, '') || null;
+    } catch {
+      return null;
+    }
   }
 
   const key = url.slice(publicBaseUrl.length + 1);

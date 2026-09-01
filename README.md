@@ -83,11 +83,12 @@ yapilandirma hatasi doner. Bu davranis `src/lib/r2.ts` icindeki
 
 `R2_PUBLIC_BASE_URL` iki sekilde olabilir:
 
+- **Ayni domain media yolu** — uretim icin onerilen yontem. Ornek:
+  `https://borabilgic.net.tr/media`. Nginx bu yolu R2 public bucket'a proxy eder;
+  tarayicilar R2'nin `r2.dev` domainine dogrudan baglanmaz.
 - **r2.dev** — bucket'ta "Public access" acilip verilen `https://pub-<hash>.r2.dev`
-  adresi. Hizli baslangic icin uygundur, ancak hiz sinirlamasina tabidir ve
-  uretim icin onerilmez.
-- **Ozel alan adi** — uretim icin onerilen yontem. Bucket ayarlarindan
-  `media.borabilgicteknik.com` gibi bir subdomain baglanir.
+  adresi. Hizli baslangic icin uygundur, ancak bazi aglarda veya tarayicilarda
+  baglanti resetleri gorulebildigi icin uretim icin onerilmez.
 
 ### Yukleme kurallari
 

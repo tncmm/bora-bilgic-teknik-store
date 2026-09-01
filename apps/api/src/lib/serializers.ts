@@ -20,8 +20,21 @@ const r2PublicBaseUrl = env.R2_PUBLIC_BASE_URL?.replace(/\/+$/, '') ?? null;
 
 function resolveMediaUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
   if (!r2PublicBaseUrl) return url;
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname.endsWith('.r2.dev')) {
+        return `${r2PublicBaseUrl}${parsed.pathname}`;
+      }
+    } catch {
+      return url;
+    }
+
+    return url;
+  }
+
   const normalizedPath = url.startsWith('/') ? url : `/${url}`;
   return `${r2PublicBaseUrl}${normalizedPath}`;
 }

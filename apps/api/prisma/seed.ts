@@ -67,7 +67,7 @@ function detailSections(name: string, narrative: string, bullets: string[], imag
   ];
 }
 
-const r2Base = 'https://pub-d17f1f58ed49462b8a262a3aa2a07ff3.r2.dev';
+const r2Base = 'https://borabilgic.net.tr/media';
 
 const media = {
   heroDrone: `${r2Base}/storefront/categories/drone.png`,
