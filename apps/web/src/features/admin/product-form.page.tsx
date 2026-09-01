@@ -1,4 +1,4 @@
-import { Button, EmptyState, InputField, SelectField, TextareaField } from '@bora/ui';
+import { Button, EmptyState, InputField, SelectField } from '@bora/ui';
 import {
   PRODUCT_MEDIA_IMAGE_MIME_TYPES,
   PRODUCT_MEDIA_LIMITS,
@@ -14,6 +14,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api, ApiError } from '../../shared/api/client';
+import { RichTextEditor } from '../../shared/components/RichTextEditor';
+import { normalizeRichTextHtml } from '../../shared/lib/richText';
 
 interface AdminMediaDraft extends ProductMediaInput {
   id: string;
@@ -278,7 +280,7 @@ export function AdminProductFormPage() {
       brand: form.brand || 'DJI',
       categoryId: form.categoryId,
       shortDescription: form.shortDescription,
-      description: form.description,
+      description: normalizeRichTextHtml(form.description),
       sku: form.sku,
       badge: form.badge || null,
       heroTag: form.heroTag || null,
@@ -454,9 +456,10 @@ export function AdminProductFormPage() {
                 <p className="admin-field-hint">Katalog kartlarında görünen tek satırlık özet.</p>
               </div>
               <div className="full">
-                <TextareaField
+                <RichTextEditor
                   label="Detaylı Açıklama"
-                  onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
+                  helperText="Metin biçimlendirebilir, liste ekleyebilir ve webden kopyalanan görsel URL’lerini kullanabilirsiniz. Dosya görseli doğrudan açıklamaya yapıştırılmaz; büyük base64 içerik DB’ye kaydedilmez."
+                  onChange={(description) => setForm((value) => ({ ...value, description }))}
                   value={form.description}
                 />
               </div>

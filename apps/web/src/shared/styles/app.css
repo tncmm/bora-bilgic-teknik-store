@@ -1502,6 +1502,102 @@
   line-height: 1.45;
 }
 
+.admin-field-error {
+  margin: 0.35rem 0 0;
+  color: #ffb4ab;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.rich-text-editor {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rich-text-editor__label {
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.rich-text-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-muted, #16181d) 60%, transparent);
+}
+
+.rich-text-editor__toolbar button {
+  padding: 0.42rem 0.68rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface, #0f1115) 80%, transparent);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rich-text-editor__toolbar button:hover {
+  border-color: color-mix(in srgb, var(--primary, #ff6a21) 60%, var(--border));
+  color: var(--text-strong);
+}
+
+.rich-text-editor__surface {
+  min-height: 220px;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  outline: none;
+  background: color-mix(in srgb, var(--surface, #0f1115) 82%, transparent);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.rich-text-editor__surface:focus {
+  border-color: color-mix(in srgb, var(--primary, #ff6a21) 70%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #ff6a21) 16%, transparent);
+}
+
+.rich-text-editor__surface :is(h2, h3, h4) {
+  margin: 0.85rem 0 0.45rem;
+  color: var(--text-strong);
+}
+
+.rich-text-editor__surface p {
+  margin: 0 0 0.8rem;
+}
+
+.rich-text-editor__surface ul,
+.rich-text-editor__surface ol {
+  margin: 0.5rem 0 0.9rem;
+  padding-left: 1.25rem;
+}
+
+.rich-text-editor__surface blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--primary, #ff6a21);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary, #ff6a21) 10%, transparent);
+}
+
+.rich-text-editor__surface img {
+  display: block;
+  width: auto;
+  max-width: min(100%, 680px);
+  max-height: 360px;
+  height: auto;
+  margin: 1rem auto;
+  border-radius: 14px;
+  object-fit: contain;
+}
+
 .admin-alert-error {
   padding: 0.9rem 1.1rem;
   border: 1px solid color-mix(in srgb, var(--danger, #ff5f56) 50%, transparent);

@@ -9,6 +9,7 @@ import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
 import { CampaignSlider } from '../../shared/components/CampaignSlider';
 import { PriceTag } from '../../shared/components/PriceTag';
+import { RichTextContent } from '../../shared/components/RichTextContent';
 import { formatCurrency } from '../../shared/lib/format';
 import { findSectionBySlug, mapLegacyCategoryToSection, storefrontSections } from '../../shared/lib/storefront';
 import { translateCategoryName } from '../../shared/lib/i18n';
@@ -644,7 +645,7 @@ function ProductTabContent({ section }: { section?: ProductDetailSection }) {
     <div className="dji-detail-tabpanel">
       <div>
         {section.heading ? <h2>{section.heading}</h2> : null}
-        {section.body ? <p>{section.body}</p> : null}
+        {section.body ? <RichTextContent className="dji-detail-description" html={section.body} /> : null}
         {section.bullets?.length ? (
           <ul>
             {section.bullets.map((bullet) => (

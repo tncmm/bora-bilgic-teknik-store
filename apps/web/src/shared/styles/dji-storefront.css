@@ -1089,6 +1089,51 @@ body {
   line-height: 1.75;
 }
 
+.dji-detail-description {
+  color: var(--text);
+  font-size: 0.96rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.dji-detail-description > *:first-child {
+  margin-top: 0;
+}
+
+.dji-detail-description p {
+  margin: 0 0 1rem;
+}
+
+.dji-detail-description :is(h2, h3, h4) {
+  margin: 1.1rem 0 0.55rem;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.dji-detail-description a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.dji-detail-description blockquote {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--primary);
+  border-radius: 14px;
+  background: rgba(255, 106, 33, 0.09);
+}
+
+.dji-detail-description img {
+  display: block;
+  width: auto;
+  max-width: min(100%, 760px);
+  max-height: 440px;
+  height: auto;
+  margin: 1.25rem auto;
+  border-radius: 18px;
+  object-fit: contain;
+}
+
 .dji-detail-tabpanel ul {
   padding-left: 1.2rem;
 }
