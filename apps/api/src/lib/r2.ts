@@ -126,7 +126,7 @@ function getMaxBytes(kind: AdminUploadKind) {
 function getUploadLimitMessage(kind: AdminUploadKind) {
   if (kind === 'video') return 'Video boyutu 100 MB sinirini asamaz.';
   if (kind === 'poster') return 'Poster boyutu 3 MB sinirini asamaz.';
-  return 'Gorsel boyutu 5 MB sinirini asamaz.';
+  return 'Gorsel boyutu 10 MB sinirini asamaz.';
 }
 
 function getUploadFormatMessage(kind: AdminUploadKind) {

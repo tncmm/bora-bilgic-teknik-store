@@ -97,7 +97,7 @@ admin arayuzunde ayni kaynaktan okunur, bu yuzden iki tarafin eslesmesi bozulmaz
 
 | Tur | Kabul edilen formatlar | En buyuk boyut |
 | --- | --- | --- |
-| Gorsel | JPG, PNG, WEBP, AVIF | 5 MB |
+| Gorsel | JPG, PNG, WEBP, AVIF | 10 MB |
 | Poster | JPG, PNG, WEBP, AVIF | 3 MB |
 | Video | MP4, WEBM | 100 MB |
 

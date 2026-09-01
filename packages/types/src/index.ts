@@ -21,7 +21,7 @@ export const PRODUCT_MEDIA_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm'] as con
 export const PRODUCT_MEDIA_POSTER_MIME_TYPES = PRODUCT_MEDIA_IMAGE_MIME_TYPES;
 
 export const PRODUCT_MEDIA_LIMITS = {
-  imageBytes: 5 * 1024 * 1024,
+  imageBytes: 10 * 1024 * 1024,
   posterBytes: 3 * 1024 * 1024,
   videoBytes: 100 * 1024 * 1024,
 } as const;

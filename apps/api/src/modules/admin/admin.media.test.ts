@@ -170,8 +170,8 @@ describe('AdminService.uploadMedia', () => {
     const service = await loadService();
 
     await expect(
-      service.uploadMedia({ ...imageUpload, base64: base64Of(5 * 1024 * 1024 + 1) }),
-    ).rejects.toThrow(/5 MB/);
+      service.uploadMedia({ ...imageUpload, base64: base64Of(10 * 1024 * 1024 + 1) }),
+    ).rejects.toThrow(/10 MB/);
 
     expect(sendMock).not.toHaveBeenCalled();
   });
