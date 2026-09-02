@@ -50,6 +50,35 @@ export function computeEffectivePrice(price: Prisma.Decimal | number, discountPe
   return Math.round(base * (100 - discount)) / 100;
 }
 
+/**
+ * Finds the chosen package option on a product's packageOptions JSON.
+ * Returns null for the base product (no/empty packageOptionId) or when the
+ * option no longer exists on the product.
+ */
+export function findPackageOption(
+  product: { packageOptions?: unknown } | null | undefined,
+  packageOptionId: string | null | undefined,
+): ProductPackageOption | null {
+  if (!packageOptionId) return null;
+  const options = readJsonArray<ProductPackageOption>(product?.packageOptions);
+  return options.find((option) => option && typeof option === 'object' && option.id === packageOptionId) ?? null;
+}
+
+/**
+ * Unit price for a cart line before nothing else: package options carry their
+ * own absolute price (the seed's "Standart Paket" price equals the product
+ * price), so a package line is charged from the option's price, not from a
+ * delta. The discount applies on either path.
+ */
+export function computeLineUnitPrice(
+  product: { price: Prisma.Decimal | number; discountPercent?: number | null; packageOptions?: unknown },
+  packageOptionId: string | null | undefined,
+) {
+  const option = findPackageOption(product, packageOptionId);
+  const base = option ? option.price : product.price;
+  return computeEffectivePrice(base, product.discountPercent ?? 0);
+}
+
 function readJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
   if (!Array.isArray(value)) return fallback;
   return value as T[];
@@ -166,8 +195,10 @@ export function serializeCart(cart: any): Cart {
   const items = cart.items.map((item: any) => ({
     id: item.id,
     productId: item.productId,
+    packageOptionId: item.packageOptionId || null,
+    packageLabel: item.packageLabel ?? null,
     quantity: item.quantity,
-    lineTotal: computeEffectivePrice(item.product.price, item.product.discountPercent ?? 0) * item.quantity,
+    lineTotal: computeLineUnitPrice(item.product, item.packageOptionId) * item.quantity,
     product: serializeProduct(item.product),
   }));
 
@@ -272,6 +303,7 @@ export function serializeOrder(order: any): Order {
     items: order.items.map((item: any) => ({
       id: item.id,
       productName: item.productName,
+      packageLabel: item.packageLabel ?? null,
       quantity: item.quantity,
       unitPrice: decimalToNumber(item.unitPrice),
       lineTotal: decimalToNumber(item.lineTotal),

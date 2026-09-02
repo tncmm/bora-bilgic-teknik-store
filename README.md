@@ -132,7 +132,8 @@ mevcut urunler admin panelinden duzenlenebilir.
 
 ## Deployment
 
-- Frontend production yayininda servis edilmesi gereken klasor: `apps/web/dist`
-- Frontend build komutu: `npm run build:web`
-- Render kullaniliyorsa kokteki `render.yaml` dosyasi static site'i dogrudan `apps/web/dist` klasorunden yayinlayacak sekilde hazirlandi.
+- Production yayini GitHub Actions ile yapilir: `main` branch'e her push `.github/workflows/deploy.yml` workflow'unu tetikler (build + test).
+- Workflow bundle'i VPS'e rsync'ler; sunucudaki `scripts/deploy/remote-deploy.sh` `npm ci`, prisma generate ve `prisma migrate deploy` calistirir, `releases/<sha>` klasorunu `current` symlink'ine baglar, systemd API servisini restart eder ve son 3 release'i saklar.
+- API runtime ortam degiskenleri sunucuda `/etc/bora-bilgic-teknik-store/api.env` dosyasinda tutulur.
+- Frontend production yayininda nginx tarafindan `apps/web/dist` klasorunden servis edilir; frontend build komutu `npm run build:web` (workflow tum paketlerle birlikte `npm run build` calistirir).
 - Production ortaminda `src/main.tsx`, `src/**/*.tsx` veya Vite dev server ciktilari servis edilmemelidir. Aksi halde `$RefreshSig$ is not defined` benzeri Fast Refresh hatalari gorulebilir.

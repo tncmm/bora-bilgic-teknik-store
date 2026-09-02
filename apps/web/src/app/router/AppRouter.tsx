@@ -10,7 +10,6 @@ import { PaymentFailPage, PaymentSuccessPage } from '../../features/orders/payme
 import { AddressFormPage, AddressesPage, FavoritesPage, ProfilePage } from '../../features/profile/pages';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
-import { useI18n } from '../providers/I18nProvider';
 import { useSession } from '../providers/SessionProvider';
 
 function ProtectedRoute({ adminOnly = false }: { adminOnly?: boolean }) {
@@ -30,13 +29,11 @@ function ProtectedRoute({ adminOnly = false }: { adminOnly?: boolean }) {
 }
 
 function NotFoundPage() {
-  const { language } = useI18n();
-
   return (
     <div className="ui-shell page-section">
-      <h1>{language === 'tr' ? 'Sayfa bulunamadi' : 'Page not found'}</h1>
-      <p>{language === 'tr' ? 'Aradiginiz icerik tasinmis olabilir.' : 'The content you are looking for may have moved.'}</p>
-      <Link to="/">{language === 'tr' ? 'Ana sayfaya don' : 'Back to home'}</Link>
+      <h1>Sayfa bulunamadi</h1>
+      <p>Aradiginiz icerik tasinmis olabilir.</p>
+      <Link to="/">Ana sayfaya don</Link>
     </div>
   );
 }

@@ -143,6 +143,10 @@ export interface CatalogListResponse {
 export interface CartItem {
   id: string;
   productId: string;
+  /** null = taban urun (paket secilmemis); ayni urunun farkli paketleri ayri satirlardir. */
+  packageOptionId?: string | null;
+  /** Urunun paket adi; urun duzenlense bile sepette aynen gorunur. */
+  packageLabel?: string | null;
   quantity: number;
   lineTotal: number;
   product: Product;
@@ -186,6 +190,8 @@ export interface Wishlist {
 export interface OrderItem {
   id: string;
   productName: string;
+  /** Siparis anindaki paket adi; null = taban urun. */
+  packageLabel?: string | null;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -261,11 +267,17 @@ export interface Order {
   invoiceSentAt?: string | null;
   items: OrderItem[];
   refunds?: Refund[];
+  /** Odemesi alindigi halde siparise donemeyen denemelerde dolu gelir (admin incelemesi). */
+  paidWithoutOrderAt?: string | null;
+  /** Odemesi alinip siparis olusmayan denemeler icin operator notu. */
+  reviewNote?: string | null;
 }
 
 export interface PaytrTokenResponse {
   iframeToken: string;
   merchantOid: string;
+  /** Durum sorgusunun sahiplik kaniti: /paytr/status/:merchantOid?t=... cagrisinda kullanilir. */
+  trackingToken: string;
   trackingUrl?: string;
 }
 

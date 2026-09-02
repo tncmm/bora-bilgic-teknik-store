@@ -31,6 +31,7 @@ export function AdminHeroSlidesPage() {
   const { token } = useSession();
   const { showToast } = useToast();
   const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [draft, setDraft] = useState<SlideDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,8 +60,14 @@ export function AdminHeroSlidesPage() {
 
   async function loadSlides() {
     if (!token) return;
-    const items = await api.listAdminHeroSlides(token).catch(() => [] as HeroSlide[]);
-    setSlides(items);
+    try {
+      const items = await api.listAdminHeroSlides(token);
+      setSlides(items);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+      showToast({ tone: 'error', title: 'Slaytlar yüklenemedi', description: (error as Error).message });
+    }
   }
 
   useEffect(() => {
@@ -184,7 +191,14 @@ export function AdminHeroSlidesPage() {
         <div className="admin-card__head">
           <h2>Slayt Listesi</h2>
         </div>
-        {slides.length === 0 ? (
+        {loadError ? (
+          <>
+            <EmptyState description={loadError} title="Veriler yüklenemedi" />
+            <div style={{ paddingBottom: '1.5rem', textAlign: 'center' }}>
+              <Button onClick={() => void loadSlides()}>Tekrar Dene</Button>
+            </div>
+          </>
+        ) : slides.length === 0 ? (
           <EmptyState description="Henüz slayt eklenmemiş." title="Slayt yok" />
         ) : (
           <div className="admin-table admin-table--flat">

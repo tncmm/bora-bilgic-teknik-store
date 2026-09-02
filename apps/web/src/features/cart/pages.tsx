@@ -74,6 +74,11 @@ export function CartPage() {
             {cart.items.map((item) => {
               const image = item.product.images.find((entry) => entry.isPrimary) ?? item.product.images[0];
               const maxQty = Math.max(1, Math.min(10, item.product.stock));
+              // Paketli satirlarda birim fiyat paket fiyatindan hesaplanir; sunucu sepetinde
+              // lineTotal = birim fiyat x adet, misafir sepetinde ayni sekilde tutulur.
+              const unitPrice = item.packageOptionId
+                ? item.lineTotal / item.quantity
+                : Number(item.product.effectivePrice ?? item.product.price);
 
               return (
                 <article className="basket-item" key={item.id}>
@@ -88,6 +93,7 @@ export function CartPage() {
                         <strong>
                           <Link to={`/urun/${item.product.slug}`}>{item.product.name}</Link>
                         </strong>
+                        {item.packageLabel ? <span className="basket-item__package">{item.packageLabel}</span> : null}
                       </div>
                       <button
                         aria-label="Sepetten kaldır"
@@ -119,7 +125,7 @@ export function CartPage() {
                           +
                         </button>
                       </div>
-                      <span className="text-muted">{formatCurrency(Number(item.product.price), 'tr')} / adet</span>
+                      <span className="text-muted">{formatCurrency(unitPrice, 'tr')} / adet</span>
                       <strong className="basket-item__total">{formatCurrency(item.lineTotal, 'tr')}</strong>
                     </div>
 

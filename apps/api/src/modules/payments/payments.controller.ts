@@ -11,7 +11,11 @@ export class PaymentsController {
   };
 
   status = async (req: Request, res: Response) => {
-    const result = await this.service.getStatus(String(req.params.merchantOid), req.auth?.userId);
+    // The raw tracking token from the checkout response is the ownership
+    // proof; missing or wrong tokens must be indistinguishable from unknown
+    // merchant oids (see PaymentsService.getStatus).
+    const trackingToken = typeof req.query.t === 'string' ? req.query.t : undefined;
+    const result = await this.service.getStatus(String(req.params.merchantOid), trackingToken);
     res.json(result);
   };
 

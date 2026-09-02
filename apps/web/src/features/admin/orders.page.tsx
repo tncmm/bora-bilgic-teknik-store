@@ -1,4 +1,4 @@
-import { EmptyState, InputField } from '@bora/ui';
+import { Button, EmptyState, InputField } from '@bora/ui';
 import { PRODUCT_MEDIA_LIMITS, type Order, type Refund } from '@bora/types';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -45,6 +45,7 @@ export function AdminOrdersPage() {
   const [invoiceUploadingOrderId, setInvoiceUploadingOrderId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const refundAmountNumber = Number(refundAmount);
   const selectedRefundItems = refundOrder
     ? refundOrder.items
@@ -72,8 +73,14 @@ export function AdminOrdersPage() {
 
   async function loadOrders() {
     if (!token) return;
-    const response = await api.getAdminOrders(token);
-    setOrders(response);
+    try {
+      const response = await api.getAdminOrders(token);
+      setOrders(response);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+      showToast({ tone: 'error', title: 'Siparişler yüklenemedi', description: (error as Error).message });
+    }
   }
 
   useEffect(() => {
@@ -211,6 +218,14 @@ export function AdminOrdersPage() {
         </div>
       </div>
 
+      {loadError ? (
+        <div className="admin-card">
+          <EmptyState description={loadError} title="Veriler yüklenemedi" />
+          <div style={{ paddingBottom: '1.5rem', textAlign: 'center' }}>
+            <Button onClick={() => void loadOrders()}>Tekrar Dene</Button>
+          </div>
+        </div>
+      ) : (
       <div className="admin-card">
         <div className="admin-card__head admin-card__head--row">
           <div>
@@ -335,6 +350,7 @@ export function AdminOrdersPage() {
           </div>
         )}
       </div>
+      )}
       {refundOrder ? (
         <div className="admin-modal-backdrop" role="presentation">
           <div aria-modal="true" className="admin-modal" role="dialog">

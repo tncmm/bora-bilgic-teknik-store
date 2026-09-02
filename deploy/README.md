@@ -18,3 +18,12 @@ Runtime API environment lives on the server at:
 ```
 
 R2 and PayTR keys can be added to that file later without changing the workflow.
+
+## TLS
+
+The bundled nginx config (`deploy/nginx/bora-bilgic-teknik-store.conf`) listens
+on port 80 only and does not terminate TLS. Terminate TLS either on the VPS
+with certbot/Let's Encrypt (add a 443 server block and redirect port 80 to it)
+or in front of the server with a CDN such as Cloudflare. If TLS is already
+terminated upstream (CDN or another layer), treat this section as
+informational; the nginx behavior is intentionally left unchanged.

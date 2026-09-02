@@ -1,6 +1,7 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { isR2Configured } from './lib/r2.js';
+import { PaymentsService } from './modules/payments/payments.service.js';
 
 const app = createApp();
 
@@ -17,4 +18,15 @@ app.listen(env.PORT, env.HOST, () => {
         'and R2_PUBLIC_BASE_URL are set. See apps/api/.env.example.',
     );
   }
+
+  // Abandoned guest checkouts must not lock stock forever: expire stale
+  // payment attempts on a fixed interval. unref() keeps the timer from
+  // holding the process open; failures are logged and retried next tick.
+  const paymentsService = new PaymentsService();
+  const staleAttemptSweeper = setInterval(() => {
+    paymentsService.sweepStaleAttempts().catch((error) => {
+      console.error('[PAYTR] Stale payment attempt sweep failed', { error });
+    });
+  }, 10 * 60 * 1000);
+  staleAttemptSweeper.unref();
 });

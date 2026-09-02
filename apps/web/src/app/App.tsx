@@ -6,11 +6,12 @@ import { AppRouter } from './router/AppRouter';
 export default function App() {
   return (
     <I18nProvider>
-      <SessionProvider>
-        <ToastProvider>
+      {/* ToastProvider en dista: SessionProvider, misafir sepeti birlesiminde toast gosterebilir. */}
+      <ToastProvider>
+        <SessionProvider>
           <AppRouter />
-        </ToastProvider>
-      </SessionProvider>
+        </SessionProvider>
+      </ToastProvider>
     </I18nProvider>
   );
 }

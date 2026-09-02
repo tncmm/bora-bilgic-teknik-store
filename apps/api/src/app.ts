@@ -5,6 +5,7 @@ import express from 'express';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { jsonBodyUnlessLarge } from './middleware/json-body.js';
+import { checkoutLimiter } from './middleware/rate-limit.js';
 import { adminRoutes } from './modules/admin/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { cartRoutes } from './modules/cart/routes.js';
@@ -40,7 +41,9 @@ export function createApp() {
           return;
         }
 
-        callback(new Error('Origin not allowed by CORS'));
+        // Disallowed origins get no CORS headers instead of an error; the
+        // browser then blocks the response and the API avoids a noisy 500.
+        callback(null, false);
       },
       credentials: true,
     }),
@@ -58,6 +61,10 @@ export function createApp() {
   app.use('/api/v1', heroSlidesRoutes);
   app.use('/api/v1/cart', cartRoutes);
   app.use('/api/v1/orders', ordersRoutes);
+  // Orta seviyeli checkout limiti; sunucular arasi PayTR callback'i
+  // (/api/v1/payments/paytr/callback) bilerek sinirlandirilmaz — yeniden
+  // denemeler asla engellenmemelidir.
+  app.use('/api/v1/payments/paytr/checkout', checkoutLimiter);
   app.use('/api/v1/payments', paymentsRoutes);
   app.use('/api/v1/users', usersRoutes);
   app.use('/api/v1/admin', adminRoutes);

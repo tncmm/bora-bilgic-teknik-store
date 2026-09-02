@@ -23,6 +23,17 @@ import { AppError } from './app-error.js';
 const PAYTR_TOKEN_URL = 'https://www.paytr.com/odeme/api/get-token';
 const PAYTR_REFUND_URL = 'https://www.paytr.com/odeme/iade';
 
+/** PayTR yanit vermezse istek bu surede kesilir; askida kalan istekler
+ *  odeme akisini bloklamamali. */
+const PAYTR_REQUEST_TIMEOUT_MS = 15_000;
+
+/** AbortSignal.timeout ile kesilen istekleri diger ag hatalarindan ayirir.
+ *  DOMException Error'dan turetmedigi icin yalnizca name alanina bakilir. */
+function isTimeoutError(error: unknown) {
+  const name = typeof error === 'object' && error !== null ? (error as { name?: unknown }).name : undefined;
+  return name === 'TimeoutError' || name === 'AbortError';
+}
+
 export interface PaytrBasketItem {
   name: string;
   unitPrice: number;
@@ -159,8 +170,12 @@ export async function requestIframeToken(input: TokenRequestInput): Promise<stri
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
+      signal: AbortSignal.timeout(PAYTR_REQUEST_TIMEOUT_MS),
     });
-  } catch {
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      throw new AppError('PayTR token servisi zaman asimina ugradi.', 502);
+    }
     throw new AppError('PayTR token servisine ulasilamadi.', 502);
   }
 
@@ -189,8 +204,14 @@ export class PaytrRefundError extends AppError {
   }
 }
 
+/**
+ * PayTR iade APIsinde errNo '000' basariyi gosterir; boyle bir yanit hata
+ * olarak hicbir zaman tekrar deneme listesine dusmemeli. Bilinen diger hata
+ * kodlari icin iade kaydini denenebilir tutariz, kodu okunamayan hatalar
+ * kalici basarisizlik sayilir.
+ */
 export function isRetryablePaytrRefundError(error: unknown) {
-  return error instanceof PaytrRefundError && error.errNo === '000';
+  return error instanceof PaytrRefundError && error.errNo !== undefined && error.errNo !== '000';
 }
 
 export async function requestRefund(input: PaytrRefundInput) {
@@ -213,14 +234,20 @@ export async function requestRefund(input: PaytrRefundInput) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
+      signal: AbortSignal.timeout(PAYTR_REQUEST_TIMEOUT_MS),
     });
-  } catch {
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      throw new AppError('PayTR iade servisi zaman asimina ugradi.', 502);
+    }
     throw new AppError('PayTR iade servisine ulasilamadi.', 502);
   }
 
   const data = (await response.json().catch(() => null)) as { status?: string; reference_no?: string; err_no?: string; err_msg?: string } | null;
 
-  if (!response.ok || !data || data.status !== 'success') {
+  // errNo '000' PayTR tarafinda "basarili" demektir; status alani bazi
+  // yanitlarda baska deger tasiyabilir, o yuzden ikisi de kabul edilir.
+  if (!response.ok || !data || (data.status !== 'success' && data.err_no !== '000')) {
     console.error('[PAYTR] Refund failed', {
       merchantOid: input.merchantOid,
       amount: returnAmount,

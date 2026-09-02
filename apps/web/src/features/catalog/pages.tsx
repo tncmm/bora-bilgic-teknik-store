@@ -11,6 +11,7 @@ import { CampaignSlider } from '../../shared/components/CampaignSlider';
 import { PriceTag } from '../../shared/components/PriceTag';
 import { RichTextContent } from '../../shared/components/RichTextContent';
 import { formatCurrency } from '../../shared/lib/format';
+import { computePackageUnitPrice } from '../../shared/lib/pricing';
 import { findSectionBySlug, mapLegacyCategoryToSection, storefrontSections } from '../../shared/lib/storefront';
 import { translateCategoryName } from '../../shared/lib/i18n';
 import { HeroSlider } from './hero-slider';
@@ -89,7 +90,6 @@ function useCatalogProducts(params: Record<string, string>) {
 function StorefrontProductCard({ product }: { product: Product }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language } = useI18n();
   const { isAuthenticated, addCartItem, toggleFavorite, isFavorite } = useSession();
   const { showToast } = useToast();
   const primaryImage = getPrimaryImage(product);
@@ -100,13 +100,13 @@ function StorefrontProductCard({ product }: { product: Product }) {
       await addCartItem(product, 1);
       showToast({
         tone: 'success',
-        title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
-        description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
+        title: 'Ürün sepete eklendi',
+        description: `${product.name} sepetinize eklendi.`,
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Sepete eklenemedi' : 'Could not add to cart',
+        title: 'Sepete eklenemedi',
         description: (error as Error).message,
       });
     }
@@ -122,19 +122,12 @@ function StorefrontProductCard({ product }: { product: Product }) {
       const action = await toggleFavorite(product.id);
       showToast({
         tone: 'info',
-        title:
-          action === 'added'
-            ? language === 'tr'
-              ? 'Favorilere eklendi'
-              : 'Added to favorites'
-            : language === 'tr'
-              ? 'Favorilerden kaldırıldı'
-              : 'Removed from favorites',
+        title: action === 'added' ? 'Favorilere eklendi' : 'Favorilerden kaldırıldı',
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Favori işlemi tamamlanamadı' : 'Favorite action failed',
+        title: 'Favori işlemi tamamlanamadı',
         description: (error as Error).message,
       });
     }
@@ -381,6 +374,21 @@ function ListingSidebar({
   onClear: () => void;
   open: boolean;
 }) {
+  const [minPriceDraft, setMinPriceDraft] = useState(minPrice);
+  const [maxPriceDraft, setMaxPriceDraft] = useState(maxPrice);
+
+  // Keep the drafts in sync when the range changes elsewhere (presets, toolbar, back navigation).
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      setMinPriceDraft(minPrice);
+      setMaxPriceDraft(maxPrice);
+    });
+  }, [maxPrice, minPrice]);
+
+  function applyPriceRange() {
+    onSelectRange(minPriceDraft.trim(), maxPriceDraft.trim());
+  }
+
   return (
     <aside className={`dji-sidebar${open ? ' is-open' : ''}`}>
       <div className="dji-sidebar__group">
@@ -415,8 +423,34 @@ function ListingSidebar({
           ))}
         </div>
         <div className="dji-price-fields">
-          <input className="ui-input" placeholder="Min" value={minPrice} onChange={() => undefined} readOnly />
-          <input className="ui-input" placeholder="Max" value={maxPrice} onChange={() => undefined} readOnly />
+          <input
+            className="ui-input"
+            inputMode="numeric"
+            onBlur={applyPriceRange}
+            onChange={(event) => setMinPriceDraft(event.target.value.replace(/\D/g, ''))}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                applyPriceRange();
+              }
+            }}
+            placeholder="Min"
+            value={minPriceDraft}
+          />
+          <input
+            className="ui-input"
+            inputMode="numeric"
+            onBlur={applyPriceRange}
+            onChange={(event) => setMaxPriceDraft(event.target.value.replace(/\D/g, ''))}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                applyPriceRange();
+              }
+            }}
+            placeholder="Max"
+            value={maxPriceDraft}
+          />
         </div>
       </div>
 
@@ -501,6 +535,10 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
     setSearchParams(next);
   }
 
+  const activeRangeIndex = listingRangePresets.findIndex(
+    (range) => range.min === (searchParams.get('minPrice') ?? '') && range.max === (searchParams.get('maxPrice') ?? ''),
+  );
+
   const items = data?.items ?? [];
   const renderedItems =
     (searchParams.get('sort') ?? 'newest') === 'newest' && sectionSlug
@@ -543,10 +581,17 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
                   </option>
                 ))}
               </select>
-              <select className="ui-select" onChange={(event) => updateParam('minPrice', event.target.value)} value={searchParams.get('minPrice') ?? ''}>
+              <select
+                className="ui-select"
+                onChange={(event) => {
+                  const range = listingRangePresets[Number(event.target.value)];
+                  if (range) selectRange(range.min, range.max);
+                }}
+                value={activeRangeIndex === -1 ? '' : String(activeRangeIndex)}
+              >
                 <option value="">Fiyat Aralığı</option>
-                {listingRangePresets.map((range) => (
-                  <option key={range.label} value={range.min}>
+                {listingRangePresets.map((range, index) => (
+                  <option key={range.label} value={String(index)}>
                     {range.label}
                   </option>
                 ))}
@@ -702,17 +747,26 @@ export function ProductDetailPage() {
   async function handleAddToCart() {
     if (!product) return;
 
+    // Secili paket varsa sepete paketli satir olarak gider (paket fiyati mutlaktir);
+    // taban urunde packageOptionId hic gonderilmez.
+    const selectedPackage = product.packageOptions?.find((option) => option.id === selectedPackageId)
+      ?? product.packageOptions?.find((option) => option.isDefault)
+      ?? product.packageOptions?.[0];
+    const unitPrice = selectedPackage ? computePackageUnitPrice(product, selectedPackage.id) ?? selectedPackage.price : product.effectivePrice;
+
     try {
-      await addCartItem(product, quantity);
+      await addCartItem(product, quantity, selectedPackage?.id);
       showToast({
         tone: 'success',
-        title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
-        description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
+        title: 'Ürün sepete eklendi',
+        description: selectedPackage
+          ? `${product.name} · ${selectedPackage.name} (${formatCurrency(unitPrice, language)}) sepetinize eklendi.`
+          : `${product.name} sepetinize eklendi.`,
       });
     } catch (nextError) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Sepete eklenemedi' : 'Could not add to cart',
+        title: 'Sepete eklenemedi',
         description: (nextError as Error).message,
       });
     }
@@ -730,7 +784,7 @@ export function ProductDetailPage() {
     } catch (nextError) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Favori işlemi tamamlanamadı' : 'Favorite action failed',
+        title: 'Favori işlemi tamamlanamadı',
         description: (nextError as Error).message,
       });
     }
@@ -853,8 +907,12 @@ export function ProductDetailPage() {
                 </span>
               </div>
               <div className="dji-detail__price-row">
-                {activePackage && activePackage.price !== product.price ? (
-                  <strong>{formatCurrency(activePackage.price, language)}</strong>
+                {activePackage ? (
+                  <PriceTag
+                    discountPercent={product.discountPercent}
+                    effectivePrice={computePackageUnitPrice(product, activePackage.id) ?? activePackage.price}
+                    price={activePackage.price}
+                  />
                 ) : (
                   <PriceTag discountPercent={product.discountPercent} effectivePrice={product.effectivePrice} price={product.price} />
                 )}

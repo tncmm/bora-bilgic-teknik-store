@@ -53,6 +53,7 @@ model User {
   orders           Order[]
   paymentAttempts  PaymentAttempt[]
   refunds          Refund[]
+  refreshTokens    RefreshToken[]
   themePreference  ThemePreference?
 }
 
@@ -61,6 +62,23 @@ enum AttemptStatus {
   COMPLETED
   FAILED
   EXPIRED
+}
+
+/**
+ * Server-side refresh token revocation. Only the sha256 digest of the JWT is
+ * stored, so a database leak never yields usable tokens. Rotation marks the
+ * old row revokedAt; unknown/revoked/expired hashes are always rejected.
+ */
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Campaign {
@@ -122,6 +140,10 @@ model PaymentAttempt {
   notes               String?
   items               Json
   failureReason       String?
+  // Odemesi alindigi halde siparise donemeyen denemeler icin inceleme alani:
+  // deneme kapatilip stok geri verildikten sonra gelen basarili callback.
+  paidWithoutOrderAt  DateTime?
+  reviewNote          String?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   userId              String?
@@ -247,13 +269,18 @@ model CartItem {
   id        String   @id @default(cuid())
   cartId    String
   productId String
+  // Bos string taban urun demektir (sentinel); ayni urunun farkli paketleri
+  // ayri satirlarda yasar. NOT NULL + sentinel, Postgres'in NULL'leri ayri
+  // sayma davranisina guvenmekten daha tahmin edilebilir.
+  packageOptionId String  @default("")
+  packageLabel    String?
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
 
-  @@unique([cartId, productId])
+  @@unique([cartId, productId, packageOptionId])
 }
 
 model Wishlist {
@@ -341,6 +368,7 @@ model OrderItem {
   orderId     String
   productId   String
   productName String
+  packageLabel String?
   quantity    Int
   unitPrice   Decimal  @db.Decimal(10, 2)
   lineTotal   Decimal  @db.Decimal(10, 2)

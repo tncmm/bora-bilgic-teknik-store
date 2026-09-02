@@ -224,7 +224,7 @@ function OrderDetailView({
           {orderFlow.map((step, index) => (
             <div className={['order-progress__step', index <= stepIndex ? 'is-active' : ''].filter(Boolean).join(' ')} key={step.id}>
               <span className="order-progress__index">{index + 1}</span>
-              <strong>{language === 'tr' ? step.titleTr : step.titleEn}</strong>
+              <strong>{step.titleTr}</strong>
             </div>
           ))}
         </div>
@@ -347,8 +347,8 @@ export function OrdersPage() {
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <EmptyState
-            description={language === 'tr' ? 'Siparişlerinizi görmek için giriş yapın.' : 'Log in to view your orders.'}
-            title={language === 'tr' ? 'Siparişler kullanılamıyor' : 'Orders unavailable'}
+            description="Siparişlerinizi görmek için giriş yapın."
+            title="Siparişler kullanılamıyor"
           />
         </div>
       </section>
@@ -361,12 +361,12 @@ export function OrdersPage() {
         <div className="profile-card profile-card--full">
           <div className="section-header">
             <div>
-              <div className="detail-chip">{language === 'tr' ? 'Siparişlerim' : 'My Orders'}</div>
-              <h2>{language === 'tr' ? 'Tüm Sipariş Geçmişiniz' : 'Your Full Order History'}</h2>
-              <p>{language === 'tr' ? 'Siparişlerinizi ve iade taleplerinizi buradan takip edebilirsiniz.' : 'Track your orders and refund requests from here.'}</p>
+              <div className="detail-chip">Siparişlerim</div>
+              <h2>Tüm Sipariş Geçmişiniz</h2>
+              <p>Siparişlerinizi ve iade taleplerinizi buradan takip edebilirsiniz.</p>
             </div>
             <Link to="/profil">
-              <Button variant="secondary">{language === 'tr' ? 'Profile Dön' : 'Back to Profile'}</Button>
+              <Button variant="secondary">Profile Dön</Button>
             </Link>
           </div>
         </div>
@@ -374,8 +374,8 @@ export function OrdersPage() {
         {orders.length === 0 ? (
           <div className="profile-card profile-card--full">
             <EmptyState
-              description={language === 'tr' ? 'Bu hesap için henüz sipariş yok.' : 'There are no orders for this account yet.'}
-              title={language === 'tr' ? 'Sipariş bulunamadı' : 'No orders found'}
+              description="Bu hesap için henüz sipariş yok."
+              title="Sipariş bulunamadı"
             />
           </div>
         ) : (
@@ -398,7 +398,6 @@ export function OrdersPage() {
 
 export function OrderDetailPage() {
   const { token, user } = useSession();
-  const { language } = useI18n();
   const { orderId = '' } = useParams();
   const location = useLocation();
   const state = (location.state ?? null) as OrderDetailLocationState | null;
@@ -416,8 +415,8 @@ export function OrderDetailPage() {
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <EmptyState
-            description={language === 'tr' ? 'Sipariş detaylarını görmek için giriş yapın.' : 'Log in to view order details.'}
-            title={language === 'tr' ? 'Sipariş detayı kullanılamıyor' : 'Order detail unavailable'}
+            description="Sipariş detaylarını görmek için giriş yapın."
+            title="Sipariş detayı kullanılamıyor"
           />
         </div>
       </section>
@@ -430,8 +429,8 @@ export function OrderDetailPage() {
         <div className="ui-shell">
           <div className="profile-card profile-card--full">
             <EmptyState
-              description={error ?? (language === 'tr' ? 'Sipariş detayları yükleniyor...' : 'Loading order details...')}
-              title={error ? (language === 'tr' ? 'Sipariş yüklenemedi' : 'Order could not be loaded') : (language === 'tr' ? 'Lütfen bekleyin' : 'Please wait')}
+              description={error ?? 'Sipariş detayları yükleniyor...'}
+              title={error ? 'Sipariş yüklenemedi' : 'Lütfen bekleyin'}
             />
           </div>
         </div>

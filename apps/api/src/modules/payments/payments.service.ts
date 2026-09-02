@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 
 import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
 import { decryptBillingIdentity, encryptBillingIdentity, hashTrackingToken } from '../../lib/crypto.js';
 import { sendMail } from '../../lib/mail/transport.js';
 import { guestOrderTrackingEmail } from '../../lib/mail/templates.js';
-import { computeEffectivePrice } from '../../lib/serializers.js';
+import { computeLineUnitPrice, findPackageOption } from '../../lib/serializers.js';
 import {
   isPaytrConfigured,
   newMerchantOid,
@@ -17,16 +17,61 @@ import {
 } from '../../lib/paytr.js';
 import { PaymentsRepository, type AttemptItem } from './payments.repository.js';
 
+const checkoutItemSchema = z.object({
+  productId: z.string().min(1),
+  quantity: z.number().int().min(1).max(10),
+  // Opsiyonel: taban urun icin gelmemelidir; geldiginde urunun guncel
+  // packageOptions listesinde dogrulanir (asagida, servis katmaninda).
+  packageOptionId: z.string().trim().min(1).optional(),
+});
+
+/** Tek bir urun icin sepette tutulabilecek en yuksek adet. */
+const MAX_QUANTITY_PER_PRODUCT = 10;
+
+/** Ayni urunun farkli paketleri ayri satirlardir; birlestirme anahtari ikilidir. */
+const itemKey = (productId: string, packageOptionId?: string) => `${productId}::${packageOptionId ?? ''}`;
+
+const checkoutItemsSchema = z
+  .array(checkoutItemSchema)
+  .max(20, 'Bir odeme denemesinde en fazla 20 kalem bulundurabilirsiniz.')
+  .superRefine((items, ctx) => {
+    // Ayni urun+paket satirlari once toplanir: sinir, birlestirilmis adet
+    // uzerinden denetlenir, ayni urunu boluk boluk girmek kurali asamaz.
+    const totals = new Map<string, number>();
+    for (const item of items) {
+      totals.set(itemKey(item.productId, item.packageOptionId), (totals.get(itemKey(item.productId, item.packageOptionId)) ?? 0) + item.quantity);
+    }
+
+    for (const [key, quantity] of totals) {
+      if (quantity > MAX_QUANTITY_PER_PRODUCT) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Ayni urunden en fazla 10 adet satin alabilirsiniz.',
+          path: [key.split('::')[0]],
+        });
+      }
+    }
+  })
+  .transform((items) => mergeItems(items));
+
+function mergeItems(items: Array<{ productId: string; quantity: number; packageOptionId?: string }>) {
+  const totals = new Map<string, { productId: string; quantity: number; packageOptionId?: string }>();
+  for (const item of items) {
+    const key = itemKey(item.productId, item.packageOptionId);
+    const existing = totals.get(key);
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      totals.set(key, { productId: item.productId, quantity: item.quantity, packageOptionId: item.packageOptionId });
+    }
+  }
+
+  return [...totals.values()];
+}
+
 const checkoutSchema = z.object({
   email: z.string().email().optional(),
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1),
-        quantity: z.number().int().min(1).max(10),
-      }),
-    )
-    .optional(),
+  items: checkoutItemsSchema.optional(),
   shippingName: z.string().min(3),
   shippingPhone: z.string().min(10),
   shippingCity: z.string().min(2),
@@ -69,10 +114,11 @@ export class PaymentsService {
       throw new AppError('Siparis takibi icin e-posta adresi zorunludur.', 400);
     }
 
-    // Housekeeping before reserving fresh stock: expire own abandoned windows
-    // and close anything still open, so stock never stays locked twice.
+    // Housekeeping before reserving fresh stock: expire every abandoned
+    // payment window (guest attempts included) and close this user's still
+    // open attempts, so stock never stays locked twice.
+    await this.repository.expireStaleAttempts(new Date(Date.now() - PAYMENT_WINDOW_MS));
     if (userId) {
-      await this.repository.expireStaleAttempts(userId, new Date(Date.now() - PAYMENT_WINDOW_MS));
       await this.repository.supersedeOpenAttempts(userId);
     }
 
@@ -110,7 +156,11 @@ export class PaymentsService {
         userName: data.shippingName,
         userAddress: `${data.shippingAddressLine} ${data.shippingDistrict}/${data.shippingCity}`,
         userPhone: data.shippingPhone,
-        basket: items.map((item) => ({ name: item.productName, unitPrice: item.unitPrice, quantity: item.quantity })),
+        basket: items.map((item) => ({
+          name: item.packageLabel ? `${item.productName} (${item.packageLabel})` : item.productName,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        })),
       });
     } catch (error) {
       // PayTR never saw a payable session: release the stock and close the
@@ -122,7 +172,22 @@ export class PaymentsService {
       throw error instanceof AppError ? error : new AppError('Odeme baslatilamadi.', 502);
     }
 
-    return { iframeToken, merchantOid, trackingUrl: `${env.WEB_URL}/siparis-takip/${trackingToken}` };
+    // The raw token doubles as the ownership proof for the status endpoint;
+    // only its hash is stored, so it must reach the customer right away.
+    return { iframeToken, merchantOid, trackingToken, trackingUrl: `${env.WEB_URL}/siparis-takip/${trackingToken}` };
+  }
+
+  /**
+   * Interval-driven housekeeping: closes every stale PENDING attempt — guest
+   * attempts included — so abandoned checkouts release their stock even when
+   * nobody checks out again.
+   */
+  async sweepStaleAttempts() {
+    const count = await this.repository.expireStaleAttempts(new Date(Date.now() - PAYMENT_WINDOW_MS));
+    if (count > 0) {
+      console.log('[PAYTR] Stale payment attempts expired', { count });
+    }
+    return count;
   }
 
   private async buildItemsFromCart(userId: string): Promise<AttemptItem[]> {
@@ -139,10 +204,18 @@ export class PaymentsService {
     }
 
     return cart.items.map((item) => {
-      const unitPrice = computeEffectivePrice(item.product.price, item.product.discountPercent ?? 0);
+      // Paketli satirda stokta eski bir secim kalmis olabilir; urunun guncel
+      // packageOptions listesinde artik bulunmayan paket, taban fiyatla yanlis
+      // fiyatlandirma doguracagi icin sepetin yenilenmesini isteriz.
+      if (item.packageOptionId && !findPackageOption(item.product, item.packageOptionId)) {
+        throw new AppError('Sepetteki bir urunun paket secenekleri guncellendi. Lutfen sepetinizi yenileyin.', 409);
+      }
+
+      const unitPrice = computeLineUnitPrice(item.product, item.packageOptionId);
       return {
         productId: item.productId,
         productName: item.product.name,
+        packageLabel: item.packageLabel ?? null,
         quantity: item.quantity,
         unitPrice,
         lineTotal: unitPrice * item.quantity,
@@ -150,7 +223,9 @@ export class PaymentsService {
     });
   }
 
-  private async buildItemsFromPayload(payloadItems: Array<{ productId: string; quantity: number }>): Promise<AttemptItem[]> {
+  private async buildItemsFromPayload(
+    payloadItems: Array<{ productId: string; quantity: number; packageOptionId?: string }>,
+  ): Promise<AttemptItem[]> {
     if (payloadItems.length === 0) {
       throw new AppError('Odeme baslatmak icin sepetiniz bos olmamali.', 409);
     }
@@ -167,10 +242,18 @@ export class PaymentsService {
         throw new AppError(`${product.name} urunu su anda satisa kapali.`, 409);
       }
 
-      const unitPrice = computeEffectivePrice(product.price, product.discountPercent ?? 0);
+      // Misafir sepetinden gelen paket secimi de urunun guncel listesine
+      // gore dogrulanir; bilinmeyen paket id'si odemeyi durdurur.
+      const packageOption = findPackageOption(product, item.packageOptionId);
+      if (item.packageOptionId && !packageOption) {
+        throw new AppError('Gecersiz paket secimi.', 400);
+      }
+
+      const unitPrice = computeLineUnitPrice(product, item.packageOptionId);
       return {
         productId: product.id,
         productName: product.name,
+        packageLabel: packageOption?.name ?? null,
         quantity: item.quantity,
         unitPrice,
         lineTotal: unitPrice * item.quantity,
@@ -240,7 +323,16 @@ export class PaymentsService {
       }
 
       const order = await this.repository.completeAttempt(merchantOid);
-      if (order?.trackingTokenEncrypted) {
+      if (!order) {
+        // The PENDING guard tripped: the attempt was already settled (e.g. the
+        // customer started a new checkout or let the window expire while the
+        // iframe was open). Money moved without an order — flag the attempt
+        // for manual review, then still answer "OK" so PayTR stops retrying.
+        await this.recordPaidWithoutOrder(merchantOid);
+        return { outcome: 'paid' as const };
+      }
+
+      if (order.trackingTokenEncrypted) {
         const trackingToken = decryptBillingIdentity(order.trackingTokenEncrypted);
         const email = guestOrderTrackingEmail({
           name: order.shippingName,
@@ -261,14 +353,44 @@ export class PaymentsService {
     return { outcome: 'failed' as const };
   }
 
-  async getStatus(merchantOid: string, userId?: string) {
-    const attempt = await this.repository.findAttemptStatus(merchantOid);
+  /**
+   * Money was charged for an attempt that is no longer open. Only closed
+   * attempts (FAILED/EXPIRED) are flagged: a COMPLETED one means this is an
+   * idempotent retry and its order already exists. A missing attempt keeps
+   * the original 400 so PayTR keeps retrying.
+   */
+  private async recordPaidWithoutOrder(merchantOid: string) {
+    const attempt = await this.repository.findAttemptByOid(merchantOid);
     if (!attempt) {
-      throw new AppError('Odeme denemesi bulunamadi.', 404);
+      throw new AppError('Odeme bildirimi bir denemeyle eslesmedi.', 400);
     }
 
-    if (attempt.userId && attempt.userId !== userId) {
-      throw new AppError('Bu odeme denemesini goruntuleme yetkiniz yok.', 403);
+    if (attempt.status !== 'FAILED' && attempt.status !== 'EXPIRED') {
+      return;
+    }
+
+    const reviewNote =
+      'Odeme basarili geldi ancak deneme daha once kapatilmis ve stok geri verilmisti. ' +
+      'Siparis olusmadi; PayTR panelinden iade yapilmali veya siparis elle olusturulmali.';
+
+    await this.repository.markPaidWithoutOrder(merchantOid, reviewNote);
+    console.error('[PAYTR] Payment succeeded but no order was created', {
+      merchantOid,
+      attemptStatus: attempt.status,
+      customerEmail: attempt.customerEmail,
+    });
+  }
+
+  /**
+   * Payment status lookup. The raw tracking token handed out at checkout is
+   * the ownership proof: its sha256 digest must match the stored hash. A
+   * missing or wrong token answers with the exact same 404 as an unknown
+   * merchantOid, so the existence of an attempt is never revealed.
+   */
+  async getStatus(merchantOid: string, trackingToken: string | undefined) {
+    const attempt = await this.repository.findAttemptStatus(merchantOid);
+    if (!attempt || !this.hasValidTrackingToken(attempt.trackingTokenHash, trackingToken)) {
+      throw new AppError('Odeme denemesi bulunamadi.', 404);
     }
 
     const order = await this.repository.findOrderByPaymentRef(merchantOid);
@@ -287,5 +409,17 @@ export class PaymentsService {
       orderId: order?.id,
       trackingUrl,
     };
+  }
+
+  /** Timing-safe comparison of the raw token's digest against the stored hash. */
+  private hasValidTrackingToken(storedHash: string | null, rawToken: string | undefined) {
+    if (!storedHash || !rawToken) {
+      return false;
+    }
+
+    const provided = Buffer.from(hashTrackingToken(rawToken), 'utf8');
+    const expected = Buffer.from(storedHash, 'utf8');
+
+    return provided.length === expected.length && timingSafeEqual(provided, expected);
   }
 }

@@ -38,7 +38,7 @@ export interface AdminBrand {
 
 export interface CheckoutPayload {
   email?: string;
-  items?: Array<{ productId: string; quantity: number }>;
+  items?: Array<{ productId: string; quantity: number; packageOptionId?: string }>;
   shippingName: string;
   shippingPhone: string;
   shippingCity: string;
@@ -178,17 +178,11 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
-  logout() {
-    return request<void>('/auth/logout', { method: 'POST' });
+  logout(token?: string) {
+    return request<void>('/auth/logout', { method: 'POST' }, token);
   },
   getProfile(token: string) {
     return request<User & { themeMode: ThemeMode }>('/users/me', {}, token);
-  },
-  updateTheme(token: string, mode: ThemeMode) {
-    return request('/users/theme', {
-      method: 'PATCH',
-      body: JSON.stringify({ mode }),
-    }, token);
   },
   listAddresses(token: string) {
     return request<Address[]>('/users/addresses', {}, token);
@@ -223,7 +217,8 @@ export const api = {
   removeFavorite(token: string, productId: string) {
     return request<Wishlist>(`/users/favorites/items/${productId}`, { method: 'DELETE' }, token);
   },
-  addToCart(token: string, payload: { productId: string; quantity: number }) {
+  // packageOptionId yalnizca paketli satirlarda gonderilir; taban urunde alan hic yer almasin.
+  addToCart(token: string, payload: { productId: string; quantity: number; packageOptionId?: string }) {
     return request<Cart>('/cart/items', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -244,8 +239,10 @@ export const api = {
       body: JSON.stringify(payload),
     }, token ?? undefined);
   },
-  getPaymentStatus(merchantOid: string, token?: string | null) {
-    return request<PaymentStatusResponse>(`/payments/paytr/status/${merchantOid}`, {}, token ?? undefined);
+  getPaymentStatus(merchantOid: string, token?: string | null, trackingToken?: string | null) {
+    const search = new URLSearchParams(trackingToken ? { t: trackingToken } : {});
+    const query = search.toString();
+    return request<PaymentStatusResponse>(`/payments/paytr/status/${merchantOid}${query ? `?${query}` : ''}`, {}, token ?? undefined);
   },
   getMyOrders(token: string) {
     return request<Order[]>('/orders/me', {}, token);

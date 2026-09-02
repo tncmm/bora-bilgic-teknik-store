@@ -34,6 +34,28 @@ const resendVerificationSchema = z.object({
 
 const RESEND_COOLDOWN_MS = 60_000;
 
+/** Refresh JWT'nin omruyle birebir ayni DB son kullanma suresi (7 gun). */
+const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Veritabanina yalnizca ozet yazilir; ham token yalnizca httpOnly cereze
+ * konur. Boylece bir veri sizintisindan dogrudan kullanilabilir refresh
+ * token'i cikmaz.
+ */
+function hashRefreshToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/** Oturum yenileme akislarindaki tek tip 401: cerez temizlenip girise donulur. */
+const INVALID_REFRESH_MESSAGE = 'Oturumunuz sona erdi. Lütfen tekrar giriş yapın.';
+
+/**
+ * Bilinmeyen e-postalarda da gerçek bir bcrypt karşılaştırması çalıştırmak
+ * için kullanılan geçersiz bir hash. Böylece yanıt süresi, adresin veri
+ * tabanında var olup olmadığını ele vermez (user enumeration önleme).
+ */
+const DUMMY_PASSWORD_HASH = '$2b$10$z2OJvqWoVsx7A97SjP7Qy.vFy2OFjM4sJ.bgYasG3.Yigabx2RecS';
+
 export class AuthService {
   constructor(private readonly repository = new AuthRepository()) {}
 
@@ -81,7 +103,7 @@ export class AuthService {
     // Fire-and-forget welcome email.
     void this.sendWelcomeMail(verified.firstName, verified.email);
 
-    return this.buildAuthResponse(verified.id, verified.email, verified.role, verified);
+    return this.buildAuthResponse(verified);
   }
 
   async resendVerification(payload: unknown) {
@@ -118,7 +140,11 @@ export class AuthService {
     const user = await this.repository.findUserByEmail(data.email);
 
     if (!user) {
-      throw new AppError('Kullanıcı bulunamadı.', 404);
+      // Bilinmeyen e-posta, hatalı şifreyle aynı genel 401 mesajını döner;
+      // karşılaştırma yine de gerçekten çalıştırılır ki zamanlama farkı
+      // hesabın varlığını ele vermesin.
+      await comparePassword(data.password, DUMMY_PASSWORD_HASH);
+      throw new AppError('E-posta veya şifre hatalı.', 401);
     }
 
     if (env.requireEmailVerification && !user.emailVerified) {
@@ -133,7 +159,7 @@ export class AuthService {
       throw new AppError('E-posta veya şifre hatalı.', 401);
     }
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user);
+    return this.buildAuthResponse(user);
   }
 
   async me(userId: string) {
@@ -144,20 +170,86 @@ export class AuthService {
     return serializeUser(user);
   }
 
-  async refresh(token: string) {
-    const payload = verifyRefreshToken(token);
-    const user = await this.repository.findUserById(payload.sub);
-
-    if (!user) {
-      throw new AppError('Kullanıcı bulunamadı.', 404);
+  async refresh(token: string | undefined) {
+    if (!token) {
+      throw new AppError(INVALID_REFRESH_MESSAGE, 401);
     }
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user);
+    let payload: ReturnType<typeof verifyRefreshToken>;
+    try {
+      payload = verifyRefreshToken(token);
+    } catch {
+      // Imza/omur gecersiz: DB'ye bakmaya gerek yok, cerez temizlenir.
+      throw new AppError(INVALID_REFRESH_MESSAGE, 401);
+    }
+
+    const tokenHash = hashRefreshToken(token);
+    const stored = await this.repository.findRefreshTokenByHash(tokenHash);
+
+    // Bilinmeyen, iptal edilmis (rotasyon sonrasi yeniden kullanim) veya
+    // suresi DB tarafinda dolmus token'in hepsi ayni 401'i alir.
+    if (!stored || stored.revokedAt || stored.expiresAt <= new Date()) {
+      throw new AppError(INVALID_REFRESH_MESSAGE, 401);
+    }
+
+    const user = await this.repository.findUserById(payload.sub);
+    if (!user) {
+      throw new AppError(INVALID_REFRESH_MESSAGE, 401);
+    }
+
+    const refreshToken = signRefreshToken({ sub: user.id, email: user.email, role: user.role });
+    const rotated = await this.repository.rotateRefreshToken({
+      oldTokenHash: tokenHash,
+      userId: user.id,
+      newTokenHash: hashRefreshToken(refreshToken),
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+      revokedAt: new Date(),
+    });
+
+    if (!rotated) {
+      // Paralel bir istek ayni token'i cebinden cikarmis: bu token artik kapali.
+      throw new AppError(INVALID_REFRESH_MESSAGE, 401);
+    }
+
+    const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
+
+    return { accessToken, refreshToken, user: serializeUser(user) };
   }
 
-  private buildAuthResponse(userId: string, email: string, role: Role, user: any) {
-    const accessToken = signAccessToken({ sub: userId, email, role });
-    const refreshToken = signRefreshToken({ sub: userId, email, role });
+  /** Cikis: cerezdeki token'in DB satirini iptal eder; hata olsa da cikis basarisiz sayilmaz. */
+  async logout(token: string | undefined) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      await this.repository.revokeRefreshTokenByHash(hashRefreshToken(token), new Date());
+    } catch (error) {
+      console.error('[AUTH] Refresh token revoke failed during logout:', error);
+    }
+  }
+
+  /**
+   * Access + refresh ciftini uretir ve refresh token'in sha256 ozetini DB'ye
+   * yazar (sunucu tarafi iptal icin). Yazmadan once kullanicinin suresi
+   * dolmus/iptal edilmis eski satirlarini ucuz bir deleteMany ile temizler.
+   */
+  private async buildAuthResponse(user: {
+    id: string;
+    email: string;
+    role: Role;
+    firstName: string;
+    lastName: string;
+  }) {
+    const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
+    const refreshToken = signRefreshToken({ sub: user.id, email: user.email, role: user.role });
+
+    await this.repository.deleteStaleRefreshTokens(user.id, new Date());
+    await this.repository.createRefreshToken({
+      userId: user.id,
+      tokenHash: hashRefreshToken(refreshToken),
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    });
 
     return {
       accessToken,

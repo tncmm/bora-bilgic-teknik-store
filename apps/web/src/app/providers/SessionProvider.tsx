@@ -1,14 +1,15 @@
-import type { AuthResponse, Cart, Product, ThemeMode, User, Wishlist } from '@bora/types';
+import type { AuthResponse, Cart, Product, User, Wishlist } from '@bora/types';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { api } from '../../shared/api/client';
+import { computePackageUnitPrice } from '../../shared/lib/pricing';
+import { useToast } from './ToastProvider';
 
 interface SessionContextValue {
   user: User | null;
   token: string | null;
   cart: Cart | null;
   wishlist: Wishlist | null;
-  themeMode: ThemeMode;
   isAuthenticated: boolean;
   isAdmin: boolean;
   cartCount: number;
@@ -18,13 +19,12 @@ interface SessionContextValue {
   applyAuthResponse: (response: AuthResponse) => void;
   logout: () => void;
   syncCart: () => Promise<void>;
-  addCartItem: (product: Product, quantity: number) => Promise<void>;
+  addCartItem: (product: Product, quantity: number, packageOptionId?: string) => Promise<void>;
   updateCartItem: (itemId: string, quantity: number) => Promise<void>;
   removeCartItem: (itemId: string) => Promise<void>;
   syncWishlist: () => Promise<void>;
   toggleFavorite: (productId: string) => Promise<'added' | 'removed'>;
   isFavorite: (productId: string) => boolean;
-  setThemeMode: (mode: ThemeMode) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -32,12 +32,21 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 const TOKEN_KEY = 'bora-session-token';
 const USER_KEY = 'bora-session-user';
-const THEME_KEY = 'bora-theme-mode';
 const GUEST_CART_KEY = 'bora-guest-cart';
 
 interface GuestCartLine {
   product: Product;
   quantity: number;
+  /** Paketli satirlarda secilen paket; taban urunde yok (eski kayitlarla uyumlu). */
+  packageOptionId?: string;
+  packageLabel?: string | null;
+  /** Paketli satirlarin birim fiyati (paket fiyati + urun indirimi). */
+  unitPrice?: number;
+}
+
+/** Ayni urunun farkli paketleri ayri satirlardir; taban satir id'si eski haliyle kalir. */
+function guestLineId(line: Pick<GuestCartLine, 'product' | 'packageOptionId'>) {
+  return line.packageOptionId ? `guest-${line.product.id}-${line.packageOptionId}` : `guest-${line.product.id}`;
 }
 
 function readStorage<T>(key: string): T | null {
@@ -50,25 +59,21 @@ function readStorage<T>(key: string): T | null {
   }
 }
 
-function applyTheme(mode: ThemeMode) {
-  const theme =
-    mode === 'system'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-      : mode;
-
-  document.documentElement.dataset.theme = theme;
-}
-
 function buildGuestCart(lines: GuestCartLine[]): Cart {
-  const items = lines.map((line) => ({
-    id: `guest-${line.product.id}`,
-    productId: line.product.id,
-    quantity: line.quantity,
-    product: line.product,
-    lineTotal: line.product.effectivePrice * line.quantity,
-  }));
+  const items = lines.map((line) => {
+    // Paketli satirlarda unitPrice (paket fiyati uzerinden indirim); eski/temel
+    // kayitlarda urunun etkin fiyati kullanilir.
+    const unitPrice = line.unitPrice ?? line.product.effectivePrice ?? line.product.price;
+    return {
+      id: guestLineId(line),
+      productId: line.product.id,
+      packageOptionId: line.packageOptionId ?? null,
+      packageLabel: line.packageLabel ?? null,
+      quantity: line.quantity,
+      product: line.product,
+      lineTotal: unitPrice * line.quantity,
+    };
+  });
 
   return {
     id: 'guest-cart',
@@ -88,18 +93,11 @@ function writeGuestCart(lines: GuestCartLine[]) {
 }
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
   const [token, setToken] = useState<string | null>(() => window.localStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState<User | null>(() => readStorage<User>(USER_KEY));
   const [cart, setCart] = useState<Cart | null>(() => (window.localStorage.getItem(TOKEN_KEY) ? null : readGuestCart()));
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    return (window.localStorage.getItem(THEME_KEY) as ThemeMode | null) ?? 'light';
-  });
-
-  useEffect(() => {
-    applyTheme(themeMode);
-    window.localStorage.setItem(THEME_KEY, themeMode);
-  }, [themeMode]);
 
   useEffect(() => {
     if (!token) return;
@@ -146,12 +144,30 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const response = await api.login(payload);
     applyAuthResponse(response);
     const guestLines = readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? [];
+    let skippedLines = 0;
     for (const line of guestLines) {
-      await api.addToCart(response.accessToken, { productId: line.product.id, quantity: line.quantity });
+      try {
+        // Taban satirlarda packageOptionId alanini hic gondermeyerek taban urun satiri olustur.
+        await api.addToCart(response.accessToken, {
+          productId: line.product.id,
+          quantity: line.quantity,
+          ...(line.packageOptionId ? { packageOptionId: line.packageOptionId } : {}),
+        });
+      } catch {
+        // Tek satir (stok/paket degismis, limit dolu vb.) tum girisi bloklamasin.
+        skippedLines += 1;
+      }
     }
     if (guestLines.length > 0) {
       window.localStorage.removeItem(GUEST_CART_KEY);
       await syncCartInternal(response.accessToken);
+      if (skippedLines > 0) {
+        showToast({
+          tone: 'error',
+          title: 'Sepetin tamamen aktarılamadı',
+          description: `${skippedLines} ürün stok ya da paket değişikliği nedeniyle sepete eklenemedi.`,
+        });
+      }
     }
   }
 
@@ -161,13 +177,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }
 
   function logout() {
+    const currentToken = token;
     setToken(null);
     setUser(null);
     setCart(null);
     setWishlist(null);
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
-    void api.logout();
+    void api.logout(currentToken ?? undefined).catch(() => undefined);
     setCart(readGuestCart());
   }
 
@@ -179,19 +196,40 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await syncCartInternal(token);
   }
 
-  async function addCartItem(product: Product, quantity: number) {
+  async function addCartItem(product: Product, quantity: number, packageOptionId?: string) {
     if (token) {
-      await api.addToCart(token, { productId: product.id, quantity });
+      await api.addToCart(token, {
+        productId: product.id,
+        quantity,
+        ...(packageOptionId ? { packageOptionId } : {}),
+      });
       await syncCartInternal(token);
       return;
     }
 
     const lines = readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? [];
-    const existing = lines.find((line) => line.product.id === product.id);
+    // Ayni urun + ayni paket tek satirda birlesir; farkli paket ayri satirdir.
+    const existing = lines.find(
+      (line) => line.product.id === product.id && (line.packageOptionId ?? undefined) === packageOptionId,
+    );
     if (existing) {
       existing.quantity = Math.min(10, existing.quantity + quantity);
     } else {
-      lines.push({ product, quantity });
+      const unitPrice = computePackageUnitPrice(product, packageOptionId);
+      const option = packageOptionId
+        ? product.packageOptions?.find((entry) => entry.id === packageOptionId)
+        : undefined;
+      lines.push({
+        product,
+        quantity,
+        ...(packageOptionId
+          ? {
+              packageOptionId,
+              packageLabel: option?.name ?? null,
+              ...(unitPrice !== undefined ? { unitPrice } : {}),
+            }
+          : {}),
+      });
     }
     setCart(writeGuestCart(lines));
   }
@@ -203,9 +241,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const productId = itemId.replace(/^guest-/, '');
     const lines = (readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? []).map((line) =>
-      line.product.id === productId ? { ...line, quantity } : line,
+      guestLineId(line) === itemId ? { ...line, quantity } : line,
     );
     setCart(writeGuestCart(lines));
   }
@@ -217,8 +254,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const productId = itemId.replace(/^guest-/, '');
-    const lines = (readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? []).filter((line) => line.product.id !== productId);
+    const lines = (readStorage<GuestCartLine[]>(GUEST_CART_KEY) ?? []).filter((line) => guestLineId(line) !== itemId);
     setCart(writeGuestCart(lines));
   }
 
@@ -242,13 +278,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return wishlist?.items.some((item) => item.productId === productId) ?? false;
   }
 
-  async function setThemeMode(mode: ThemeMode) {
-    setThemeModeState(mode);
-    if (token) {
-      await api.updateTheme(token, mode);
-    }
-  }
-
   async function refreshProfile() {
     if (!token) return;
     await refreshProfileInternal(token);
@@ -260,7 +289,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       token,
       cart,
       wishlist,
-      themeMode,
       isAuthenticated: Boolean(token && user),
       isAdmin: user?.role === 'admin',
       cartCount: cart?.itemCount ?? 0,
@@ -276,10 +304,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       syncWishlist,
       toggleFavorite,
       isFavorite,
-      setThemeMode,
       refreshProfile,
     }),
-    [user, token, cart, wishlist, themeMode],
+    [user, token, cart, wishlist, showToast],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

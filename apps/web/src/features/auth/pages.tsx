@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
-import { useI18n } from '../../app/providers/I18nProvider';
 import { api, ApiError } from '../../shared/api/client';
 
 interface RegisterFieldErrors {
@@ -47,7 +46,6 @@ function useCountdown(seconds: number, active: boolean) {
 
 export function LoginPage() {
   const { login } = useSession();
-  const { language } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -98,21 +96,17 @@ export function LoginPage() {
     <section className="auth-shell">
       <div className="ui-shell">
         <div className="auth-card">
-          <div className="detail-chip">{language === 'tr' ? 'Hesap Girişi' : 'Account Login'}</div>
-          <h1>{language === 'tr' ? 'Hesabınıza giriş yapın' : 'Log in to your account'}</h1>
-          <p>
-            {language === 'tr'
-              ? 'Siparişlerinizi takip etmek ve favori ürünlerinizi kaydetmek için giriş yapın.'
-              : 'Sign in to track your orders and save your favorite products.'}
-          </p>
+          <div className="detail-chip">Hesap Girişi</div>
+          <h1>Hesabınıza giriş yapın</h1>
+          <p>Siparişlerinizi takip etmek ve favori ürünlerinizi kaydetmek için giriş yapın.</p>
           <form onSubmit={handleSubmit}>
             <div className="auth-form-grid">
               <div className="full">
-                <InputField label={language === 'tr' ? 'E-posta' : 'Email'} onChange={(event) => setEmail(event.target.value)} value={email} />
+                <InputField label="E-posta" onChange={(event) => setEmail(event.target.value)} value={email} />
               </div>
               <div className="full">
                 <InputField
-                  label={language === 'tr' ? 'Şifre' : 'Password'}
+                  label="Şifre"
                   onChange={(event) => setPassword(event.target.value)}
                   type="password"
                   value={password}
@@ -134,18 +128,14 @@ export function LoginPage() {
                   disabled={countdown > 0}
                   style={{ marginTop: '0.5rem', width: '100%' }}
                 >
-                  {countdown > 0
-                    ? `${language === 'tr' ? 'Tekrar gönder' : 'Resend'} (${countdown}s)`
-                    : language === 'tr'
-                      ? 'Doğrulama e-postasını tekrar gönder'
-                      : 'Resend verification email'}
+                  {countdown > 0 ? `Tekrar gönder (${countdown}s)` : 'Doğrulama e-postasını tekrar gönder'}
                 </Button>
               </div>
             )}
             <div className="auth-actions" style={{ marginTop: '1.25rem' }}>
-              <Button type="submit">{language === 'tr' ? 'Giriş Yap' : 'Log In'}</Button>
+              <Button type="submit">Giriş Yap</Button>
               <Link state={location.state} to="/kayit">
-                <Button variant="secondary">{language === 'tr' ? 'Kayıt Ol' : 'Register'}</Button>
+                <Button variant="secondary">Kayıt Ol</Button>
               </Link>
             </div>
           </form>
@@ -157,7 +147,6 @@ export function LoginPage() {
 
 export function RegisterPage() {
   const { register } = useSession();
-  const { language } = useI18n();
   const location = useLocation();
   const [form, setForm] = useState({
     firstName: '',
@@ -225,17 +214,13 @@ export function RegisterPage() {
       <section className="auth-shell">
         <div className="ui-shell">
           <div className="auth-card">
-            <div className="detail-chip">{language === 'tr' ? 'E-posta Doğrulama' : 'Email Verification'}</div>
-            <h1>{language === 'tr' ? 'Gelen kutunuzu kontrol edin' : 'Check your inbox'}</h1>
+            <div className="detail-chip">E-posta Doğrulama</div>
+            <h1>Gelen kutunuzu kontrol edin</h1>
             <p>
-              {language === 'tr'
-                ? `${registeredEmail} adresine bir doğrulama bağlantısı gönderdik. Hesabınızı aktifleştirmek için e-postadaki bağlantıya tıklayın.`
-                : `We sent a verification link to ${registeredEmail}. Click the link in the email to activate your account.`}
+              {`${registeredEmail} adresine bir doğrulama bağlantısı gönderdik. Hesabınızı aktifleştirmek için e-postadaki bağlantıya tıklayın.`}
             </p>
             <p style={{ fontSize: '0.9rem', color: '#666' }}>
-              {language === 'tr'
-                ? 'E-postayı göremiyor musunuz? Spam klasörünüzü de kontrol etmeyi unutmayın.'
-                : "Can't see the email? Don't forget to check your spam folder."}
+              E-postayı göremiyor musunuz? Spam klasörünüzü de kontrol etmeyi unutmayın.
             </p>
             {resendMessage ? (
               <p className="form-feedback form-feedback--success">{resendMessage}</p>
@@ -249,14 +234,10 @@ export function RegisterPage() {
                 onClick={handleResend}
                 disabled={countdown > 0}
               >
-                {countdown > 0
-                  ? `${language === 'tr' ? 'Tekrar gönder' : 'Resend'} (${countdown}s)`
-                  : language === 'tr'
-                    ? 'Doğrulama e-postasını tekrar gönder'
-                    : 'Resend verification email'}
+                {countdown > 0 ? `Tekrar gönder (${countdown}s)` : 'Doğrulama e-postasını tekrar gönder'}
               </Button>
               <Link state={location.state} to="/giris">
-                <Button variant="secondary">{language === 'tr' ? 'Giriş sayfasına git' : 'Go to login'}</Button>
+                <Button variant="secondary">Giriş sayfasına git</Button>
               </Link>
             </div>
           </div>
@@ -269,31 +250,29 @@ export function RegisterPage() {
     <section className="auth-shell">
       <div className="ui-shell">
         <div className="auth-card">
-          <div className="detail-chip">{language === 'tr' ? 'Kayıt' : 'Register'}</div>
-          <h1>{language === 'tr' ? 'Yeni hesap oluşturun' : 'Create a new account'}</h1>
+          <div className="detail-chip">Kayıt</div>
+          <h1>Yeni hesap oluşturun</h1>
           <p>
-            {language === 'tr'
-              ? 'Alışverişe başlamak, siparişlerinizi takip etmek ve kampanyalardan haberdar olmak için ücretsiz kayıt olun.'
-              : 'Sign up for free to start shopping, track your orders, and stay updated on campaigns.'}
+            Alışverişe başlamak, siparişlerinizi takip etmek ve kampanyalardan haberdar olmak için ücretsiz kayıt olun.
           </p>
           <form onSubmit={handleSubmit}>
             <div className="auth-form-grid">
               <InputField
                 error={fieldErrors.firstName}
-                label={language === 'tr' ? 'Ad' : 'First Name'}
+                label="Ad"
                 onChange={(event) => setForm((value) => ({ ...value, firstName: event.target.value }))}
                 value={form.firstName}
               />
               <InputField
                 error={fieldErrors.lastName}
-                label={language === 'tr' ? 'Soyad' : 'Last Name'}
+                label="Soyad"
                 onChange={(event) => setForm((value) => ({ ...value, lastName: event.target.value }))}
                 value={form.lastName}
               />
               <div className="full">
                 <InputField
                   error={fieldErrors.email}
-                  label={language === 'tr' ? 'E-posta' : 'Email'}
+                  label="E-posta"
                   onChange={(event) => setForm((value) => ({ ...value, email: event.target.value }))}
                   value={form.email}
                 />
@@ -301,8 +280,8 @@ export function RegisterPage() {
               <div className="full">
                 <InputField
                   error={fieldErrors.password}
-                  hint={language === 'tr' ? 'En az 8 karakter olmalı.' : 'Must be at least 8 characters.'}
-                  label={language === 'tr' ? 'Şifre' : 'Password'}
+                  hint="En az 8 karakter olmalı."
+                  label="Şifre"
                   onChange={(event) => setForm((value) => ({ ...value, password: event.target.value }))}
                   type="password"
                   value={form.password}
@@ -311,9 +290,9 @@ export function RegisterPage() {
             </div>
             {error ? <p className="form-feedback form-feedback--error">{error}</p> : null}
             <div className="auth-actions" style={{ marginTop: '1.25rem' }}>
-              <Button type="submit">{language === 'tr' ? 'Hesap Oluştur' : 'Create Account'}</Button>
+              <Button type="submit">Hesap Oluştur</Button>
               <Link state={location.state} to="/giris">
-                <Button variant="secondary">{language === 'tr' ? 'Giriş' : 'Login'}</Button>
+                <Button variant="secondary">Giriş</Button>
               </Link>
             </div>
           </form>
@@ -325,7 +304,6 @@ export function RegisterPage() {
 
 export function VerifyEmailPage() {
   const { applyAuthResponse } = useSession();
-  const { language } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -371,13 +349,20 @@ export function VerifyEmailPage() {
     }
   }
 
+  // Navigate after a brief moment so user sees the success message.
+  useEffect(() => {
+    if (status !== 'success') return;
+    const timer = window.setTimeout(() => navigate('/', { replace: true }), 1500);
+    return () => window.clearTimeout(timer);
+  }, [navigate, status]);
+
   if (status === 'loading') {
     return (
       <section className="auth-shell">
         <div className="ui-shell">
           <div className="auth-card">
-            <h1>{language === 'tr' ? 'E-posta doğrulanıyor…' : 'Verifying your email…'}</h1>
-            <p>{language === 'tr' ? 'Lütfen bekleyin.' : 'Please wait.'}</p>
+            <h1>E-posta doğrulanıyor…</h1>
+            <p>Lütfen bekleyin.</p>
           </div>
         </div>
       </section>
@@ -385,18 +370,12 @@ export function VerifyEmailPage() {
   }
 
   if (status === 'success') {
-    // Navigate after a brief moment so user sees the success message.
-    setTimeout(() => navigate('/', { replace: true }), 1500);
     return (
       <section className="auth-shell">
         <div className="ui-shell">
           <div className="auth-card">
-            <h1>{language === 'tr' ? 'E-postanız doğrulandı!' : 'Email verified!'}</h1>
-            <p>
-              {language === 'tr'
-                ? 'Hesabınız başarıyla aktifleştirildi. Ana sayfaya yönlendiriliyorsunuz.'
-                : 'Your account has been activated. Redirecting to the homepage.'}
-            </p>
+            <h1>E-postanız doğrulandı!</h1>
+            <p>Hesabınız başarıyla aktifleştirildi. Ana sayfaya yönlendiriliyorsunuz.</p>
           </div>
         </div>
       </section>
@@ -408,11 +387,11 @@ export function VerifyEmailPage() {
     <section className="auth-shell">
       <div className="ui-shell">
         <div className="auth-card">
-          <h1>{language === 'tr' ? 'Doğrulama başarısız' : 'Verification failed'}</h1>
+          <h1>Doğrulama başarısız</h1>
           <p className="form-feedback form-feedback--error">{errorMessage}</p>
           <div style={{ marginTop: '1rem' }}>
             <InputField
-              label={language === 'tr' ? 'E-posta adresiniz' : 'Your email address'}
+              label="E-posta adresiniz"
               value={resendEmail}
               onChange={(event) => setResendEmail(event.target.value)}
             />
@@ -428,16 +407,12 @@ export function VerifyEmailPage() {
               disabled={countdown > 0 || !resendEmail}
               style={{ marginTop: '0.5rem', width: '100%' }}
             >
-              {countdown > 0
-                ? `${language === 'tr' ? 'Tekrar gönder' : 'Resend'} (${countdown}s)`
-                : language === 'tr'
-                  ? 'Doğrulama e-postasını tekrar gönder'
-                  : 'Resend verification email'}
+              {countdown > 0 ? `Tekrar gönder (${countdown}s)` : 'Doğrulama e-postasını tekrar gönder'}
             </Button>
           </div>
           <div className="auth-actions" style={{ marginTop: '1.25rem' }}>
             <Link to="/giris">
-              <Button variant="secondary">{language === 'tr' ? 'Giriş sayfasına git' : 'Go to login'}</Button>
+              <Button variant="secondary">Giriş sayfasına git</Button>
             </Link>
           </div>
         </div>

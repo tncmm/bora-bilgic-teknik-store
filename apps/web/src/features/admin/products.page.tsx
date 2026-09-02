@@ -14,13 +14,20 @@ export function AdminProductsPage() {
   const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   async function loadData() {
     if (!token) return;
-    const [nextProducts, nextCategories] = await Promise.all([api.getAdminProducts(token), api.getAdminCategories(token)]);
-    setProducts(nextProducts);
-    setCategories(nextCategories);
+    try {
+      const [nextProducts, nextCategories] = await Promise.all([api.getAdminProducts(token), api.getAdminCategories(token)]);
+      setProducts(nextProducts);
+      setCategories(nextCategories);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+      showToast({ tone: 'error', title: 'Ürünler yüklenemedi', description: (error as Error).message });
+    }
   }
 
   useEffect(() => {
@@ -77,70 +84,79 @@ export function AdminProductsPage() {
         </div>
       </div>
 
-      <div className="admin-card">
-        <div className="admin-toolbar">
-          <input
-            className="ui-input admin-search"
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Ürün adı veya SKU ara..."
-            value={search}
-          />
-          <span className="text-muted">{visibleProducts.length} ürün</span>
-        </div>
-
-        {visibleProducts.length === 0 ? (
-          <EmptyState description="Aradığınız filtreyle eşleşen ürün bulunamadı." title="Ürün bulunamadı" />
-        ) : (
-          <div className="admin-table admin-table--flat">
-            <table>
-              <thead>
-                <tr>
-                  <th>Ürün</th>
-                  <th>Kategori</th>
-                  <th>Fiyat</th>
-                  <th>Stok</th>
-                  <th>Durum</th>
-                  <th style={{ textAlign: 'center' }}>Çok Satan</th>
-                  <th style={{ textAlign: 'right' }}>Aksiyonlar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleProducts.map((product) => (
-                  <tr key={product.id}>
-                    <td>
-                      <strong>{product.name}</strong>
-                      <div className="text-muted">{product.sku}</div>
-                    </td>
-                    <td>{categories.length ? translateCategoryName('tr', product.category.slug, product.category.name) : ''}</td>
-                    <td>{formatCurrency(product.price, 'tr')}</td>
-                    <td>
-                      <span className={product.stock === 0 ? 'order-badge order-badge--payment-failed' : product.stock <= 3 ? 'order-badge order-badge--payment-pending' : 'order-badge order-badge--payment-paid'}>
-                        {product.stock} adet
-                      </span>
-                    </td>
-                    <td>{product.isPurchasable ? 'Satışta' : 'Satışa Kapalı'}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button className="admin-switch-wrap" onClick={() => void toggleBestseller(product)} type="button" aria-pressed={product.isBestseller}>
-                        <span className={product.isBestseller ? 'order-badge order-badge--payment-paid' : 'order-badge'}>{product.isBestseller ? 'Evet' : 'Hayır'}</span>
-                      </button>
-                    </td>
-                    <td>
-                      <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
-                        <Link to={`/admin/urunler/${product.id}`}>
-                          <Button variant="secondary">Düzenle</Button>
-                        </Link>
-                        <Button onClick={() => void toggleSale(product)} variant="ghost">
-                          {product.isPurchasable ? 'Satışı Kapat' : 'Satışı Aç'}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {loadError ? (
+        <div className="admin-card">
+          <EmptyState description={loadError} title="Veriler yüklenemedi" />
+          <div style={{ paddingBottom: '1.5rem', textAlign: 'center' }}>
+            <Button onClick={() => void loadData()}>Tekrar Dene</Button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="admin-card">
+          <div className="admin-toolbar">
+            <input
+              className="ui-input admin-search"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Ürün adı veya SKU ara..."
+              value={search}
+            />
+            <span className="text-muted">{visibleProducts.length} ürün</span>
+          </div>
+
+          {visibleProducts.length === 0 ? (
+            <EmptyState description="Aradığınız filtreyle eşleşen ürün bulunamadı." title="Ürün bulunamadı" />
+          ) : (
+            <div className="admin-table admin-table--flat">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ürün</th>
+                    <th>Kategori</th>
+                    <th>Fiyat</th>
+                    <th>Stok</th>
+                    <th>Durum</th>
+                    <th style={{ textAlign: 'center' }}>Çok Satan</th>
+                    <th style={{ textAlign: 'right' }}>Aksiyonlar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td>
+                        <strong>{product.name}</strong>
+                        <div className="text-muted">{product.sku}</div>
+                      </td>
+                      <td>{categories.length ? translateCategoryName('tr', product.category.slug, product.category.name) : ''}</td>
+                      <td>{formatCurrency(product.price, 'tr')}</td>
+                      <td>
+                        <span className={product.stock === 0 ? 'order-badge order-badge--payment-failed' : product.stock <= 3 ? 'order-badge order-badge--payment-pending' : 'order-badge order-badge--payment-paid'}>
+                          {product.stock} adet
+                        </span>
+                      </td>
+                      <td>{product.isPurchasable ? 'Satışta' : 'Satışa Kapalı'}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button className="admin-switch-wrap" onClick={() => void toggleBestseller(product)} type="button" aria-pressed={product.isBestseller}>
+                          <span className={product.isBestseller ? 'order-badge order-badge--payment-paid' : 'order-badge'}>{product.isBestseller ? 'Evet' : 'Hayır'}</span>
+                        </button>
+                      </td>
+                      <td>
+                        <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
+                          <Link to={`/admin/urunler/${product.id}`}>
+                            <Button variant="secondary">Düzenle</Button>
+                          </Link>
+                          <Button onClick={() => void toggleSale(product)} variant="ghost">
+                            {product.isPurchasable ? 'Satışı Kapat' : 'Satışı Aç'}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

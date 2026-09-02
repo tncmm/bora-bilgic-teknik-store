@@ -28,13 +28,13 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
       await onAdded?.();
       showToast({
         tone: 'success',
-        title: language === 'tr' ? 'Ürün sepete eklendi' : 'Product added to cart',
-        description: language === 'tr' ? `${product.name} sepetinize eklendi.` : `${product.name} was added to your cart.`,
+        title: 'Ürün sepete eklendi',
+        description: `${product.name} sepetinize eklendi.`,
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Sepete eklenemedi' : 'Could not add to cart',
+        title: 'Sepete eklenemedi',
         description: (error as Error).message,
       });
     }
@@ -50,27 +50,16 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
       const action = await toggleFavorite(product.id);
       showToast({
         tone: 'info',
-        title:
-          action === 'added'
-            ? language === 'tr'
-              ? 'Favorilere eklendi'
-              : 'Added to favorites'
-            : language === 'tr'
-              ? 'Favorilerden kaldırıldı'
-              : 'Removed from favorites',
+        title: action === 'added' ? 'Favorilere eklendi' : 'Favorilerden kaldırıldı',
         description:
           action === 'added'
-            ? language === 'tr'
-              ? `${product.name} favorilerinize eklendi.`
-              : `${product.name} was added to your favorites.`
-            : language === 'tr'
-              ? `${product.name} favorilerinizden çıkarıldı.`
-              : `${product.name} was removed from your favorites.`,
+            ? `${product.name} favorilerinize eklendi.`
+            : `${product.name} favorilerinizden çıkarıldı.`,
       });
     } catch (error) {
       showToast({
         tone: 'error',
-        title: language === 'tr' ? 'Favori işlemi tamamlanamadı' : 'Favorite action failed',
+        title: 'Favori işlemi tamamlanamadı',
         description: (error as Error).message,
       });
     }
@@ -95,7 +84,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
 
   return (
     <Card
-      aria-label={language === 'tr' ? `${product.name} detayına git` : `Open ${product.name} details`}
+      aria-label={`${product.name} detayına git`}
       className="product-card product-card--interactive"
       onClick={openDetails}
       onKeyDown={handleCardKeyDown}
@@ -106,7 +95,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
         <img alt={primaryImage?.alt ?? product.name} src={primaryImage?.url} loading="lazy" decoding="async" />
       </div>
       <button
-        aria-label={favoriteActive ? (language === 'tr' ? 'Favorilerden kaldır' : 'Remove from favorites') : language === 'tr' ? 'Favorilere ekle' : 'Add to favorites'}
+        aria-label={favoriteActive ? 'Favorilerden kaldır' : 'Favorilere ekle'}
         className={`product-card__wish ${favoriteActive ? 'product-card__wish--active' : ''}`}
         onClick={(event) => {
           stopCardNavigation(event);
@@ -124,15 +113,11 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
         <p>{product.shortDescription}</p>
         <div className="product-card__footer">
           <div>
-            <strong>{product.isPurchasable ? formatCurrency(product.price, language) : language === 'tr' ? 'Teklif Üzerine' : 'Quote on Request'}</strong>
+            <strong>{product.isPurchasable ? formatCurrency(product.price, language) : 'Teklif Üzerine'}</strong>
             <span>
               {product.isPurchasable
-                ? language === 'tr'
-                  ? `${product.stock} adet stokta`
-                  : `${product.stock} units in stock`
-                : language === 'tr'
-                  ? 'Kurumsal teklif veya ön sipariş için inceleyin'
-                  : 'Review for quote-based or pre-order purchase'}
+                ? `${product.stock} adet stokta`
+                : 'Kurumsal teklif veya ön sipariş için inceleyin'}
             </span>
           </div>
           {product.isPurchasable ? (
@@ -142,7 +127,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
                 void handleAddToCart();
               }}
             >
-              {language === 'tr' ? 'Sepete Ekle' : 'Add to Cart'}
+              Sepete Ekle
             </Button>
           ) : (
             <Link
@@ -150,7 +135,7 @@ export function ProductCard({ product, onAdded }: ProductCardProps) {
               onClick={stopCardNavigation}
               to={`/urun/${product.slug}`}
             >
-              {language === 'tr' ? 'İncele' : 'View Details'}
+              İncele
             </Link>
           )}
         </div>

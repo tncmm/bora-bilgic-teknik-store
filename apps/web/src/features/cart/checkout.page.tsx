@@ -58,6 +58,16 @@ export function CheckoutPage() {
       .catch(() => setManualMode(true));
   }, [token]);
 
+  const accountEmail = user?.email;
+
+  // Seed the account email once so the field stays freely editable (no `||` fallback snapping back).
+  useEffect(() => {
+    if (!accountEmail) return;
+    void Promise.resolve().then(() => {
+      setForm((current) => (current.email ? current : { ...current, email: accountEmail }));
+    });
+  }, [accountEmail]);
+
   const selectedAddress = addresses.find((address) => address.id === selectedAddressId) ?? null;
   const shipping = selectedAddress && !manualMode
     ? {
@@ -91,7 +101,7 @@ export function CheckoutPage() {
         billingAddressLine: form.billingAddressLine ?? '',
       };
 
-  const contactEmail = (form.email || user?.email || '').trim();
+  const contactEmail = (form.email ?? '').trim();
   const formReady = Boolean(
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) &&
       shipping.shippingName.trim() &&
@@ -115,7 +125,16 @@ export function CheckoutPage() {
     try {
       const payload: CheckoutPayload = {
         email: contactEmail,
-        items: isAuthenticated ? undefined : cart.items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+        // Misafir siparisinde satirlar elle gonderilir; paketli satirlarda packageOptionId
+        // de eklenir (taban satirlarda alan hic gonderilmez). Girisli kullanicida sepet
+        // sunucudan okunur, items gerekmez.
+        items: isAuthenticated
+          ? undefined
+          : cart.items.map((item) => ({
+              productId: item.product.id,
+              quantity: item.quantity,
+              ...(item.packageOptionId ? { packageOptionId: item.packageOptionId } : {}),
+            })),
         ...shipping,
         billingSameAsShipping: form.billingSameAsShipping,
         billingType: form.billingType,
@@ -128,6 +147,9 @@ export function CheckoutPage() {
       };
       const session = await api.startPayment(token, payload);
       window.sessionStorage.setItem('bora-pending-merchant-oid', session.merchantOid);
+      if (session.trackingToken) {
+        window.sessionStorage.setItem('bora-pending-tracking-token', session.trackingToken);
+      }
       if (session.trackingUrl) {
         window.sessionStorage.setItem('bora-pending-tracking-url', session.trackingUrl);
       }
@@ -190,7 +212,7 @@ export function CheckoutPage() {
                   <p>Sipariş takip linki ve fatura bilgilendirmesi bu e-posta adresine gönderilir.</p>
                 </div>
               </div>
-              <InputField label="E-posta" onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} placeholder="ornek@mail.com" type="email" value={form.email || user?.email || ''} />
+              <InputField label="E-posta" onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} placeholder="ornek@mail.com" type="email" value={form.email} />
               {isAuthenticated ? <p className="admin-field-hint">Hesap e-postan otomatik dolduruldu; istersen bu sipariş için farklı bir e-posta yazabilirsin.</p> : null}
             </div>
 
@@ -313,7 +335,8 @@ export function CheckoutPage() {
                 {cart.items.map((item) => (
                   <div className="checkout-line" key={item.id}>
                     <span>
-                      {item.product.name} × {item.quantity}
+                      {item.product.name}
+                      {item.packageLabel ? ` · ${item.packageLabel}` : ''} × {item.quantity}
                     </span>
                     <strong>{formatCurrency(item.lineTotal, 'tr')}</strong>
                   </div>

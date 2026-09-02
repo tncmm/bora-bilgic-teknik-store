@@ -395,7 +395,7 @@ export class AdminService {
 
   async listOrders() {
     const orders = await this.repository.listOrders();
-    return orders.map((order) => {
+    const serializedOrders = orders.map((order) => {
       const serialized = serializeOrder(order);
       let identityNumber: string | null = null;
 
@@ -415,6 +415,66 @@ export class AdminService {
         email: order.user?.email ?? order.customerEmail,
       };
     });
+
+    // Odemesi alinip siparise donemeyen denemeler listeye eklenir; gercek
+    // siparis olmadiklarindan inceleme sirasinda en onde gosterilir.
+    const attempts = await this.repository.listAttemptsWithoutOrder();
+    const reviewRows = attempts.map((attempt) => {
+      let identityNumber: string | null = null;
+
+      try {
+        identityNumber = decryptBillingIdentity(attempt.identityNumberEncrypted);
+      } catch (error) {
+        console.error('[ADMIN] Billing identity decrypt failed', { merchantOid: attempt.merchantOid, error });
+      }
+
+      const serialized = serializeOrder({
+        id: attempt.id,
+        orderNumber: attempt.merchantOid,
+        status: 'PENDING',
+        paymentStatus: 'PAID',
+        createdAt: attempt.paidWithoutOrderAt ?? attempt.createdAt,
+        paidAt: attempt.paidWithoutOrderAt,
+        total: attempt.total,
+        customerEmail: attempt.customerEmail,
+        refundedAmount: 0,
+        shippingName: attempt.shippingName,
+        shippingPhone: attempt.shippingPhone,
+        shippingCity: attempt.shippingCity,
+        shippingDistrict: attempt.shippingDistrict,
+        shippingAddressLine: attempt.shippingAddressLine,
+        billingType: attempt.billingType,
+        billingName: attempt.billingName,
+        billingPhone: attempt.billingPhone,
+        billingCity: attempt.billingCity,
+        billingDistrict: attempt.billingDistrict,
+        billingAddressLine: attempt.billingAddressLine,
+        companyName: attempt.companyName,
+        taxOffice: attempt.taxOffice,
+        taxNumber: attempt.taxNumber,
+        identityNumberLast4: attempt.identityNumberLast4,
+        notes: attempt.notes,
+        items: (attempt.items as Array<{ productName: string; quantity: number; unitPrice: number; lineTotal: number }>).map((item, index) => ({
+          id: `${attempt.id}:${index}`,
+          ...item,
+        })),
+        refunds: [],
+      });
+
+      return {
+        ...serialized,
+        billing: {
+          ...serialized.billing,
+          identityNumber,
+        },
+        customer: attempt.shippingName,
+        email: attempt.customerEmail,
+        paidWithoutOrderAt: attempt.paidWithoutOrderAt ? attempt.paidWithoutOrderAt.toISOString() : null,
+        reviewNote: attempt.reviewNote,
+      };
+    });
+
+    return [...reviewRows, ...serializedOrders];
   }
 
   async updateOrderStatus(id: string, payload: unknown) {

@@ -21,6 +21,7 @@ export function AdminCampaignsPage() {
   const { token } = useSession();
   const { showToast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [draft, setDraft] = useState<CampaignDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,8 +50,14 @@ export function AdminCampaignsPage() {
 
   async function loadCampaigns() {
     if (!token) return;
-    const items = await api.listAdminCampaigns(token).catch(() => [] as Campaign[]);
-    setCampaigns(items);
+    try {
+      const items = await api.listAdminCampaigns(token);
+      setCampaigns(items);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+      showToast({ tone: 'error', title: 'Kampanyalar yüklenemedi', description: (error as Error).message });
+    }
   }
 
   useEffect(() => {
@@ -170,7 +177,14 @@ export function AdminCampaignsPage() {
         <div className="admin-card__head">
           <h2>Kampanya Listesi</h2>
         </div>
-        {campaigns.length === 0 ? (
+        {loadError ? (
+          <>
+            <EmptyState description={loadError} title="Veriler yüklenemedi" />
+            <div style={{ paddingBottom: '1.5rem', textAlign: 'center' }}>
+              <Button onClick={() => void loadCampaigns()}>Tekrar Dene</Button>
+            </div>
+          </>
+        ) : campaigns.length === 0 ? (
           <EmptyState description="Henüz kampanya eklenmemiş." title="Kampanya yok" />
         ) : (
           <div className="admin-table admin-table--flat">

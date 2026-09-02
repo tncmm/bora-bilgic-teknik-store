@@ -63,13 +63,3 @@ export function translatePaymentStatus(language: Language, status?: string) {
 
   return dictionary[normalized]?.[language] ?? status;
 }
-
-export function translateThemeMode(language: Language, mode: 'light' | 'dark' | 'system') {
-  const dictionary = {
-    light: { tr: 'Açık', en: 'Light' },
-    dark: { tr: 'Koyu', en: 'Dark' },
-    system: { tr: 'Sistem', en: 'System' },
-  } as const;
-
-  return dictionary[mode][language];
-}

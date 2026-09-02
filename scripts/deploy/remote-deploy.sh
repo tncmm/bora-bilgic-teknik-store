@@ -21,6 +21,12 @@ npm ci
 npm run prisma:generate
 npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
 
+# CI bundles packages/types/dist, but rebuild if it is missing so the API can
+# resolve @bora/types at runtime (packages/ui resolves from src, no dist needed).
+if [[ ! -f packages/types/dist/index.js ]]; then
+  npm run build:types
+fi
+
 ln -sfn "$RELEASE_PATH" "$DEPLOY_PATH/current"
 sudo -n systemctl restart "$SERVICE_NAME"
 

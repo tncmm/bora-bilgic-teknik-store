@@ -9,8 +9,8 @@ interface I18nContextValue {
 
 /**
  * The storefront is Turkish-only by product decision. The context still hands
- * out `language`/`locale` so call sites (`language === 'tr'` fallbacks, date
- * and currency formatting) keep working unchanged.
+ * out `language`/`locale` for date/currency formatting and translation helpers,
+ * and sets `<html lang>` for accessibility.
  */
 const SITE_LANGUAGE: Language = 'tr';
 

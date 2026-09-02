@@ -9,6 +9,7 @@ export function AdminBrandsPage() {
   const { token } = useSession();
   const { showToast } = useToast();
   const [brands, setBrands] = useState<AdminBrand[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [brandName, setBrandName] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -16,8 +17,14 @@ export function AdminBrandsPage() {
 
   async function loadBrands() {
     if (!token) return;
-    const items = await api.getAdminBrands(token).catch(() => [] as AdminBrand[]);
-    setBrands(items);
+    try {
+      const items = await api.getAdminBrands(token);
+      setBrands(items);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+      showToast({ tone: 'error', title: 'Markalar yüklenemedi', description: (error as Error).message });
+    }
   }
 
   useEffect(() => {
@@ -117,7 +124,14 @@ export function AdminBrandsPage() {
           <h2>Mevcut Markalar</h2>
           <p>Yeniden adlandırma o markayı taşıyan tüm ürünleri günceller. Ürünü olmayan markalar silinebilir.</p>
         </div>
-        {brands.length === 0 ? (
+        {loadError ? (
+          <>
+            <EmptyState description={loadError} title="Veriler yüklenemedi" />
+            <div style={{ paddingBottom: '1.5rem', textAlign: 'center' }}>
+              <Button onClick={() => void loadBrands()}>Tekrar Dene</Button>
+            </div>
+          </>
+        ) : brands.length === 0 ? (
           <EmptyState description="Henüz ürün eklenmemiş." title="Marka yok" />
         ) : (
           <div className="admin-table admin-table--flat">

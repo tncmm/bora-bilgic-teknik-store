@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { OrderStatus, PrismaClient, Role } from '@prisma/client';
 
+import { encryptBillingIdentity } from '../src/lib/crypto.js';
+
 const prisma = new PrismaClient();
 
 function gallery(images: Array<{ url: string; alt: string }>) {
@@ -1201,6 +1203,15 @@ async function seedOrders() {
     },
   });
 
+  // Admin order list decrypts identityNumberEncrypted on every fetch. With a
+  // billing key we seed valid AES-GCM ciphertext for a dummy TC kimlik so that
+  // decrypt succeeds; without the key there is nothing to encrypt with, so the
+  // 'seed-demo-unavailable' placeholder is kept (admin decrypt logs an error).
+  const billingKeyAvailable = Boolean(process.env.BILLING_ENCRYPTION_KEY?.trim());
+  const identityNumberEncrypted = billingKeyAvailable
+    ? encryptBillingIdentity('11111111111')
+    : 'seed-demo-unavailable';
+
   for (const scenario of orderScenarios) {
     const items = scenario.items.map((item: { slug: string; quantity: number }) => {
       const product = productBySlug.get(item.slug);
@@ -1247,8 +1258,8 @@ async function seedOrders() {
         billingCity: scenario.shippingCity,
         billingDistrict: scenario.shippingDistrict,
         billingAddressLine: scenario.shippingAddressLine,
-        identityNumberEncrypted: 'seed-demo-unavailable',
-        identityNumberLast4: '0000',
+        identityNumberEncrypted,
+        identityNumberLast4: billingKeyAvailable ? '1111' : '0000',
         notes: scenario.notes,
         userId: userByEmail.get(scenario.email)!,
         createdAt: scenario.createdAt,

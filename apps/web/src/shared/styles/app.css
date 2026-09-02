@@ -2892,6 +2892,19 @@
   color: var(--primary, #ff6a1a);
 }
 
+/* Sepetteki paketli satirlarin etiketi (orn. "Fly More Combo"). */
+.basket-item__package {
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--primary, #ff6a1a) 40%, transparent);
+  border-radius: 999px;
+  color: var(--primary, #ff6a1a);
+  font-size: 0.72rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
 .basket-item__remove {
   flex: none;
   width: 26px;

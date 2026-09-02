@@ -9,6 +9,8 @@ const orderInclude = { items: true, refunds: { include: { items: true }, orderBy
 export interface AttemptItem {
   productId: string;
   productName: string;
+  /** Siparis aninda secilen paketin adi; null = taban urun. */
+  packageLabel?: string | null;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -113,10 +115,15 @@ export class PaymentsRepository {
     });
   }
 
-  /** Abandoned attempts older than the payment window are expired and refunded. */
-  async expireStaleAttempts(userId: string, cutoff: Date) {
+  /**
+   * Abandoned attempts older than the payment window are expired and their
+   * reserved stock handed back. Guest attempts (userId null) are included, so
+   * an abandoned guest checkout can never lock stock forever; the query rides
+   * the [status, createdAt] index.
+   */
+  async expireStaleAttempts(cutoff: Date) {
     const stale = await prisma.paymentAttempt.findMany({
-      where: { userId, status: 'PENDING', createdAt: { lt: cutoff } },
+      where: { status: 'PENDING', createdAt: { lt: cutoff } },
       select: { merchantOid: true },
     });
 
@@ -201,6 +208,19 @@ export class PaymentsRepository {
   }
 
   /**
+   * Flags an attempt whose payment succeeded even though the attempt had
+   * already been closed (superseded or expired, stock handed back). The
+   * status is left untouched; an operator must create the order or refund
+   * the money manually from the PayTR panel.
+   */
+  markPaidWithoutOrder(merchantOid: string, reviewNote: string) {
+    return prisma.paymentAttempt.update({
+      where: { merchantOid },
+      data: { paidWithoutOrderAt: new Date(), reviewNote },
+    });
+  }
+
+  /**
    * The only path that turns an attempt into an order: PayTR confirmed the
    * payment, so the order is born PAID, the attempt is marked COMPLETED and
    * the cart is emptied — a single transaction, idempotent via the PENDING
@@ -259,6 +279,7 @@ export class PaymentsRepository {
             create: items.map((item) => ({
               productId: item.productId,
               productName: item.productName,
+              packageLabel: item.packageLabel ?? null,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               lineTotal: item.lineTotal,

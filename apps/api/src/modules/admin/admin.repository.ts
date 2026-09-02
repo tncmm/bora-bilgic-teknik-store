@@ -144,6 +144,18 @@ export class AdminRepository {
     });
   }
 
+  /**
+   * Odemesi alindigi halde siparise donemeyen odeme denemeleri. Operator bu
+   * satirlari inceleyip PayTR panelinden iade yapmali veya siparisi elle
+   * olusturmalidir.
+   */
+  listAttemptsWithoutOrder() {
+    return prisma.paymentAttempt.findMany({
+      where: { paidWithoutOrderAt: { not: null } },
+      orderBy: { paidWithoutOrderAt: 'desc' },
+    });
+  }
+
   getOrder(id: string) {
     return prisma.order.findUnique({
       where: { id },
