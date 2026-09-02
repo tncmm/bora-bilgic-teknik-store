@@ -3,24 +3,20 @@ import { useEffect, useState } from 'react';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
-import { api } from '../../shared/api/client';
-
-interface BrandSummary {
-  brand: string;
-  productCount: number;
-}
+import { api, type AdminBrand } from '../../shared/api/client';
 
 export function AdminBrandsPage() {
   const { token } = useSession();
   const { showToast } = useToast();
-  const [brands, setBrands] = useState<BrandSummary[]>([]);
+  const [brands, setBrands] = useState<AdminBrand[]>([]);
+  const [brandName, setBrandName] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function loadBrands() {
     if (!token) return;
-    const items = await api.getAdminBrands(token).catch(() => [] as BrandSummary[]);
+    const items = await api.getAdminBrands(token).catch(() => [] as AdminBrand[]);
     setBrands(items);
   }
 
@@ -28,6 +24,22 @@ export function AdminBrandsPage() {
     void Promise.resolve().then(() => loadBrands());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  async function handleCreate() {
+    if (!token || busy || !brandName.trim()) return;
+
+    setBusy(true);
+    try {
+      await api.createAdminBrand(token, { name: brandName.trim() });
+      setBrandName('');
+      await loadBrands();
+      showToast({ tone: 'success', title: 'Marka eklendi', description: `${brandName.trim()} artık ürün formunda seçilebilir.` });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'Marka eklenemedi', description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleRename(from: string) {
     if (!token || busy || !newName.trim()) return;
@@ -41,6 +53,24 @@ export function AdminBrandsPage() {
       showToast({ tone: 'success', title: 'Marka güncellendi', description: `${from} -> ${newName.trim()}` });
     } catch (error) {
       showToast({ tone: 'error', title: 'Marka güncellenemedi', description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(name: string) {
+    if (!token || busy) return;
+
+    const confirmed = window.confirm(`${name} markası silinsin mi? Bu işlem yalnızca ürünü olmayan markalarda yapılabilir.`);
+    if (!confirmed) return;
+
+    setBusy(true);
+    try {
+      await api.deleteAdminBrand(token, name);
+      await loadBrands();
+      showToast({ tone: 'success', title: 'Marka silindi', description: name });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'Marka silinemedi', description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -60,8 +90,32 @@ export function AdminBrandsPage() {
 
       <div className="admin-card">
         <div className="admin-card__head">
+          <h2>Yeni Marka</h2>
+          <p>Buradan eklediğiniz marka, ürün formundaki marka önerileri içinde görünür.</p>
+        </div>
+        <div className="admin-inline-form">
+          <input
+            className="ui-input"
+            onChange={(event) => setBrandName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                void handleCreate();
+              }
+            }}
+            placeholder="Örn. DJI, GoPro, Insta360"
+            value={brandName}
+          />
+          <Button disabled={busy || !brandName.trim()} onClick={() => void handleCreate()}>
+            Marka Ekle
+          </Button>
+        </div>
+      </div>
+
+      <div className="admin-card">
+        <div className="admin-card__head">
           <h2>Mevcut Markalar</h2>
-          <p>Yeni marka eklemek için yeni ürün formunda Marka alanına istediğiniz adı yazmanız yeterlidir.</p>
+          <p>Yeniden adlandırma o markayı taşıyan tüm ürünleri günceller. Ürünü olmayan markalar silinebilir.</p>
         </div>
         {brands.length === 0 ? (
           <EmptyState description="Henüz ürün eklenmemiş." title="Marka yok" />
@@ -99,6 +153,11 @@ export function AdminBrandsPage() {
                           <Button onClick={() => { setRenamingId(item.brand); setNewName(item.brand); }} variant="secondary">
                             Yeniden Adlandır
                           </Button>
+                          {item.productCount === 0 ? (
+                            <Button disabled={busy} onClick={() => void handleDelete(item.brand)} variant="ghost">
+                              Sil
+                            </Button>
+                          ) : null}
                         </td>
                       </>
                     )}

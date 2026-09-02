@@ -13,6 +13,9 @@ export class AdminRepository {
       prisma.order.count({ where: { status: OrderStatus.PENDING, paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] } } }),
       prisma.product.aggregate({ _sum: { stock: true } }),
       prisma.product.count({ where: { stock: { lte: 3 } } }),
+      prisma.order.count(),
+      prisma.order.count({ where: { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } } }),
+      prisma.refund.count({ where: { status: 'PENDING' } }),
     ]);
   }
 
@@ -65,18 +68,45 @@ export class AdminRepository {
   }
 
   listBrandSummaries() {
-    return prisma.product.groupBy({
-      by: ['brand'],
-      _count: { _all: true },
-      orderBy: { _count: { brand: 'desc' } },
-    });
+    return Promise.all([
+      prisma.brand.findMany({ orderBy: { name: 'asc' } }),
+      prisma.product.groupBy({
+        by: ['brand'],
+        _count: { _all: true },
+        orderBy: { _count: { brand: 'desc' } },
+      }),
+    ]);
+  }
+
+  findBrandByName(name: string) {
+    return prisma.brand.findUnique({ where: { name } });
+  }
+
+  createBrand(name: string) {
+    return prisma.brand.create({ data: { name } });
   }
 
   renameBrand(from: string, to: string) {
-    return prisma.product.updateMany({
-      where: { brand: from },
-      data: { brand: to },
+    return prisma.$transaction(async (tx) => {
+      await tx.brand.upsert({
+        where: { name: to },
+        create: { name: to },
+        update: {},
+      });
+      await tx.brand.deleteMany({ where: { name: from } });
+      return tx.product.updateMany({
+        where: { brand: from },
+        data: { brand: to },
+      });
     });
+  }
+
+  countBrandProducts(name: string) {
+    return prisma.product.count({ where: { brand: name } });
+  }
+
+  deleteBrand(name: string) {
+    return prisma.brand.delete({ where: { name } });
   }
 
   createProduct(data: any) {

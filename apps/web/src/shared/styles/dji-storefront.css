@@ -1086,6 +1086,10 @@ body {
   text-align: center;
 }
 
+.dji-detail-tabpanel--copy-only h2 {
+  text-align: center;
+}
+
 .dji-detail-tabpanel h2 {
   margin: 0 0 1rem;
   color: #fff;
@@ -1108,6 +1112,12 @@ body {
 
 .dji-detail-tabpanel--copy-only .dji-detail-description {
   text-align: center;
+}
+
+.dji-detail-tabpanel--copy-only .dji-detail-description > * {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center !important;
 }
 
 .dji-detail-description > *:first-child {

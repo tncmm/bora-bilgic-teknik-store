@@ -17,7 +17,7 @@ export function AdminChrome() {
           <NavLink to="/admin/kampanyalar">Kampanyalar</NavLink>
           <NavLink to="/admin/hero-gorselleri">Ana Görseller</NavLink>
           <NavLink to="/admin/kategoriler">Kategoriler</NavLink>
-          <NavLink to="/admin/markalar">Markalar</NavLink>
+          <NavLink to="/admin/markalar">Markalar / Ekle</NavLink>
           <NavLink to="/admin/siparisler">{language === 'tr' ? 'Siparişler' : 'Orders'}</NavLink>
           <NavLink to="/admin/kullanicilar">{language === 'tr' ? 'Kullanıcılar' : 'Users'}</NavLink>
           <NavLink to="/">{language === 'tr' ? 'Mağazayı Gör' : 'View Store'}</NavLink>

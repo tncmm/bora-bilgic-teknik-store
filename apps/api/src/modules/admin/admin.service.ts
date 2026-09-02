@@ -2,6 +2,7 @@ import { OrderStatus } from '@prisma/client';
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
+import { decryptBillingIdentity } from '../../lib/crypto.js';
 import { sendMail } from '../../lib/mail/transport.js';
 import { invoiceReadyEmail } from '../../lib/mail/templates.js';
 import { isRetryablePaytrRefundError, requestRefund } from '../../lib/paytr.js';
@@ -181,6 +182,10 @@ const renameBrandSchema = z.object({
   to: z.string().trim().min(2),
 });
 
+const brandSchema = z.object({
+  name: z.string().trim().min(2),
+});
+
 const orderStatusSchema = z.object({
   status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED']),
 });
@@ -189,13 +194,16 @@ export class AdminService {
   constructor(private readonly repository = new AdminRepository()) {}
 
   async getDashboardMetrics() {
-    const [salesAgg, pendingCount, stockAgg, lowStockCount] = await this.repository.countDashboardMetrics();
+    const [salesAgg, pendingCount, stockAgg, lowStockCount, totalOrders, paidOrders, pendingRefundRequests] = await this.repository.countDashboardMetrics();
 
     return serializeDashboardMetrics({
       totalSales: Number(salesAgg._sum.total ?? 0),
       newOrders: pendingCount,
       activeInventory: stockAgg._sum.stock ?? 0,
       lowStockCount,
+      totalOrders,
+      paidOrders,
+      pendingRefundRequests,
     });
   }
 
@@ -244,14 +252,46 @@ export class AdminService {
   }
 
   async listBrands() {
-    const groups = await this.repository.listBrandSummaries();
-    return groups.map((group) => ({ brand: group.brand, productCount: group._count._all }));
+    const [brands, groups] = await this.repository.listBrandSummaries();
+    const summaries = new Map<string, { brand: string; productCount: number }>();
+
+    for (const brand of brands) {
+      summaries.set(brand.name, { brand: brand.name, productCount: 0 });
+    }
+
+    for (const group of groups) {
+      summaries.set(group.brand, { brand: group.brand, productCount: group._count._all });
+    }
+
+    return [...summaries.values()].sort((a, b) => a.brand.localeCompare(b.brand, 'tr'));
+  }
+
+  async createBrand(payload: unknown) {
+    const data = brandSchema.parse(payload);
+    const existing = await this.repository.findBrandByName(data.name);
+
+    if (existing) {
+      throw new AppError('Bu marka zaten ekli.', 409);
+    }
+
+    const brand = await this.repository.createBrand(data.name);
+    return { brand: brand.name, productCount: 0 };
   }
 
   async renameBrand(payload: unknown) {
     const data = renameBrandSchema.parse(payload);
     const result = await this.repository.renameBrand(data.from, data.to);
     return { updated: result.count };
+  }
+
+  async deleteBrand(name: string) {
+    const productCount = await this.repository.countBrandProducts(name);
+
+    if (productCount > 0) {
+      throw new AppError('Bu markaya bagli urunler var; once urunleri baska markaya tasiyin.', 409);
+    }
+
+    await this.repository.deleteBrand(name);
   }
 
   async createProduct(payload: unknown) {
@@ -354,11 +394,26 @@ export class AdminService {
 
   async listOrders() {
     const orders = await this.repository.listOrders();
-    return orders.map((order) => ({
-      ...serializeOrder(order),
-      customer: order.user ? `${order.user.firstName} ${order.user.lastName}` : order.shippingName,
-      email: order.user?.email ?? order.customerEmail,
-    }));
+    return orders.map((order) => {
+      const serialized = serializeOrder(order);
+      let identityNumber: string | null = null;
+
+      try {
+        identityNumber = decryptBillingIdentity(order.identityNumberEncrypted);
+      } catch (error) {
+        console.error('[ADMIN] Billing identity decrypt failed', { orderId: order.id, error });
+      }
+
+      return {
+        ...serialized,
+        billing: {
+          ...serialized.billing,
+          identityNumber,
+        },
+        customer: order.user ? `${order.user.firstName} ${order.user.lastName}` : order.shippingName,
+        email: order.user?.email ?? order.customerEmail,
+      };
+    });
   }
 
   async updateOrderStatus(id: string, payload: unknown) {

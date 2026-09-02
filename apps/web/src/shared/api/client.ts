@@ -31,6 +31,11 @@ interface AdminMediaUploadResponse {
 
 export type AdminCategory = Category & { _count?: { products: number } };
 
+export interface AdminBrand {
+  brand: string;
+  productCount: number;
+}
+
 export interface CheckoutPayload {
   email?: string;
   items?: Array<{ productId: string; quantity: number }>;
@@ -288,13 +293,22 @@ export const api = {
     return request<void>(`/admin/categories/${categoryId}`, { method: 'DELETE' }, token);
   },
   getAdminBrands(token: string) {
-    return request<Array<{ brand: string; productCount: number }>>('/admin/brands', {}, token);
+    return request<AdminBrand[]>('/admin/brands', {}, token);
+  },
+  createAdminBrand(token: string, payload: { name: string }) {
+    return request<AdminBrand>('/admin/brands', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
   },
   renameAdminBrand(token: string, payload: { from: string; to: string }) {
     return request<{ updated: number }>('/admin/brands/rename', {
       method: 'POST',
       body: JSON.stringify(payload),
     }, token);
+  },
+  deleteAdminBrand(token: string, name: string) {
+    return request<void>(`/admin/brands/${encodeURIComponent(name)}`, { method: 'DELETE' }, token);
   },
   uploadAdminMedia(token: string, payload: { kind: AdminUploadKind; fileName: string; mimeType: string; base64: string }) {
     return request<AdminMediaUploadResponse>('/admin/media/upload', {

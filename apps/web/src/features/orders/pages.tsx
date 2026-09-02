@@ -64,7 +64,6 @@ function RefundRequestModal({
   const selectedItems = order.items
     .map((item) => ({ item, quantity: Math.min(quantities[item.id] ?? 0, item.refundableQuantity) }))
     .filter((entry) => entry.quantity > 0);
-  const refundTotal = selectedItems.reduce((total, entry) => total + entry.item.unitPrice * entry.quantity, 0);
   const canSubmit = selectedItems.length > 0 && reason.length >= 3 && note.trim().length >= 10 && !submitting;
 
   async function handleSubmit() {
@@ -147,11 +146,6 @@ function RefundRequestModal({
           <small>En az 10 karakter girmeniz gerekir.</small>
         </label>
 
-        <div className="refund-modal-summary">
-          <span>Talep tutarı</span>
-          <strong>{formatCurrency(refundTotal, 'tr')}</strong>
-        </div>
-
         <div className="admin-modal-actions">
           <button className="admin-table-action" disabled={submitting} onClick={onClose} type="button">
             Vazgeç
@@ -182,6 +176,7 @@ function OrderDetailView({
   const itemCount = order.items.reduce((total, item) => total + item.quantity, 0);
   const pendingRefunds = order.refunds?.filter((refund) => refund.status === 'pending') ?? [];
   const completedRefunds = order.refunds?.filter((refund) => refund.status === 'completed') ?? [];
+  const hasRefundActivity = pendingRefunds.length > 0 || completedRefunds.length > 0 || order.refundedAmount > 0;
 
   async function handleRefundSubmit(payload: RefundRequestPayload) {
     const updatedOrder = await onCreateRefundRequest(payload);
@@ -217,10 +212,12 @@ function OrderDetailView({
             <span>Ürün</span>
             <strong>{itemCount} adet</strong>
           </div>
-          <div>
-            <span>İade</span>
-            <strong>{formatCurrency(order.refundedAmount, language)}</strong>
-          </div>
+          {hasRefundActivity ? (
+            <div>
+              <span>İade</span>
+              <strong>{formatCurrency(order.refundedAmount, language)}</strong>
+            </div>
+          ) : null}
         </div>
 
         <div className="order-progress order-progress--compact">
@@ -260,7 +257,7 @@ function OrderDetailView({
               </div>
             </div>
 
-            {(pendingRefunds.length > 0 || completedRefunds.length > 0) && (
+            {hasRefundActivity && (
               <div className="profile-card">
                 <div className="order-section-head">
                   <div>

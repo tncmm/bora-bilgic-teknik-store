@@ -40,9 +40,19 @@ export class AdminController {
     res.json(brands);
   };
 
+  createBrand = async (req: Request, res: Response) => {
+    const brand = await this.service.createBrand(req.body);
+    res.status(201).json(brand);
+  };
+
   renameBrand = async (req: Request, res: Response) => {
     const result = await this.service.renameBrand(req.body);
     res.json(result);
+  };
+
+  deleteBrand = async (req: Request, res: Response) => {
+    await this.service.deleteBrand(String(req.params.name));
+    res.status(204).send();
   };
 
   createProduct = async (req: Request, res: Response) => {

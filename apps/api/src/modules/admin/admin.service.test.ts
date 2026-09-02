@@ -193,6 +193,9 @@ describe('AdminService', () => {
 
   it('renames a brand across all of its products', async () => {
     const repository = {
+      listBrandSummaries: vi.fn(),
+      findBrandByName: vi.fn(),
+      createBrand: vi.fn(),
       renameBrand: vi.fn().mockResolvedValue({ count: 4 }),
     };
     const service = new AdminService(repository as any);
@@ -201,5 +204,29 @@ describe('AdminService', () => {
 
     expect(result.updated).toBe(4);
     expect(repository.renameBrand).toHaveBeenCalledWith('GoPro', 'DJI');
+  });
+
+  it('creates an empty brand for product form suggestions', async () => {
+    const repository = {
+      findBrandByName: vi.fn().mockResolvedValue(null),
+      createBrand: vi.fn().mockResolvedValue({ name: 'Insta360' }),
+    };
+    const service = new AdminService(repository as any);
+
+    const result = await service.createBrand({ name: 'Insta360' });
+
+    expect(repository.createBrand).toHaveBeenCalledWith('Insta360');
+    expect(result).toEqual({ brand: 'Insta360', productCount: 0 });
+  });
+
+  it('does not delete a brand that still has products', async () => {
+    const repository = {
+      countBrandProducts: vi.fn().mockResolvedValue(2),
+      deleteBrand: vi.fn(),
+    };
+    const service = new AdminService(repository as any);
+
+    await expect(service.deleteBrand('DJI')).rejects.toMatchObject({ statusCode: 409 });
+    expect(repository.deleteBrand).not.toHaveBeenCalled();
   });
 });

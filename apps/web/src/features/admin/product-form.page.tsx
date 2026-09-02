@@ -13,7 +13,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
-import { api, ApiError } from '../../shared/api/client';
+import { api, ApiError, type AdminBrand } from '../../shared/api/client';
 import { RichTextEditor } from '../../shared/components/RichTextEditor';
 import { normalizeRichTextHtml } from '../../shared/lib/richText';
 
@@ -109,6 +109,7 @@ export function AdminProductFormPage() {
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<AdminBrand[]>([]);
   const [loading, setLoading] = useState(Boolean(productId));
   const [form, setForm] = useState(emptyForm(''));
   const [slugTouched, setSlugTouched] = useState(false);
@@ -121,8 +122,12 @@ export function AdminProductFormPage() {
     if (!token) return;
 
     void (async () => {
-      const nextCategories = await api.getAdminCategories(token).catch(() => [] as Category[]);
+      const [nextCategories, nextBrands] = await Promise.all([
+        api.getAdminCategories(token).catch(() => [] as Category[]),
+        api.getAdminBrands(token).catch(() => [] as AdminBrand[]),
+      ]);
       setCategories(nextCategories);
+      setBrands(nextBrands);
 
       if (!productId) {
         setForm((value) => ({ ...value, categoryId: value.categoryId || nextCategories[0]?.id || '' }));
@@ -390,7 +395,18 @@ export function AdminProductFormPage() {
                 <p className="admin-field-hint">/urun/{form.slug || '...'} adresinde görünür; ada göre otomatik üretilir.</p>
               </div>
               <div>
-                <InputField label="Marka" onChange={(event) => setForm((value) => ({ ...value, brand: event.target.value }))} value={form.brand} />
+                <InputField
+                  label="Marka"
+                  list="admin-brand-options"
+                  onChange={(event) => setForm((value) => ({ ...value, brand: event.target.value }))}
+                  value={form.brand}
+                />
+                <datalist id="admin-brand-options">
+                  {brands.map((brand) => (
+                    <option key={brand.brand} value={brand.brand} />
+                  ))}
+                </datalist>
+                <p className="admin-field-hint">Markalar sayfasında eklediğiniz değerler burada öneri olarak görünür.</p>
               </div>
               <div>
                 <SelectField label="Kategori" onChange={(event) => setForm((value) => ({ ...value, categoryId: event.target.value }))} value={form.categoryId}>

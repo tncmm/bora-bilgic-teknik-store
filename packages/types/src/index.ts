@@ -206,6 +206,7 @@ export interface OrderBillingSummary {
   taxOffice?: string | null;
   taxNumber?: string | null;
   identityNumberLast4: string;
+  identityNumber?: string | null;
 }
 
 export interface Refund {
@@ -288,6 +289,9 @@ export interface DashboardMetrics {
   activeInventory: number;
   newOrders: number;
   lowStockCount: number;
+  totalOrders: number;
+  paidOrders: number;
+  pendingRefundRequests: number;
 }
 
 export interface AuthResponse {

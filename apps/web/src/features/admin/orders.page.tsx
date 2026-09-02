@@ -1,6 +1,6 @@
 import { EmptyState, InputField } from '@bora/ui';
 import { PRODUCT_MEDIA_LIMITS, type Order, type Refund } from '@bora/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -34,6 +34,7 @@ export function AdminOrdersPage() {
   const { token } = useSession();
   const { showToast } = useToast();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [detailOrder, setDetailOrder] = useState<AdminOrder | null>(null);
   const [refundOrder, setRefundOrder] = useState<AdminOrder | null>(null);
   const [refundRequest, setRefundRequest] = useState<Refund | null>(null);
   const [refundAmount, setRefundAmount] = useState('');
@@ -42,6 +43,8 @@ export function AdminOrdersPage() {
   const [refundQuantities, setRefundQuantities] = useState<Record<string, number>>({});
   const [refunding, setRefunding] = useState(false);
   const [invoiceUploadingOrderId, setInvoiceUploadingOrderId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('all');
   const refundAmountNumber = Number(refundAmount);
   const selectedRefundItems = refundOrder
     ? refundOrder.items
@@ -52,6 +55,20 @@ export function AdminOrdersPage() {
   const effectiveRefundAmount = refundRequest || selectedRefundItems.length === 0 ? refundAmountNumber : selectedRefundTotal;
   const pendingRefundRequests = refundOrder?.refunds?.filter((refund) => refund.status === 'pending') ?? [];
   const canRestockRefund = Boolean(refundRequest?.items?.length || selectedRefundItems.length || (refundOrder && effectiveRefundAmount === refundOrder.refundableAmount));
+  const visibleOrders = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return orders.filter((order) => {
+      const matchesSearch =
+        !keyword ||
+        order.orderNumber.toLowerCase().includes(keyword) ||
+        order.customer.toLowerCase().includes(keyword) ||
+        order.email.toLowerCase().includes(keyword);
+      const matchesPayment = paymentFilter === 'all' || order.paymentStatus === paymentFilter;
+      return matchesSearch && matchesPayment;
+    });
+  }, [orders, paymentFilter, search]);
+  const totalSales = visibleOrders.reduce((total, order) => total + order.total, 0);
+  const pendingRefundCount = orders.reduce((total, order) => total + (order.refunds?.filter((refund) => refund.status === 'pending').length ?? 0), 0);
 
   async function loadOrders() {
     if (!token) return;
@@ -171,13 +188,54 @@ export function AdminOrdersPage() {
       <div className="admin-headline">
         <div>
           <h1>Siparişler</h1>
-          <p>Ödemesi onaylanmış siparişler burada listelenir. Durumu değiştirmek için satırdaki seçimi kullanın.</p>
+          <p>Ödenmiş siparişleri, faturaları, durum değişikliklerini ve iade taleplerini buradan yönetin.</p>
+        </div>
+      </div>
+
+      <div className="admin-order-summary">
+        <div>
+          <span>Listelenen sipariş</span>
+          <strong>{visibleOrders.length}</strong>
+        </div>
+        <div>
+          <span>Listelenen ciro</span>
+          <strong>{formatCurrency(totalSales, 'tr')}</strong>
+        </div>
+        <div>
+          <span>Bekleyen iade</span>
+          <strong>{pendingRefundCount}</strong>
+        </div>
+        <div>
+          <span>Fatura bekleyen</span>
+          <strong>{orders.filter((order) => !order.invoicePdfUrl).length}</strong>
         </div>
       </div>
 
       <div className="admin-card">
+        <div className="admin-card__head admin-card__head--row">
+          <div>
+            <h2>Sipariş Listesi</h2>
+            <p>Arama ve ödeme durumuna göre hızlı filtreleme.</p>
+          </div>
+          <div className="admin-order-filters">
+            <input
+              className="ui-input"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Sipariş no, müşteri veya e-posta"
+              value={search}
+            />
+            <select className="ui-select" onChange={(event) => setPaymentFilter(event.target.value)} value={paymentFilter}>
+              <option value="all">Tüm ödemeler</option>
+              <option value="paid">Ödendi</option>
+              <option value="partially_refunded">Kısmi iade</option>
+              <option value="refunded">İade edildi</option>
+            </select>
+          </div>
+        </div>
         {orders.length === 0 ? (
           <EmptyState description="Ödenmiş sipariş geldiğinde burada görünecek." title="Henüz sipariş yok" />
+        ) : visibleOrders.length === 0 ? (
+          <EmptyState description="Arama veya filtreyi değiştirerek tekrar deneyin." title="Sipariş bulunamadı" />
         ) : (
           <div className="admin-table admin-table--flat">
             <table>
@@ -195,7 +253,7 @@ export function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
+                {visibleOrders.map((order) => (
                   <tr key={order.id}>
                     <td>
                       <strong>{order.orderNumber}</strong>
@@ -244,6 +302,9 @@ export function AdminOrdersPage() {
                       <div className="text-muted">{order.invoiceSentAt ? 'Mail gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</div>
                     </td>
                     <td style={{ textAlign: 'right' }}>
+                      <button className="admin-table-action" onClick={() => setDetailOrder(order)} type="button">
+                        Detay
+                      </button>
                       <label className={`admin-table-action ${invoiceUploadingOrderId === order.id ? 'is-disabled' : ''}`}>
                         {invoiceUploadingOrderId === order.id ? 'Yükleniyor...' : 'Fatura Yükle'}
                         <input
@@ -366,6 +427,83 @@ export function AdminOrdersPage() {
               <button className="admin-table-action admin-table-action--danger" disabled={refunding} onClick={() => void handleRefund()} type="button">
                 {refunding ? 'İade Ediliyor...' : 'İadeyi Onayla'}
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {detailOrder ? (
+        <div className="admin-modal-backdrop" role="presentation">
+          <div aria-modal="true" className="admin-modal admin-order-detail-modal" role="dialog">
+            <div className="admin-card__head admin-card__head--row">
+              <div>
+                <h2>Sipariş Detayı</h2>
+                <p>{detailOrder.orderNumber} faturası için gerekli müşteri, teslimat, fatura ve ürün bilgileri.</p>
+              </div>
+              <button className="admin-table-action" onClick={() => setDetailOrder(null)} type="button">
+                Kapat
+              </button>
+            </div>
+
+            <div className="admin-order-detail-grid">
+              <section className="admin-order-detail-block">
+                <h3>Müşteri</h3>
+                <dl>
+                  <div><dt>Ad Soyad</dt><dd>{detailOrder.customer}</dd></div>
+                  <div><dt>E-posta</dt><dd>{detailOrder.email}</dd></div>
+                  <div><dt>Telefon</dt><dd>{detailOrder.shippingPhone}</dd></div>
+                  <div><dt>Sipariş Tarihi</dt><dd>{formatDate(detailOrder.createdAt, 'tr')}</dd></div>
+                </dl>
+              </section>
+
+              <section className="admin-order-detail-block">
+                <h3>Fatura Bilgileri</h3>
+                <dl>
+                  <div><dt>Fatura Tipi</dt><dd>{detailOrder.billing.type === 'corporate' ? 'Kurumsal' : 'Bireysel'}</dd></div>
+                  <div><dt>Ad / Ünvan</dt><dd>{detailOrder.billing.companyName || detailOrder.billing.name}</dd></div>
+                  <div><dt>TC Kimlik</dt><dd>{detailOrder.billing.identityNumber ?? `***${detailOrder.billing.identityNumberLast4}`}</dd></div>
+                  {detailOrder.billing.type === 'corporate' ? (
+                    <>
+                      <div><dt>Vergi No</dt><dd>{detailOrder.billing.taxNumber || '-'}</dd></div>
+                      <div><dt>Vergi Dairesi</dt><dd>{detailOrder.billing.taxOffice || '-'}</dd></div>
+                    </>
+                  ) : null}
+                  <div><dt>Fatura Telefon</dt><dd>{detailOrder.billing.phone}</dd></div>
+                  <div><dt>Fatura Adresi</dt><dd>{detailOrder.billing.addressLine}, {detailOrder.billing.district} / {detailOrder.billing.city}</dd></div>
+                </dl>
+              </section>
+
+              <section className="admin-order-detail-block">
+                <h3>Teslimat</h3>
+                <dl>
+                  <div><dt>Alıcı</dt><dd>{detailOrder.shippingName}</dd></div>
+                  <div><dt>Telefon</dt><dd>{detailOrder.shippingPhone}</dd></div>
+                  <div><dt>Adres</dt><dd>{detailOrder.shippingAddressLine}, {detailOrder.shippingDistrict} / {detailOrder.shippingCity}</dd></div>
+                  <div><dt>Not</dt><dd>{detailOrder.notes || '-'}</dd></div>
+                </dl>
+              </section>
+
+              <section className="admin-order-detail-block">
+                <h3>Ödeme</h3>
+                <dl>
+                  <div><dt>Durum</dt><dd>{translatePaymentStatus('tr', detailOrder.paymentStatus)}</dd></div>
+                  <div><dt>Toplam</dt><dd>{formatCurrency(detailOrder.total, 'tr')}</dd></div>
+                  <div><dt>İade Edilen</dt><dd>{formatCurrency(detailOrder.refundedAmount, 'tr')}</dd></div>
+                  <div><dt>Kalan İade</dt><dd>{formatCurrency(detailOrder.refundableAmount, 'tr')}</dd></div>
+                </dl>
+              </section>
+            </div>
+
+            <div className="admin-order-detail-block">
+              <h3>Ürün Kalemleri</h3>
+              <div className="admin-order-lines">
+                {detailOrder.items.map((item) => (
+                  <div className="admin-order-line" key={item.id}>
+                    <strong>{item.productName}</strong>
+                    <span>{item.quantity} adet × {formatCurrency(item.unitPrice, 'tr')}</span>
+                    <strong>{formatCurrency(item.lineTotal, 'tr')}</strong>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
