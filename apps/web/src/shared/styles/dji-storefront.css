@@ -213,6 +213,11 @@ body {
   position: absolute;
   inset: 0;
 }
+
+.dji-hero-slider .dji-hero__background {
+  background: #000;
+}
+
 .dji-hero__background img,
 .dji-listing-hero__background img {
   width: 100%;
@@ -221,7 +226,9 @@ body {
 }
 
 .dji-hero-slider .dji-hero__background img {
-  object-position: center center;
+  display: block;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .dji-hero__content,
