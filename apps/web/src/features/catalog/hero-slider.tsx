@@ -1,8 +1,6 @@
 import type { HeroSlide } from '@bora/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 
-import { Button } from '@bora/ui';
 import { api } from '../../shared/api/client';
 
 const FALLBACK_SLIDE: HeroSlide = {
@@ -88,11 +86,6 @@ export function HeroSlider() {
         <div className="dji-hero__copy">
           <h1>{currentSlide.title}</h1>
           {currentSlide.subtitle ? <h2>{currentSlide.subtitle}</h2> : null}
-          <div className="dji-hero__actions">
-            <Link to={currentSlide.ctaLink ?? '/katalog'}>
-              <Button>{currentSlide.ctaText ?? 'KEŞFET'}</Button>
-            </Link>
-          </div>
         </div>
       </div>
 

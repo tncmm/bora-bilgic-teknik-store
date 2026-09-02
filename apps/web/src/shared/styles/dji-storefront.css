@@ -199,7 +199,8 @@ body {
 
 .dji-hero {
   min-height: unset;
-  height: clamp(420px, 52vw, 760px);
+  height: clamp(300px, 52vw, 760px);
+  aspect-ratio: 16 / 7;
 }
 
 .dji-listing-hero,
@@ -219,6 +220,10 @@ body {
   object-fit: cover;
 }
 
+.dji-hero-slider .dji-hero__background img {
+  object-position: center center;
+}
+
 .dji-hero__content,
 .dji-listing-hero__content {
   position: relative;
@@ -234,6 +239,29 @@ body {
 .dji-hero__copy {
   max-width: 560px;
   padding: 0;
+}
+
+.dji-hero-slider .dji-hero__content {
+  align-items: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.dji-hero-slider .dji-hero__copy {
+  display: grid;
+  justify-items: end;
+}
+
+.dji-hero-slider h1 {
+  font-size: clamp(1.9rem, 5.2vw, 4.6rem);
+}
+
+.dji-hero-slider h2 {
+  font-size: clamp(0.78rem, 2vw, 1.5rem);
+}
+
+.dji-hero-slider .dji-hero__actions {
+  justify-content: flex-end;
 }
 
 .dji-kicker {
@@ -2019,6 +2047,18 @@ body {
     flex-direction: column;
   }
 
+  .dji-hero-slider .dji-hero__actions {
+    align-items: flex-end;
+  }
+
+  .dji-hero-slider h1 {
+    font-size: clamp(1.35rem, 6vw, 2.4rem);
+  }
+
+  .dji-hero-slider h2 {
+    font-size: clamp(0.68rem, 2.6vw, 0.95rem);
+  }
+
   .dji-detail__package-grid {
     grid-template-columns: 1fr;
   }
@@ -2069,7 +2109,22 @@ body {
   }
 
   .dji-hero {
-    height: clamp(280px, 76vw, 380px);
+    height: clamp(220px, 62vw, 340px);
+    aspect-ratio: 4 / 3;
+  }
+
+  .dji-hero-slider .dji-hero__content {
+    padding-bottom: 2.25rem;
+  }
+
+  .dji-hero-slider h1 {
+    font-size: clamp(1.05rem, 7.2vw, 1.8rem);
+  }
+
+  .dji-hero-slider h2 {
+    margin-top: 0.35rem;
+    font-size: clamp(0.58rem, 3.2vw, 0.78rem);
+    letter-spacing: 0.05em;
   }
 
   .dji-service-band__grid,
