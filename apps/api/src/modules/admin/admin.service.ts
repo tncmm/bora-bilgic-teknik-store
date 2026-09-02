@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { AppError } from '../../lib/app-error.js';
 import { sendMail } from '../../lib/mail/transport.js';
 import { invoiceReadyEmail } from '../../lib/mail/templates.js';
-import { requestRefund } from '../../lib/paytr.js';
+import { isRetryablePaytrRefundError, requestRefund } from '../../lib/paytr.js';
 import { buildRefundSelection } from '../../lib/refunds.js';
 import { serializeDashboardMetrics, serializeOrder, serializeProduct, serializeUser } from '../../lib/serializers.js';
 import { deleteManyMediaFromR2, extractR2KeyFromUrl, uploadInvoicePdfToR2, uploadMediaToR2 } from '../../lib/r2.js';
@@ -445,7 +445,12 @@ export class AdminService {
       });
       return serializeOrder(updatedOrder);
     } catch (error) {
-      await this.repository.markRefundFailed(refund.id, error instanceof Error ? error.message : 'PayTR iadesi basarisiz.');
+      const reason = error instanceof Error ? error.message : 'PayTR iadesi basarisiz.';
+      if (isRetryablePaytrRefundError(error)) {
+        await this.repository.recordRefundFailure(refund.id, reason);
+      } else {
+        await this.repository.markRefundFailed(refund.id, reason);
+      }
       throw error;
     }
   }

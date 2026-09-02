@@ -178,6 +178,21 @@ export interface PaytrRefundInput {
   amount: number;
 }
 
+export class PaytrRefundError extends AppError {
+  constructor(
+    message: string,
+    public readonly errNo?: string,
+    public readonly errMsg?: string,
+  ) {
+    super(message, 502);
+    this.name = 'PaytrRefundError';
+  }
+}
+
+export function isRetryablePaytrRefundError(error: unknown) {
+  return error instanceof PaytrRefundError && error.errNo === '000';
+}
+
 export async function requestRefund(input: PaytrRefundInput) {
   const config = requirePaytrConfig();
   const returnAmount = input.amount.toFixed(2);
@@ -206,7 +221,19 @@ export async function requestRefund(input: PaytrRefundInput) {
   const data = (await response.json().catch(() => null)) as { status?: string; reference_no?: string; err_no?: string; err_msg?: string } | null;
 
   if (!response.ok || !data || data.status !== 'success') {
-    throw new AppError(`PayTR iadesi basarisiz.${data?.err_msg ? ` ${data.err_msg}` : ''}`, 502);
+    console.error('[PAYTR] Refund failed', {
+      merchantOid: input.merchantOid,
+      amount: returnAmount,
+      httpStatus: response.status,
+      errNo: data?.err_no,
+      errMsg: data?.err_msg,
+      status: data?.status,
+    });
+    throw new PaytrRefundError(
+      `PayTR iadesi basarisiz.${data?.err_msg ? ` ${data.err_msg}` : ''}`,
+      data?.err_no,
+      data?.err_msg,
+    );
   }
 
   return {

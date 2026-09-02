@@ -196,6 +196,13 @@ export class AdminRepository {
     });
   }
 
+  recordRefundFailure(refundId: string, reason: string) {
+    return prisma.refund.update({
+      where: { id: refundId },
+      data: { failureReason: reason },
+    });
+  }
+
   completeRefund(refundId: string, input: { paytrReference?: string | null; restock: boolean }) {
     return prisma.$transaction(async (tx) => {
       const refund = await tx.refund.update({

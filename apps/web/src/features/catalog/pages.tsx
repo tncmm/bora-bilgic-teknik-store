@@ -642,7 +642,7 @@ function ProductTabContent({ section }: { section?: ProductDetailSection }) {
   if (!section) return null;
 
   return (
-    <div className="dji-detail-tabpanel">
+    <div className={['dji-detail-tabpanel', !section.imageUrl ? 'dji-detail-tabpanel--copy-only' : ''].filter(Boolean).join(' ')}>
       <div>
         {section.heading ? <h2>{section.heading}</h2> : null}
         {section.body ? <RichTextContent className="dji-detail-description" html={section.body} /> : null}
