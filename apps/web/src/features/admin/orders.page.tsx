@@ -1,5 +1,5 @@
 import { EmptyState, InputField } from '@bora/ui';
-import { PRODUCT_MEDIA_LIMITS, type Order } from '@bora/types';
+import { PRODUCT_MEDIA_LIMITS, type Order, type Refund } from '@bora/types';
 import { useEffect, useState } from 'react';
 
 import { useSession } from '../../app/providers/SessionProvider';
@@ -35,13 +35,23 @@ export function AdminOrdersPage() {
   const { showToast } = useToast();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [refundOrder, setRefundOrder] = useState<AdminOrder | null>(null);
+  const [refundRequest, setRefundRequest] = useState<Refund | null>(null);
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [refundRestock, setRefundRestock] = useState(false);
+  const [refundQuantities, setRefundQuantities] = useState<Record<string, number>>({});
   const [refunding, setRefunding] = useState(false);
   const [invoiceUploadingOrderId, setInvoiceUploadingOrderId] = useState<string | null>(null);
   const refundAmountNumber = Number(refundAmount);
-  const canRestockRefund = Boolean(refundOrder && refundAmountNumber === refundOrder.refundableAmount);
+  const selectedRefundItems = refundOrder
+    ? refundOrder.items
+        .map((item) => ({ item, quantity: Math.min(refundQuantities[item.id] ?? 0, item.refundableQuantity) }))
+        .filter((entry) => entry.quantity > 0)
+    : [];
+  const selectedRefundTotal = selectedRefundItems.reduce((total, entry) => total + entry.item.unitPrice * entry.quantity, 0);
+  const effectiveRefundAmount = refundRequest || selectedRefundItems.length === 0 ? refundAmountNumber : selectedRefundTotal;
+  const pendingRefundRequests = refundOrder?.refunds?.filter((refund) => refund.status === 'pending') ?? [];
+  const canRestockRefund = Boolean(refundRequest?.items?.length || selectedRefundItems.length || (refundOrder && effectiveRefundAmount === refundOrder.refundableAmount));
 
   async function loadOrders() {
     if (!token) return;
@@ -75,17 +85,24 @@ export function AdminOrdersPage() {
     }
   }
 
-  function openRefundModal(order: AdminOrder) {
+  function openRefundModal(order: AdminOrder, request?: Refund) {
     setRefundOrder(order);
-    setRefundAmount(String(order.refundableAmount));
-    setRefundReason('');
+    setRefundRequest(request ?? null);
+    setRefundAmount(String(request?.amount ?? order.refundableAmount));
+    setRefundReason(request?.customerReason ?? request?.reason ?? '');
     setRefundRestock(false);
+    setRefundQuantities(
+      request?.items?.reduce<Record<string, number>>((acc, item) => {
+        acc[item.orderItemId] = item.quantity;
+        return acc;
+      }, {}) ?? {},
+    );
   }
 
   async function handleRefund() {
     if (!token || !refundOrder) return;
 
-    const amount = Number(refundAmount);
+    const amount = effectiveRefundAmount;
     if (!Number.isFinite(amount) || amount <= 0) {
       showToast({ tone: 'error', title: 'İade tutarı geçersiz', description: 'Lütfen pozitif bir tutar girin.' });
       return;
@@ -97,7 +114,14 @@ export function AdminOrdersPage() {
     setRefunding(true);
     try {
       await api.refundAdminOrder(token, refundOrder.id, {
+        refundId: refundRequest?.id,
+        manualAmount: refundRequest ? undefined : selectedRefundItems.length ? undefined : amount,
         amount,
+        items: refundRequest
+          ? undefined
+          : selectedRefundItems.length
+            ? selectedRefundItems.map((entry) => ({ orderItemId: entry.item.id, quantity: entry.quantity }))
+            : undefined,
         reason: refundReason.trim() || undefined,
         restock: refundRestock && canRestockRefund,
       });
@@ -192,6 +216,9 @@ export function AdminOrdersPage() {
                     <td style={{ textAlign: 'right' }}>
                       <strong>{formatCurrency(order.refundedAmount, 'tr')}</strong>
                       <div className="text-muted">Kalan {formatCurrency(order.refundableAmount, 'tr')}</div>
+                      {(order.refunds?.filter((refund) => refund.status === 'pending').length ?? 0) > 0 ? (
+                        <div className="text-muted">Bekleyen talep var</div>
+                      ) : null}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <select
@@ -232,6 +259,13 @@ export function AdminOrdersPage() {
                       <button className="admin-table-action" disabled={order.refundableAmount <= 0 || order.paymentStatus === 'refunded'} onClick={() => openRefundModal(order)} type="button">
                         İade Et
                       </button>
+                      {order.refunds
+                        ?.filter((refund) => refund.status === 'pending')
+                        .map((refund) => (
+                          <button className="admin-table-action admin-table-action--danger" key={refund.id} onClick={() => openRefundModal(order, refund)} type="button">
+                            Talebi Onayla
+                          </button>
+                        ))}
                     </td>
                   </tr>
                 ))}
@@ -244,21 +278,83 @@ export function AdminOrdersPage() {
         <div className="admin-modal-backdrop" role="presentation">
           <div aria-modal="true" className="admin-modal" role="dialog">
             <div className="admin-card__head">
-              <h2>PayTR İadesi</h2>
+              <h2>{refundRequest ? 'Müşteri İade Talebi' : 'PayTR İadesi'}</h2>
               <p>
                 {refundOrder.orderNumber} için en fazla {formatCurrency(refundOrder.refundableAmount, 'tr')} iade edilebilir.
               </p>
             </div>
+            {pendingRefundRequests.length > 0 && !refundRequest ? (
+              <div className="refund-history-list">
+                {pendingRefundRequests.map((request) => (
+                  <button className="refund-admin-request" key={request.id} onClick={() => openRefundModal(refundOrder, request)} type="button">
+                    <span>
+                      <strong>{request.customerReason ?? 'Müşteri iade talebi'}</strong>
+                      <small>{request.customerNote}</small>
+                    </span>
+                    <strong>{formatCurrency(request.amount, 'tr')}</strong>
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <div className="admin-form-grid">
-              <InputField label="İade Tutarı" min="1" onChange={(e) => setRefundAmount(e.target.value)} step="0.01" type="number" value={refundAmount} />
+              <InputField
+                disabled={Boolean(refundRequest) || selectedRefundItems.length > 0}
+                label="İade Tutarı"
+                min="1"
+                onChange={(e) => setRefundAmount(e.target.value)}
+                step="0.01"
+                type="number"
+                value={selectedRefundItems.length > 0 ? String(selectedRefundTotal) : refundAmount}
+              />
               <label className="admin-field">
                 <span>Stok</span>
                 <label className="checkout-check">
                   <input checked={refundRestock && canRestockRefund} disabled={!canRestockRefund} onChange={(e) => setRefundRestock(e.target.checked)} type="checkbox" />
                   <span>Ürünleri stoka geri ekle</span>
                 </label>
-                {!canRestockRefund ? <small>Stok geri ekleme yalnızca kalan tutarın tamamı iade edilirken açılır.</small> : null}
+                {!canRestockRefund ? <small>Stok geri ekleme için ürün/adet seçimi veya tam iade gerekir.</small> : null}
               </label>
+              {!refundRequest ? (
+                <div className="full refund-picker-list">
+                  {refundOrder.items.map((item) => (
+                    <label className={`refund-picker-item ${item.refundableQuantity <= 0 ? 'is-disabled' : ''}`} key={item.id}>
+                      <div>
+                        <strong>{item.productName}</strong>
+                        <span>En fazla {item.refundableQuantity} adet · {formatCurrency(item.unitPrice, 'tr')}</span>
+                      </div>
+                      <input
+                        disabled={item.refundableQuantity <= 0}
+                        max={item.refundableQuantity}
+                        min="0"
+                        onChange={(event) => {
+                          setRefundQuantities((current) => ({ ...current, [item.id]: Number(event.target.value) }));
+                        }}
+                        type="number"
+                        value={refundQuantities[item.id] ?? 0}
+                      />
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="full refund-history-list">
+                  <div className="refund-admin-note">
+                    <strong>{refundRequest.customerReason}</strong>
+                    <p>{refundRequest.customerNote}</p>
+                  </div>
+                  {refundRequest.items?.map((item) => {
+                    const orderItem = refundOrder.items.find((entry) => entry.id === item.orderItemId);
+                    return (
+                      <div className="refund-history-item" key={item.id}>
+                        <div>
+                          <strong>{orderItem?.productName ?? item.productId}</strong>
+                          <span>{item.quantity} adet</span>
+                        </div>
+                        <strong>{formatCurrency(item.lineTotal, 'tr')}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="full">
                 <textarea className="ui-textarea" onChange={(e) => setRefundReason(e.target.value)} placeholder="İade sebebi" value={refundReason} />
               </div>

@@ -39,6 +39,14 @@ function normalizeTagName(tagName: string) {
   return tagName.toLowerCase();
 }
 
+function readTextAlign(element: HTMLElement) {
+  const inlineAlign = element.style.textAlign;
+  const attrAlign = element.getAttribute('align');
+  const value = (inlineAlign || attrAlign || '').trim().toLowerCase();
+
+  return ['left', 'center', 'right'].includes(value) ? value : null;
+}
+
 export function normalizeRichTextHtml(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return '';
@@ -64,6 +72,10 @@ export function normalizeRichTextHtml(value: string) {
     }
 
     const cleanElement = cleanDocument.createElement(normalizeTagName(element.tagName));
+    const textAlign = readTextAlign(element);
+    if (textAlign && !['BR', 'IMG'].includes(element.tagName)) {
+      cleanElement.setAttribute('style', `text-align: ${textAlign};`);
+    }
 
     if (element.tagName === 'A') {
       const href = element.getAttribute('href')?.trim();

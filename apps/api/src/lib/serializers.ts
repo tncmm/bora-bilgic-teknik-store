@@ -223,6 +223,18 @@ export function serializeWishlist(wishlist: any): Wishlist {
 export function serializeOrder(order: any): Order {
   const total = decimalToNumber(order.total);
   const refundedAmount = decimalToNumber(order.refundedAmount ?? 0);
+  const refunds = Array.isArray(order.refunds) ? order.refunds : [];
+  const itemRefundTotals = new Map<string, { pending: number; completed: number }>();
+
+  for (const refund of refunds) {
+    if (!['PENDING', 'COMPLETED'].includes(refund.status)) continue;
+    for (const item of refund.items ?? []) {
+      const current = itemRefundTotals.get(item.orderItemId) ?? { pending: 0, completed: 0 };
+      if (refund.status === 'PENDING') current.pending += item.quantity;
+      if (refund.status === 'COMPLETED') current.completed += item.quantity;
+      itemRefundTotals.set(item.orderItemId, current);
+    }
+  }
 
   return {
     id: order.id,
@@ -263,6 +275,12 @@ export function serializeOrder(order: any): Order {
       quantity: item.quantity,
       unitPrice: decimalToNumber(item.unitPrice),
       lineTotal: decimalToNumber(item.lineTotal),
+      refundedQuantity: itemRefundTotals.get(item.id)?.completed ?? 0,
+      pendingRefundQuantity: itemRefundTotals.get(item.id)?.pending ?? 0,
+      refundableQuantity: Math.max(0, item.quantity - (itemRefundTotals.get(item.id)?.completed ?? 0) - (itemRefundTotals.get(item.id)?.pending ?? 0)),
+      refundableAmount:
+        Math.max(0, item.quantity - (itemRefundTotals.get(item.id)?.completed ?? 0) - (itemRefundTotals.get(item.id)?.pending ?? 0)) *
+        decimalToNumber(item.unitPrice),
     })),
     refunds: Array.isArray(order.refunds)
       ? order.refunds.map((refund: any) => ({
@@ -270,11 +288,27 @@ export function serializeOrder(order: any): Order {
           amount: decimalToNumber(refund.amount),
           status: refund.status.toLowerCase(),
           reason: refund.reason ?? null,
+          source: refund.source === 'customer' ? 'customer' : 'admin',
+          requestedByUserId: refund.requestedByUserId ?? null,
+          requestedByEmail: refund.requestedByEmail ?? null,
+          customerReason: refund.customerReason ?? null,
+          customerNote: refund.customerNote ?? null,
+          requestedAt: refund.requestedAt ? refund.requestedAt.toISOString() : null,
           restock: refund.restock,
           paytrReference: refund.paytrReference ?? null,
           failureReason: refund.failureReason ?? null,
           createdAt: refund.createdAt.toISOString(),
           completedAt: refund.completedAt ? refund.completedAt.toISOString() : null,
+          items: Array.isArray(refund.items)
+            ? refund.items.map((item: any) => ({
+                id: item.id,
+                orderItemId: item.orderItemId,
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: decimalToNumber(item.unitPrice),
+                lineTotal: decimalToNumber(item.lineTotal),
+              }))
+            : [],
         }))
       : undefined,
   };

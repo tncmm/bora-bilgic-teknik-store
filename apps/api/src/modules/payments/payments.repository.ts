@@ -4,6 +4,8 @@ import { prisma } from '../../db/prisma.js';
 import { AppError } from '../../lib/app-error.js';
 import { generateOrderNumber } from '../orders/orders.repository.js';
 
+const orderInclude = { items: true, refunds: { include: { items: true }, orderBy: { createdAt: 'desc' as const } } };
+
 export interface AttemptItem {
   productId: string;
   productName: string;
@@ -77,7 +79,7 @@ export class PaymentsRepository {
   findOrderByPaymentRef(paymentRef: string) {
     return prisma.order.findUnique({
       where: { paymentRef },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
     });
   }
 
@@ -263,7 +265,7 @@ export class PaymentsRepository {
             })),
           },
         },
-        include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+        include: orderInclude,
       });
 
       await tx.paymentAttempt.update({

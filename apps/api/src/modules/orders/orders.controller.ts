@@ -19,4 +19,14 @@ export class OrdersController {
     const order = await this.service.getOrderByTrackingToken(String(req.params.token));
     res.json(order);
   };
+
+  createMyRefundRequest = async (req: Request, res: Response) => {
+    const order = await this.service.createRefundRequestForUser(req.auth!.userId, String(req.params.orderId), req.body);
+    res.status(201).json(order);
+  };
+
+  createTrackedRefundRequest = async (req: Request, res: Response) => {
+    const order = await this.service.createRefundRequestByTrackingToken(String(req.params.token), req.body);
+    res.status(201).json(order);
+  };
 }

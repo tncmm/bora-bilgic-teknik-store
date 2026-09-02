@@ -1,12 +1,13 @@
 import { appConfig } from '@bora/config';
 import type { Order } from '@bora/types';
 import { Button, EmptyState } from '@bora/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { useI18n } from '../../app/providers/I18nProvider';
 import { useSession } from '../../app/providers/SessionProvider';
-import { api } from '../../shared/api/client';
+import { useToast } from '../../app/providers/ToastProvider';
+import { api, type RefundRequestPayload } from '../../shared/api/client';
 import { formatCurrency, formatDate } from '../../shared/lib/format';
 import { translateOrderStatus, translatePaymentStatus } from '../../shared/lib/i18n';
 
@@ -15,60 +16,323 @@ interface OrderDetailLocationState {
 }
 
 const orderFlow = [
-  {
-    id: 'pending',
-    titleTr: 'Sipariş Alındı',
-    titleEn: 'Order Received',
-    descriptionTr: 'Kayıt tamamlandı ve kontrol sırasına alındı.',
-    descriptionEn: 'The order was recorded and queued for review.',
-  },
-  {
-    id: 'processing',
-    titleTr: 'Hazırlanıyor',
-    titleEn: 'Preparing',
-    descriptionTr: 'Ürünler ve teslimat planlaması hazırlanıyor.',
-    descriptionEn: 'Products and delivery planning are being prepared.',
-  },
-  {
-    id: 'shipped',
-    titleTr: 'Kargoda',
-    titleEn: 'Shipped',
-    descriptionTr: 'Paket çıkışı yapıldı ve teslimata gidiyor.',
-    descriptionEn: 'The package has left the warehouse and is in transit.',
-  },
-  {
-    id: 'delivered',
-    titleTr: 'Teslim Edildi',
-    titleEn: 'Delivered',
-    descriptionTr: 'Sipariş teslim edildi ve süreç tamamlandı.',
-    descriptionEn: 'The order was delivered and the flow is complete.',
-  },
+  { id: 'pending', titleTr: 'Alındı', titleEn: 'Received' },
+  { id: 'processing', titleTr: 'Hazırlanıyor', titleEn: 'Preparing' },
+  { id: 'shipped', titleTr: 'Kargoda', titleEn: 'Shipped' },
+  { id: 'delivered', titleTr: 'Teslim', titleEn: 'Delivered' },
+] as const;
+
+const refundReasons = [
+  'Ürün beklentimi karşılamadı',
+  'Yanlış ürün sipariş ettim',
+  'Hasarlı veya eksik teslimat',
+  'Farklı bir ürün almak istiyorum',
+  'Diğer',
 ] as const;
 
 function getOrderStepIndex(status: Order['status']) {
-  return orderFlow.findIndex((step) => step.id === status);
+  return Math.max(0, orderFlow.findIndex((step) => step.id === status));
 }
 
-function getOrderHeadline(status: Order['status'], language: 'tr' | 'en') {
-  const copy = {
-    pending: language === 'tr' ? 'Siparişiniz onay bekliyor.' : 'Your order is pending review.',
-    processing: language === 'tr' ? 'Siparişiniz hazırlanıyor.' : 'Your order is being prepared.',
-    shipped: language === 'tr' ? 'Siparişiniz yola çıktı.' : 'Your order is on the way.',
-    delivered: language === 'tr' ? 'Siparişiniz teslim edildi.' : 'Your order has been delivered.',
-  } satisfies Record<Order['status'], string>;
-
-  return copy[status];
+function canOrderRequestRefund(order: Order) {
+  return ['paid', 'partially_refunded'].includes(order.paymentStatus) && order.items.some((item) => item.refundableQuantity > 0);
 }
 
-function getOrderSupportCopy(status: Order['status'], language: 'tr' | 'en') {
-  const copy = {
-    pending: language === 'tr' ? 'Siparişiniz kontrol aşamasında. Ekip kısa süre içinde işleme alır.' : 'Your order is in review. The team will move it into processing shortly.',
-    processing: language === 'tr' ? 'Hazırlama süreci devam ediyor. Teslimat ve paket içeriği netleştiriliyor.' : 'Preparation is underway. Delivery timing and package contents are being finalized.',
-    shipped: language === 'tr' ? 'Siparişiniz sevkte. Teslimat için telefonunuzu ulaşılabilir tutmanız iyi olur.' : 'Your order is in transit. Keeping your phone reachable will help with delivery.',
-    delivered: language === 'tr' ? 'Teslimat tamamlandı. Destek gerektiğinde sipariş numaranızla hızlı ilerlenebilir.' : 'Delivery is complete. Support can help faster when you share your order number.',
-  } satisfies Record<Order['status'], string>;
+function getRefundStatusLabel(item: Order['items'][number]) {
+  const parts = [];
+  if (item.pendingRefundQuantity > 0) parts.push(`${item.pendingRefundQuantity} adet talep bekliyor`);
+  if (item.refundedQuantity > 0) parts.push(`${item.refundedQuantity} adet iade tamamlandı`);
+  if (item.refundableQuantity > 0) parts.push(`${item.refundableQuantity} adet iade edilebilir`);
+  return parts.length ? parts.join(' · ') : 'İade hakkı yok';
+}
 
-  return copy[status];
+function RefundRequestModal({
+  order,
+  onClose,
+  onSubmit,
+}: {
+  order: Order;
+  onClose: () => void;
+  onSubmit: (payload: RefundRequestPayload) => Promise<void>;
+}) {
+  const { showToast } = useToast();
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [reason, setReason] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const selectedItems = order.items
+    .map((item) => ({ item, quantity: Math.min(quantities[item.id] ?? 0, item.refundableQuantity) }))
+    .filter((entry) => entry.quantity > 0);
+  const refundTotal = selectedItems.reduce((total, entry) => total + entry.item.unitPrice * entry.quantity, 0);
+  const canSubmit = selectedItems.length > 0 && reason.length >= 3 && note.trim().length >= 10 && !submitting;
+
+  async function handleSubmit() {
+    if (!canSubmit) {
+      showToast({
+        tone: 'error',
+        title: 'İade talebi eksik',
+        description: 'Lütfen ürün/adet seçin, sebep belirleyin ve kısa bir açıklama yazın.',
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        items: selectedItems.map((entry) => ({ orderItemId: entry.item.id, quantity: entry.quantity })),
+        reason,
+        note: note.trim(),
+      });
+      showToast({
+        tone: 'success',
+        title: 'İade talebi alındı',
+        description: 'Talebiniz admin onayına düştü. Para iadesi onaydan sonra işlenecek.',
+      });
+      onClose();
+    } catch (error) {
+      showToast({ tone: 'error', title: 'İade talebi oluşturulamadı', description: (error as Error).message });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation">
+      <div aria-modal="true" className="admin-modal refund-request-modal" role="dialog">
+        <div className="admin-card__head">
+          <h2>İade Talebi Oluştur</h2>
+          <p>İade etmek istediğiniz ürünleri ayrı ayrı seçin. Talep onaylandıktan sonra ödeme iadesi admin tarafından yapılır.</p>
+        </div>
+
+        <div className="refund-picker-list">
+          {order.items.map((item) => (
+            <label className={`refund-picker-item ${item.refundableQuantity <= 0 ? 'is-disabled' : ''}`} key={item.id}>
+              <div>
+                <strong>{item.productName}</strong>
+                <span>{getRefundStatusLabel(item)}</span>
+              </div>
+              <input
+                disabled={item.refundableQuantity <= 0}
+                max={item.refundableQuantity}
+                min="0"
+                onChange={(event) => setQuantities((current) => ({ ...current, [item.id]: Number(event.target.value) }))}
+                type="number"
+                value={quantities[item.id] ?? 0}
+              />
+            </label>
+          ))}
+        </div>
+
+        <label className="admin-field">
+          <span>İade sebebi</span>
+          <select className="ui-select" onChange={(event) => setReason(event.target.value)} value={reason}>
+            <option value="">Sebep seçin</option>
+            {refundReasons.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="admin-field">
+          <span>Açıklama</span>
+          <textarea
+            className="ui-textarea"
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Talebinizi kısaca açıklayın."
+            value={note}
+          />
+          <small>En az 10 karakter girmeniz gerekir.</small>
+        </label>
+
+        <div className="refund-modal-summary">
+          <span>Talep tutarı</span>
+          <strong>{formatCurrency(refundTotal, 'tr')}</strong>
+        </div>
+
+        <div className="admin-modal-actions">
+          <button className="admin-table-action" disabled={submitting} onClick={onClose} type="button">
+            Vazgeç
+          </button>
+          <button className="admin-table-action admin-table-action--danger" disabled={!canSubmit} onClick={() => void handleSubmit()} type="button">
+            {submitting ? 'Gönderiliyor...' : 'Talebi Gönder'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderDetailView({
+  order,
+  justPlaced,
+  onOrderChange,
+  onCreateRefundRequest,
+}: {
+  order: Order;
+  justPlaced?: boolean;
+  onOrderChange: (order: Order) => void;
+  onCreateRefundRequest: (payload: RefundRequestPayload) => Promise<Order>;
+}) {
+  const { language } = useI18n();
+  const [refundOpen, setRefundOpen] = useState(false);
+  const stepIndex = getOrderStepIndex(order.status);
+  const itemCount = order.items.reduce((total, item) => total + item.quantity, 0);
+  const pendingRefunds = order.refunds?.filter((refund) => refund.status === 'pending') ?? [];
+  const completedRefunds = order.refunds?.filter((refund) => refund.status === 'completed') ?? [];
+
+  async function handleRefundSubmit(payload: RefundRequestPayload) {
+    const updatedOrder = await onCreateRefundRequest(payload);
+    onOrderChange(updatedOrder);
+  }
+
+  return (
+    <>
+      <div className="order-detail-simple">
+        <div className={['order-summary-card', justPlaced ? 'order-summary-card--success' : ''].filter(Boolean).join(' ')}>
+          <div>
+            <span className="detail-chip">{justPlaced ? 'Sipariş Alındı' : 'Sipariş Detayı'}</span>
+            <h1>{justPlaced ? 'Tebrikler, siparişiniz alındı.' : order.orderNumber}</h1>
+            <p>Bu ekranda sipariş durumunu, ürünleri, fatura bilgisini ve iade taleplerini sade şekilde takip edebilirsiniz.</p>
+          </div>
+          <div className="order-summary-card__facts">
+            <span>{translateOrderStatus(language, order.status)}</span>
+            <strong>{formatCurrency(order.total, language)}</strong>
+            <small>{formatDate(order.createdAt, language)}</small>
+          </div>
+        </div>
+
+        <div className="order-mini-grid">
+          <div>
+            <span>Sipariş No</span>
+            <strong>{order.orderNumber}</strong>
+          </div>
+          <div>
+            <span>Ödeme</span>
+            <strong>{translatePaymentStatus(language, order.paymentStatus)}</strong>
+          </div>
+          <div>
+            <span>Ürün</span>
+            <strong>{itemCount} adet</strong>
+          </div>
+          <div>
+            <span>İade</span>
+            <strong>{formatCurrency(order.refundedAmount, language)}</strong>
+          </div>
+        </div>
+
+        <div className="order-progress order-progress--compact">
+          {orderFlow.map((step, index) => (
+            <div className={['order-progress__step', index <= stepIndex ? 'is-active' : ''].filter(Boolean).join(' ')} key={step.id}>
+              <span className="order-progress__index">{index + 1}</span>
+              <strong>{language === 'tr' ? step.titleTr : step.titleEn}</strong>
+            </div>
+          ))}
+        </div>
+
+        <div className="order-detail-split">
+          <main className="order-detail-split__main">
+            <div className="profile-card">
+              <div className="order-section-head">
+                <div>
+                  <h2>Ürünler</h2>
+                  <p>Ürünleri aynı sipariş içinde ayrı ayrı iade talebine konu edebilirsiniz.</p>
+                </div>
+                {canOrderRequestRefund(order) ? <Button onClick={() => setRefundOpen(true)}>İade Talebi Oluştur</Button> : null}
+              </div>
+
+              <div className="order-line-list">
+                {order.items.map((item) => (
+                  <div className="order-line-card" key={item.id}>
+                    <div>
+                      <strong>{item.productName}</strong>
+                      <span>{getRefundStatusLabel(item)}</span>
+                    </div>
+                    <div className="order-line-card__numbers">
+                      <span>{item.quantity} adet</span>
+                      <span>{formatCurrency(item.unitPrice, language)}</span>
+                      <strong>{formatCurrency(item.lineTotal, language)}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {(pendingRefunds.length > 0 || completedRefunds.length > 0) && (
+              <div className="profile-card">
+                <div className="order-section-head">
+                  <div>
+                    <h2>İade Süreci</h2>
+                    <p>Bekleyen talepler admin onayı sonrası PayTR üzerinden tamamlanır.</p>
+                  </div>
+                </div>
+                <div className="refund-history-list">
+                  {[...pendingRefunds, ...completedRefunds].map((refund) => (
+                    <div className="refund-history-item" key={refund.id}>
+                      <div>
+                        <strong>{refund.source === 'customer' ? refund.customerReason : refund.reason || 'Admin iadesi'}</strong>
+                        <span>{refund.items?.map((item) => `${item.quantity} adet`).join(', ') || 'Tutar bazlı iade'}</span>
+                      </div>
+                      <div>
+                        <span className={`order-badge order-badge--payment-${refund.status}`}>{refund.status === 'pending' ? 'Onay bekliyor' : 'Tamamlandı'}</span>
+                        <strong>{formatCurrency(refund.amount, language)}</strong>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </main>
+
+          <aside className="order-detail-split__side">
+            <div className="profile-card compact-info-card">
+              <h3>Teslimat</h3>
+              <strong>{order.shippingName}</strong>
+              <p>{order.shippingPhone}</p>
+              <p>{order.shippingAddressLine}</p>
+              <p>{order.shippingDistrict} / {order.shippingCity}</p>
+              {(order.status === 'shipped' || order.status === 'delivered') && (
+                <a href={appConfig.cargoTrackingUrl} rel="noreferrer" target="_blank">
+                  Kargo takip sayfası
+                </a>
+              )}
+            </div>
+
+            <div className="profile-card compact-info-card">
+              <h3>Fatura</h3>
+              <strong>{order.billing.name}</strong>
+              <p>{order.billing.addressLine}</p>
+              <p>{order.billing.district} / {order.billing.city}</p>
+              <p>TC Kimlik: ***{order.billing.identityNumberLast4}</p>
+              {order.invoicePdfUrl ? (
+                <a href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
+                  PDF faturayı indir
+                </a>
+              ) : (
+                <span>Fatura yüklendiğinde burada görünür.</span>
+              )}
+            </div>
+
+            <div className="profile-card compact-info-card">
+              <h3>Destek</h3>
+              <p>Sipariş numaranızla bizimle iletişime geçerseniz süreci daha hızlı kontrol ederiz.</p>
+              <Link to="/iletisim">Destekle iletişime geç</Link>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      {refundOpen ? (
+        <RefundRequestModal
+          onClose={() => setRefundOpen(false)}
+          onSubmit={handleRefundSubmit}
+          order={order}
+        />
+      ) : null}
+    </>
+  );
 }
 
 export function OrdersPage() {
@@ -102,7 +366,7 @@ export function OrdersPage() {
             <div>
               <div className="detail-chip">{language === 'tr' ? 'Siparişlerim' : 'My Orders'}</div>
               <h2>{language === 'tr' ? 'Tüm Sipariş Geçmişiniz' : 'Your Full Order History'}</h2>
-              <p>{language === 'tr' ? 'Oluşturduğunuz tüm siparişleri, tutarları ve detay ekranlarını buradan takip edebilirsiniz.' : 'Track every order, total, and detail screen from here.'}</p>
+              <p>{language === 'tr' ? 'Siparişlerinizi ve iade taleplerinizi buradan takip edebilirsiniz.' : 'Track your orders and refund requests from here.'}</p>
             </div>
             <Link to="/profil">
               <Button variant="secondary">{language === 'tr' ? 'Profile Dön' : 'Back to Profile'}</Button>
@@ -146,11 +410,8 @@ export function OrderDetailPage() {
 
   useEffect(() => {
     if (!token || !orderId) return;
-
     void Promise.resolve().then(() => setError(null));
-    void api.getMyOrder(token, orderId).then(setOrder).catch((nextError: Error) => {
-      setError(nextError.message);
-    });
+    void api.getMyOrder(token, orderId).then(setOrder).catch((nextError: Error) => setError(nextError.message));
   }, [orderId, token]);
 
   if (!user || !token) {
@@ -166,14 +427,14 @@ export function OrderDetailPage() {
     );
   }
 
-  if (error) {
+  if (error || !order) {
     return (
       <section className="page-section" style={{ paddingTop: '140px' }}>
         <div className="ui-shell">
           <div className="profile-card profile-card--full">
             <EmptyState
-              description={error}
-              title={language === 'tr' ? 'Sipariş yüklenemedi' : 'Order could not be loaded'}
+              description={error ?? (language === 'tr' ? 'Sipariş detayları yükleniyor...' : 'Loading order details...')}
+              title={error ? (language === 'tr' ? 'Sipariş yüklenemedi' : 'Order could not be loaded') : (language === 'tr' ? 'Lütfen bekleyin' : 'Please wait')}
             />
           </div>
         </div>
@@ -181,264 +442,15 @@ export function OrderDetailPage() {
     );
   }
 
-  if (!order) {
-    return (
-      <section className="page-section" style={{ paddingTop: '140px' }}>
-        <div className="ui-shell">
-          <div className="profile-card profile-card--full">
-            <p className="text-muted">{language === 'tr' ? 'Sipariş detayları yükleniyor...' : 'Loading order details...'}</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const itemCount = order.items.reduce((total, item) => total + item.quantity, 0);
-  const stepIndex = getOrderStepIndex(order.status);
-
   return (
     <section className="page-section" style={{ paddingTop: '140px' }}>
       <div className="ui-shell orders-layout">
-        <div className={['profile-card', 'profile-card--full', 'order-detail-hero', state?.justPlaced ? 'order-success-card' : ''].filter(Boolean).join(' ')}>
-          <div className="section-header">
-            <div>
-              <div className="detail-chip">{state?.justPlaced ? (language === 'tr' ? 'Sipariş Alındı' : 'Order Received') : order.orderNumber}</div>
-              <h2>{state?.justPlaced ? (language === 'tr' ? 'Tebrikler, siparişiniz alındı.' : 'Congratulations, your order has been received.') : order.orderNumber}</h2>
-              <p>
-                {state?.justPlaced
-                  ? language === 'tr'
-                    ? 'Siparişiniz başarıyla kaydedildi. Aşağıda sipariş özeti, ürün satırları ve teslimat detayları yer alıyor.'
-                    : 'Your order has been recorded successfully. The summary, item lines, and delivery details are shown below.'
-                  : language === 'tr'
-                    ? 'Sipariş detaylarınızı daha net bir akışla, süreç durumu ve teslimat bilgileriyle birlikte burada görebilirsiniz.'
-                    : 'Review your order in a clearer flow here, including progress status and delivery details.'}
-              </p>
-            </div>
-            <div className="auth-actions">
-              <Link to="/siparislerim">
-                <Button variant="secondary">{language === 'tr' ? 'Tüm Siparişler' : 'All Orders'}</Button>
-              </Link>
-              <Link to="/katalog">
-                <Button>{language === 'tr' ? 'Alışverişe Dön' : 'Continue Shopping'}</Button>
-              </Link>
-            </div>
-          </div>
-
-          <div className="order-hero-facts">
-            <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Durum' : 'Status'}</span>
-              <strong>{translateOrderStatus(language, order.status)}</strong>
-            </div>
-            <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Sipariş Tarihi' : 'Order Date'}</span>
-              <strong>{formatDate(order.createdAt, language)}</strong>
-            </div>
-            <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Ürün Adedi' : 'Item Count'}</span>
-              <strong>{itemCount}</strong>
-            </div>
-            <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Genel Toplam' : 'Grand Total'}</span>
-              <strong>{formatCurrency(order.total, language)}</strong>
-            </div>
-            <div className="order-hero-fact">
-              <span>{language === 'tr' ? 'Ödeme' : 'Payment'}</span>
-              <strong>
-                {translatePaymentStatus(language, order.paymentStatus)}
-                {order.paidAt ? ` · ${formatDate(order.paidAt, language)}` : ''}
-              </strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="profile-card profile-card--full">
-          <div className="order-progress">
-            {orderFlow.map((step, index) => (
-              <div className={['order-progress__step', index <= stepIndex ? 'is-active' : ''].filter(Boolean).join(' ')} key={step.id}>
-                <span className="order-progress__index">{index + 1}</span>
-                <div>
-                  <strong>{language === 'tr' ? step.titleTr : step.titleEn}</strong>
-                  <p>{language === 'tr' ? step.descriptionTr : step.descriptionEn}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {order.status === 'shipped' || order.status === 'delivered' ? (
-          <div className="profile-card profile-card--full">
-            <div className="section-header">
-              <div>
-                <h2>{language === 'tr' ? 'Kargo Takibi' : 'Shipment Tracking'}</h2>
-                <p>
-                  {language === 'tr'
-                    ? 'Siparişiniz Yurtiçi Kargo ile yola çıktı. Takip numaranız kargo firması tarafından SMS ile gönderilir; aşağıdaki buton sizi kargo firmasının takip sayfasına götürür.'
-                    : 'Your order has been handed to Yurtici Kargo. The tracking number is sent to you by SMS; the button below opens the carrier’s tracking page.'}
-                </p>
-              </div>
-            </div>
-            <a href={appConfig.cargoTrackingUrl} rel="noreferrer" target="_blank" style={{ display: 'inline-block', maxWidth: 320 }}>
-              <Button style={{ width: '100%' }}>
-                {language === 'tr' ? 'Kargoyu Takip Et' : 'Track Shipment'}
-              </Button>
-            </a>
-          </div>
-        ) : null}
-
-        <div className="profile-card profile-card--full">
-          <div className="order-kpi-grid">
-            <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Sipariş No' : 'Order Number'}</span>
-              <strong>{order.orderNumber}</strong>
-            </div>
-            <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Teslimat Kişisi' : 'Delivery Contact'}</span>
-              <strong>{order.shippingName}</strong>
-            </div>
-            <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Telefon' : 'Phone'}</span>
-              <strong>{order.shippingPhone}</strong>
-            </div>
-            <div className="order-kpi-card">
-              <span>{language === 'tr' ? 'Süreç Notu' : 'Progress Note'}</span>
-              <strong>{getOrderHeadline(order.status, language)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="order-detail-main profile-card--full">
-          <div className="order-detail-primary">
-            <div className="profile-card">
-              <div className="section-header">
-                <div>
-                  <h2>{language === 'tr' ? 'Ürün Satırları' : 'Order Items'}</h2>
-                  <p>{language === 'tr' ? 'Siparişinize eklenen ürünler, adetler ve satır toplamları.' : 'Products included in your order, quantities, and line totals.'}</p>
-                </div>
-              </div>
-              <div className="order-item-list">
-                {order.items.map((item) => (
-                  <div className="order-item-card" key={item.id}>
-                    <div className="order-item-card__media">
-                      <span>{item.productName.slice(0, 1)}</span>
-                    </div>
-                    <div className="order-item-card__body">
-                      <div className="order-item-card__heading">
-                        <strong>{item.productName}</strong>
-                        <span>{language === 'tr' ? 'Satır Toplamı' : 'Line Total'}</span>
-                      </div>
-                      <div className="order-item-card__meta">
-                        <div>
-                          <span>{language === 'tr' ? 'Birim Fiyat' : 'Unit Price'}</span>
-                          <strong>{formatCurrency(item.unitPrice, language)}</strong>
-                        </div>
-                        <div>
-                          <span>{language === 'tr' ? 'Adet' : 'Quantity'}</span>
-                          <strong>{item.quantity}</strong>
-                        </div>
-                        <div>
-                          <span>{language === 'tr' ? 'Ara Toplam' : 'Subtotal'}</span>
-                          <strong>{formatCurrency(item.lineTotal, language)}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {order.notes ? (
-              <div className="profile-card">
-                <div className="section-header">
-                  <div>
-                    <h2>{language === 'tr' ? 'Sipariş Notunuz' : 'Your Order Note'}</h2>
-                    <p>{language === 'tr' ? 'Checkout sırasında eklediğiniz not burada saklanır.' : 'The note you left during checkout is shown here.'}</p>
-                  </div>
-                </div>
-                <div className="order-note-card">
-                  <p>{order.notes}</p>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <aside className="order-detail-sidebar">
-            <div className="profile-card">
-              <div className="section-header">
-                <div>
-                  <h2>{language === 'tr' ? 'Sipariş Özetiniz' : 'Order Summary'}</h2>
-                  <p>{formatDate(order.createdAt, language)}</p>
-                </div>
-              </div>
-              <div className="order-detail-stack">
-                <div className="checkout-summary-box">
-                  <strong>{language === 'tr' ? 'Ürün Toplamı' : 'Products Total'}</strong>
-                  <p>{formatCurrency(order.total, language)}</p>
-                </div>
-                <div className="checkout-summary-box">
-                  <strong>{language === 'tr' ? 'Kargo' : 'Shipping'}</strong>
-                  <p>{language === 'tr' ? 'Sipariş detayına dahil' : 'Included in the order detail'}</p>
-                </div>
-                <div className="checkout-summary-box">
-                  <strong>{language === 'tr' ? 'Genel Toplam' : 'Grand Total'}</strong>
-                  <p>{formatCurrency(order.total, language)}</p>
-                </div>
-                <div className="checkout-summary-box">
-                  <strong>{language === 'tr' ? 'Fatura' : 'Invoice'}</strong>
-                  {order.invoicePdfUrl ? (
-                    <p>
-                      <a href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
-                        {order.invoiceFileName ?? (language === 'tr' ? 'PDF faturayı indir' : 'Download PDF invoice')}
-                      </a>
-                    </p>
-                  ) : (
-                    <p>{language === 'tr' ? 'Fatura hazırlandığında burada görünecek.' : 'The invoice will appear here when it is ready.'}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="profile-card">
-              <div className="section-header">
-                <div>
-                  <h2>{language === 'tr' ? 'Teslimat Bilgileri' : 'Delivery Details'}</h2>
-                  <p>{language === 'tr' ? 'Teslimat kişisi ve açık adres bilgileri.' : 'Delivery contact and full address details.'}</p>
-                </div>
-              </div>
-              <div className="order-detail-stack">
-                <div className="checkout-summary-box">
-                  <strong>{order.shippingName}</strong>
-                  <p>{order.shippingPhone}</p>
-                </div>
-                <div className="checkout-summary-box">
-                  <strong>{language === 'tr' ? 'Adres' : 'Address'}</strong>
-                  <p>{order.shippingAddressLine}</p>
-                  <p>{order.shippingDistrict} / {order.shippingCity}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="profile-card order-support-card">
-              <div className="section-header">
-                <div>
-                  <h2>{language === 'tr' ? 'Süreç ve Destek' : 'Progress and Support'}</h2>
-                  <p>{language === 'tr' ? 'Siparişiniz için kısa durum özeti ve yönlendirme.' : 'A short status summary and guidance for your order.'}</p>
-                </div>
-              </div>
-              <div className="order-support-card__body">
-                <strong>{getOrderHeadline(order.status, language)}</strong>
-                <p>{getOrderSupportCopy(order.status, language)}</p>
-                <div className="order-support-card__actions">
-                  <Link to="/iletisim">
-                    <Button variant="secondary">{language === 'tr' ? 'Destekle İletişime Geç' : 'Contact Support'}</Button>
-                  </Link>
-                  <Link to="/teslimat">
-                    <Button variant="ghost">{language === 'tr' ? 'Teslimat Bilgisi' : 'Delivery Info'}</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </div>
+        <OrderDetailView
+          justPlaced={state?.justPlaced}
+          onCreateRefundRequest={(payload) => api.createMyRefundRequest(token, order.id, payload)}
+          onOrderChange={setOrder}
+          order={order}
+        />
       </div>
     </section>
   );
@@ -446,7 +458,6 @@ export function OrderDetailPage() {
 
 export function GuestOrderTrackingPage() {
   const { token = '' } = useParams();
-  const { language } = useI18n();
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -455,90 +466,34 @@ export function GuestOrderTrackingPage() {
     void api.trackOrder(token).then(setOrder).catch((nextError: Error) => setError(nextError.message));
   }, [token]);
 
-  if (error) {
-    return (
-      <section className="page-section" style={{ paddingTop: '140px' }}>
-        <div className="ui-shell account-layout">
+  const content = useMemo(() => {
+    if (error) {
+      return (
+        <>
           <EmptyState description={error} title="Sipariş takip edilemiyor" />
           <Link to="/iletisim">
             <Button>Destek Al</Button>
           </Link>
-        </div>
-      </section>
-    );
-  }
+        </>
+      );
+    }
 
-  if (!order) {
+    if (!order) {
+      return <EmptyState description="Sipariş bilgileri yükleniyor." title="Lütfen bekleyin" />;
+    }
+
     return (
-      <section className="page-section" style={{ paddingTop: '140px' }}>
-        <div className="ui-shell account-layout">
-          <EmptyState description="Sipariş bilgileri yükleniyor." title="Lütfen bekleyin" />
-        </div>
-      </section>
+      <OrderDetailView
+        onCreateRefundRequest={(payload) => api.createTrackedRefundRequest(token, payload)}
+        onOrderChange={setOrder}
+        order={order}
+      />
     );
-  }
+  }, [error, order, token]);
 
   return (
     <section className="page-section" style={{ paddingTop: '140px' }}>
-      <div className="ui-shell orders-layout">
-        <div className="order-confirmation-card">
-          <div>
-            <div className="detail-chip">Sipariş Takibi</div>
-            <h1>{order.orderNumber}</h1>
-            <p>Ödeme ve teslimat sürecini bu güvenli bağlantıdan takip edebilirsin.</p>
-          </div>
-          <span className={`order-badge order-badge--payment-${order.paymentStatus}`}>{translatePaymentStatus(language, order.paymentStatus)}</span>
-        </div>
-
-        <div className="order-detail-grid">
-          <div className="admin-card">
-            <div className="admin-card__head">
-              <h2>Ürünler</h2>
-              <p>{order.items.length} satır</p>
-            </div>
-            <div className="checkout-lines">
-              {order.items.map((item) => (
-                <div className="checkout-line" key={item.id}>
-                  <span>
-                    {item.productName} × {item.quantity}
-                  </span>
-                  <strong>{formatCurrency(item.lineTotal, language)}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <aside className="admin-card">
-            <div className="checkout-summary-box">
-              <span>Durum</span>
-              <strong>{translateOrderStatus(language, order.status)}</strong>
-            </div>
-            <div className="checkout-summary-box">
-              <span>Toplam</span>
-              <strong>{formatCurrency(order.total, language)}</strong>
-            </div>
-            <div className="checkout-summary-box">
-              <span>Teslimat</span>
-              <strong>{order.shippingCity}</strong>
-              <p>{order.shippingAddressLine}</p>
-            </div>
-            <div className="checkout-summary-box">
-              <span>Fatura</span>
-              <strong>{order.billing.name}</strong>
-              <p>TC Kimlik: ***{order.billing.identityNumberLast4}</p>
-              {order.invoicePdfUrl ? (
-                <p>
-                  <a href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
-                    PDF faturayı indir
-                  </a>
-                </p>
-              ) : (
-                <p>Fatura hazırlandığında burada görünecek.</p>
-              )}
-            </div>
-          </aside>
-        </div>
-      </div>
+      <div className="ui-shell orders-layout">{content}</div>
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { AppError } from '../../lib/app-error.js';
 import { sendMail } from '../../lib/mail/transport.js';
 import { invoiceReadyEmail } from '../../lib/mail/templates.js';
 import { requestRefund } from '../../lib/paytr.js';
+import { buildRefundSelection } from '../../lib/refunds.js';
 import { serializeDashboardMetrics, serializeOrder, serializeProduct, serializeUser } from '../../lib/serializers.js';
 import { deleteManyMediaFromR2, extractR2KeyFromUrl, uploadInvoicePdfToR2, uploadMediaToR2 } from '../../lib/r2.js';
 import { AdminRepository } from './admin.repository.js';
@@ -60,7 +61,10 @@ const optionalMediaUrlSchema = z.preprocess(emptyStringToNull, mediaUrlSchema.nu
 const optionalMimeTypeSchema = z.preprocess(emptyStringToNull, z.string().nullable().optional());
 
 const refundSchema = z.object({
-  amount: z.number().positive(),
+  refundId: z.string().min(1).optional(),
+  amount: z.number().positive().optional(),
+  manualAmount: z.number().positive().optional(),
+  items: z.array(z.object({ orderItemId: z.string().min(1), quantity: z.number().int().min(1) })).optional(),
   reason: z.string().max(500).optional(),
   restock: z.boolean().default(false),
 });
@@ -390,24 +394,51 @@ export class AdminService {
       throw new AppError('Bu siparis icin iade baslatilamaz.', 409);
     }
 
-    const refundableAmount = Number(order.total) - Number(order.refundedAmount ?? 0);
-    if (data.amount > refundableAmount) {
+    const completedAmount = Number(order.refundedAmount ?? 0);
+    const pendingAmount = (order.refunds ?? [])
+      .filter((refund: any) => refund.status === 'PENDING')
+      .reduce((sum: number, refund: any) => sum + Number(refund.amount), 0);
+    const availableAmount = Number(order.total) - completedAmount - pendingAmount;
+    let refund = data.refundId ? order.refunds.find((entry: any) => entry.id === data.refundId && entry.status === 'PENDING') : null;
+    let amount = refund ? Number(refund.amount) : 0;
+    let items: Array<{ orderItemId: string; productId: string; quantity: number; unitPrice: number; lineTotal: number }> | undefined;
+
+    if (!refund) {
+      if (data.items?.length) {
+        const selection = buildRefundSelection(order, data.items);
+        amount = selection.amount;
+        items = selection.items;
+      } else {
+        amount = data.manualAmount ?? data.amount ?? 0;
+      }
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new AppError('Iade tutari gecersiz.', 400);
+    }
+
+    if (!refund && amount > availableAmount) {
       throw new AppError('Iade tutari kalan iade edilebilir tutari asamaz.', 400);
     }
 
-    if (data.restock && Math.round(data.amount * 100) !== Math.round(refundableAmount * 100)) {
-      throw new AppError('Stok geri ekleme yalnizca kalan tutarin tamami iade edilirken kullanilabilir.', 400);
+    const isFullRemainingRefund = Math.round(amount * 100) === Math.round(availableAmount * 100);
+    if (data.restock && !refund?.items?.length && !items?.length && !isFullRemainingRefund) {
+      throw new AppError('Stok geri eklemek icin urun bazli iade secimi gereklidir.', 400);
     }
 
-    const refund = await this.repository.createRefund(id, adminId, {
-      merchantOid: order.paymentRef,
-      amount: data.amount,
-      reason: data.reason,
-      restock: data.restock,
-    });
+    if (!refund) {
+      refund = await this.repository.createRefund(id, adminId, {
+        merchantOid: order.paymentRef,
+        amount,
+        reason: data.reason,
+        restock: data.restock,
+        source: 'admin',
+        items,
+      });
+    }
 
     try {
-      const paytrResult = await requestRefund({ merchantOid: order.paymentRef, amount: data.amount });
+      const paytrResult = await requestRefund({ merchantOid: order.paymentRef, amount });
       const updatedOrder = await this.repository.completeRefund(refund.id, {
         paytrReference: paytrResult.referenceNo,
         restock: data.restock,

@@ -1371,6 +1371,292 @@
   color: #5fb4ff;
 }
 
+.order-badge--payment-completed {
+  border-color: rgba(46, 204, 113, 0.45);
+  color: #2ecc71;
+}
+
+.order-detail-simple {
+  display: grid;
+  gap: 18px;
+}
+
+.order-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 106, 33, 0.16), transparent 42%),
+    color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.order-summary-card--success {
+  border-color: rgba(46, 204, 113, 0.38);
+  background:
+    linear-gradient(135deg, rgba(46, 204, 113, 0.14), transparent 40%),
+    color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.order-summary-card h1 {
+  margin: 0.5rem 0 0.45rem;
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  letter-spacing: -0.04em;
+}
+
+.order-summary-card p,
+.order-section-head p,
+.compact-info-card p,
+.compact-info-card span,
+.refund-history-item span,
+.order-line-card span,
+.refund-picker-item span {
+  color: var(--text-soft);
+}
+
+.order-summary-card__facts {
+  display: grid;
+  justify-items: end;
+  gap: 0.25rem;
+  text-align: right;
+}
+
+.order-summary-card__facts span {
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.order-summary-card__facts strong {
+  color: var(--text-strong);
+  font-size: 1.45rem;
+}
+
+.order-summary-card__facts small {
+  color: var(--text-soft);
+}
+
+.order-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.order-mini-grid > div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+.order-mini-grid span {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+}
+
+.order-mini-grid strong {
+  color: var(--text-strong);
+  font-size: 0.92rem;
+}
+
+.order-progress--compact {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+.order-progress--compact .order-progress__step {
+  gap: 0.65rem;
+}
+
+.order-progress--compact .order-progress__step p {
+  display: none;
+}
+
+.order-detail-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.order-detail-split__main,
+.order-detail-split__side,
+.order-line-list,
+.refund-history-list,
+.refund-picker-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 16px;
+}
+
+.order-section-head h2,
+.compact-info-card h3 {
+  margin: 0 0 0.25rem;
+  color: var(--text-strong);
+}
+
+.order-section-head p,
+.compact-info-card p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.order-line-card,
+.refund-history-item,
+.refund-picker-item,
+.refund-modal-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-muted, #16181d) 58%, transparent);
+}
+
+.order-line-card > div:first-child,
+.refund-history-item > div:first-child,
+.refund-picker-item > div:first-child {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.order-line-card__numbers {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  gap: 16px;
+  align-items: center;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.compact-info-card {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.compact-info-card a,
+.refund-history-item strong,
+.order-line-card strong {
+  color: var(--text-strong);
+}
+
+.refund-history-item > div:last-child {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+}
+
+.refund-request-modal {
+  max-width: 680px;
+}
+
+.refund-picker-item {
+  cursor: pointer;
+}
+
+.refund-picker-item.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.refund-picker-item input {
+  width: 84px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--text-strong);
+  text-align: center;
+}
+
+.refund-modal-summary {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+}
+
+.refund-admin-request {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.refund-admin-request span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.refund-admin-request small,
+.refund-admin-note p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.refund-admin-note {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-muted, #16181d) 52%, transparent);
+}
+
+@media (max-width: 900px) {
+  .order-summary-card,
+  .order-section-head,
+  .order-line-card,
+  .refund-history-item,
+  .refund-picker-item,
+  .refund-modal-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .order-summary-card__facts,
+  .refund-history-item > div:last-child {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .order-mini-grid,
+  .order-detail-split {
+    grid-template-columns: 1fr;
+  }
+
+  .order-line-card__numbers {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    text-align: left;
+    white-space: normal;
+  }
+}
+
 /* --- Sade admin yapisi (v2) ------------------------------------------- */
 .admin-page {
   display: grid;
@@ -1648,6 +1934,21 @@
 
 .rich-text-editor__surface p {
   margin: 0 0 0.8rem;
+}
+
+.rich-text-editor__surface [style*='text-align: center'],
+.rich-text-editor__preview [style*='text-align: center'] {
+  text-align: center;
+}
+
+.rich-text-editor__surface [style*='text-align: right'],
+.rich-text-editor__preview [style*='text-align: right'] {
+  text-align: right;
+}
+
+.rich-text-editor__surface [style*='text-align: left'],
+.rich-text-editor__preview [style*='text-align: left'] {
+  text-align: left;
 }
 
 .rich-text-editor__surface ul,

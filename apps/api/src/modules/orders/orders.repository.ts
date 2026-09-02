@@ -3,6 +3,8 @@ import { randomBytes } from 'node:crypto';
 import { prisma } from '../../db/prisma.js';
 import { hashTrackingToken } from '../../lib/crypto.js';
 
+const orderInclude = { items: true, refunds: { include: { items: true }, orderBy: { createdAt: 'desc' as const } } };
+
 export function generateOrderNumber() {
   return `BBT-${Date.now().toString(36).toUpperCase()}${randomBytes(3).toString('hex').toUpperCase()}`;
 }
@@ -16,7 +18,7 @@ export class OrdersRepository {
   listOrdersForUser(userId: string) {
     return prisma.order.findMany({
       where: { userId, paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -28,14 +30,50 @@ export class OrdersRepository {
         userId,
         paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] },
       },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
     });
   }
 
   findOrderByTrackingToken(token: string) {
     return prisma.order.findUnique({
       where: { trackingTokenHash: hashTrackingToken(token) },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
+    });
+  }
+
+  createRefundRequest(
+    orderId: string,
+    input: {
+      merchantOid: string;
+      amount: number;
+      requestedByUserId?: string;
+      requestedByEmail: string;
+      customerReason: string;
+      customerNote: string;
+      items: Array<{ orderItemId: string; productId: string; quantity: number; unitPrice: number; lineTotal: number }>;
+    },
+  ) {
+    return prisma.$transaction(async (tx) => {
+      await tx.refund.create({
+        data: {
+          orderId,
+          merchantOid: input.merchantOid,
+          amount: input.amount,
+          source: 'customer',
+          requestedByUserId: input.requestedByUserId,
+          requestedByEmail: input.requestedByEmail,
+          customerReason: input.customerReason,
+          customerNote: input.customerNote,
+          requestedAt: new Date(),
+          restock: false,
+          items: { create: input.items },
+        },
+      });
+
+      return tx.order.findUnique({
+        where: { id: orderId },
+        include: orderInclude,
+      });
     });
   }
 }

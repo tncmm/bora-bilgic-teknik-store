@@ -339,6 +339,7 @@ model OrderItem {
   lineTotal   Decimal  @db.Decimal(10, 2)
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  refundItems RefundItem[]
 }
 
 model Refund {
@@ -349,6 +350,12 @@ model Refund {
   amount         Decimal       @db.Decimal(10, 2)
   status         AttemptStatus @default(PENDING)
   reason         String?
+  source         String        @default("admin")
+  requestedByUserId String?
+  requestedByEmail  String?
+  customerReason String?
+  customerNote   String?
+  requestedAt    DateTime?
   restock        Boolean       @default(false)
   paytrReference String?
   failureReason  String?
@@ -357,7 +364,24 @@ model Refund {
   completedAt    DateTime?
   order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   admin          User?         @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  items          RefundItem[]
 
   @@index([orderId, createdAt])
   @@index([status, createdAt])
+}
+
+model RefundItem {
+  id          String   @id @default(cuid())
+  refundId    String
+  orderItemId String
+  productId   String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  lineTotal   Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  refund      Refund   @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([refundId])
+  @@index([orderItemId])
 }

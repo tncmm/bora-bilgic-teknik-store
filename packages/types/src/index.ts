@@ -189,6 +189,10 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  refundedQuantity: number;
+  pendingRefundQuantity: number;
+  refundableQuantity: number;
+  refundableAmount: number;
 }
 
 export interface OrderBillingSummary {
@@ -209,11 +213,27 @@ export interface Refund {
   amount: number;
   status: 'pending' | 'completed' | 'failed' | 'expired';
   reason?: string | null;
+  source: 'customer' | 'admin';
+  requestedByUserId?: string | null;
+  requestedByEmail?: string | null;
+  customerReason?: string | null;
+  customerNote?: string | null;
+  requestedAt?: string | null;
   restock: boolean;
   paytrReference?: string | null;
   failureReason?: string | null;
   createdAt: string;
   completedAt?: string | null;
+  items?: RefundItem[];
+}
+
+export interface RefundItem {
+  id: string;
+  orderItemId: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
 }
 
 export interface Order {

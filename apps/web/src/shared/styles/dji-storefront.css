@@ -1104,6 +1104,18 @@ body {
   margin: 0 0 1rem;
 }
 
+.dji-detail-description [style*='text-align: center'] {
+  text-align: center;
+}
+
+.dji-detail-description [style*='text-align: right'] {
+  text-align: right;
+}
+
+.dji-detail-description [style*='text-align: left'] {
+  text-align: left;
+}
+
 .dji-detail-description :is(h2, h3, h4) {
   margin: 1.1rem 0 0.55rem;
   color: #fff;

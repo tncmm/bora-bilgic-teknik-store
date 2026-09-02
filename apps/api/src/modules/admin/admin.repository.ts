@@ -2,6 +2,8 @@ import { OrderStatus } from '@prisma/client';
 
 import { prisma } from '../../db/prisma.js';
 
+const orderInclude = { items: true, refunds: { include: { items: true }, orderBy: { createdAt: 'desc' as const } } };
+
 export class AdminRepository {
   countDashboardMetrics() {
     // Unpaid orders are payment attempts, not sales: they never reach the
@@ -105,7 +107,7 @@ export class AdminRepository {
       where: { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } },
       include: {
         items: true,
-        refunds: { orderBy: { createdAt: 'desc' } },
+        refunds: { include: { items: true }, orderBy: { createdAt: 'desc' } },
         user: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -115,7 +117,7 @@ export class AdminRepository {
   getOrder(id: string) {
     return prisma.order.findUnique({
       where: { id },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
     });
   }
 
@@ -123,7 +125,7 @@ export class AdminRepository {
     return prisma.order.update({
       where: { id },
       data: { status },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
     });
   }
 
@@ -135,7 +137,7 @@ export class AdminRepository {
         invoiceFileName: input.invoiceFileName,
         invoiceUploadedAt: new Date(),
       },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
     });
   }
 
@@ -143,11 +145,26 @@ export class AdminRepository {
     return prisma.order.update({
       where: { id },
       data: { invoiceSentAt: new Date() },
-      include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+      include: orderInclude,
     });
   }
 
-  createRefund(orderId: string, adminId: string | undefined, input: { merchantOid: string; amount: number; reason?: string; restock: boolean }) {
+  createRefund(
+    orderId: string,
+    adminId: string | undefined,
+    input: {
+      merchantOid: string;
+      amount: number;
+      reason?: string;
+      restock: boolean;
+      source?: 'admin' | 'customer';
+      requestedByUserId?: string;
+      requestedByEmail?: string;
+      customerReason?: string;
+      customerNote?: string;
+      items?: Array<{ orderItemId: string; productId: string; quantity: number; unitPrice: number; lineTotal: number }>;
+    },
+  ) {
     return prisma.refund.create({
       data: {
         orderId,
@@ -156,7 +173,19 @@ export class AdminRepository {
         amount: input.amount,
         reason: input.reason,
         restock: input.restock,
+        source: input.source ?? 'admin',
+        requestedByUserId: input.requestedByUserId,
+        requestedByEmail: input.requestedByEmail,
+        customerReason: input.customerReason,
+        customerNote: input.customerNote,
+        requestedAt: input.source === 'customer' ? new Date() : undefined,
+        items: input.items?.length
+          ? {
+              create: input.items,
+            }
+          : undefined,
       },
+      include: { items: true },
     });
   }
 
@@ -174,9 +203,10 @@ export class AdminRepository {
         data: {
           status: 'COMPLETED',
           paytrReference: input.paytrReference,
+          restock: input.restock,
           completedAt: new Date(),
         },
-        include: { order: { include: { items: true, refunds: true } } },
+        include: { items: true, order: { include: { items: true, refunds: { include: { items: true } } } } },
       });
 
       const order = refund.order;
@@ -185,7 +215,8 @@ export class AdminRepository {
       const nextPaymentStatus = refundedAmount >= Number(order.total) ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
 
       if (input.restock) {
-        for (const item of order.items) {
+        const itemsToRestock = refund.items.length > 0 ? refund.items : order.items.map((item) => ({ productId: item.productId, quantity: item.quantity }));
+        for (const item of itemsToRestock) {
           await tx.product.update({
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },
@@ -200,7 +231,7 @@ export class AdminRepository {
           paymentStatus: nextPaymentStatus,
           lastRefundedAt: new Date(),
         },
-        include: { items: true, refunds: { orderBy: { createdAt: 'desc' } } },
+        include: orderInclude,
       });
     });
   }

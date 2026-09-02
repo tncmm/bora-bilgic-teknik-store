@@ -53,6 +53,21 @@ export interface CheckoutPayload {
   notes?: string;
 }
 
+export interface RefundRequestPayload {
+  items: Array<{ orderItemId: string; quantity: number }>;
+  reason: string;
+  note: string;
+}
+
+export interface AdminRefundPayload {
+  refundId?: string;
+  amount?: number;
+  manualAmount?: number;
+  items?: Array<{ orderItemId: string; quantity: number }>;
+  reason?: string;
+  restock: boolean;
+}
+
 interface ApiErrorPayload {
   message?: string;
   fieldErrors?: Record<string, string[]>;
@@ -236,6 +251,18 @@ export const api = {
   trackOrder(trackingToken: string) {
     return request<Order>(`/orders/track/${trackingToken}`);
   },
+  createMyRefundRequest(token: string, orderId: string, payload: RefundRequestPayload) {
+    return request<Order>(`/orders/me/${orderId}/refund-requests`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, token);
+  },
+  createTrackedRefundRequest(trackingToken: string, payload: RefundRequestPayload) {
+    return request<Order>(`/orders/track/${trackingToken}/refund-requests`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
   getAdminDashboard(token: string) {
     return request<DashboardMetrics>('/admin/dashboard', {}, token);
   },
@@ -311,7 +338,7 @@ export const api = {
       body: JSON.stringify({ status }),
     }, token);
   },
-  refundAdminOrder(token: string, orderId: string, payload: { amount: number; reason?: string; restock: boolean }) {
+  refundAdminOrder(token: string, orderId: string, payload: AdminRefundPayload) {
     return request<Order>(`/admin/orders/${orderId}/refunds`, {
       method: 'POST',
       body: JSON.stringify(payload),
