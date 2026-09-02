@@ -1903,8 +1903,42 @@ body {
 }
 
 @media (max-width: 780px) {
-  .dji-hero {
-    height: clamp(330px, 64vw, 480px);
+  .dji-hero.dji-hero-slider {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    background: #000;
+  }
+
+  .dji-hero-slider .dji-hero__background {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  .dji-hero-slider .dji-hero__background img {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    object-fit: contain;
+    object-position: center top;
+  }
+
+  .dji-hero-slider .dji-hero__content {
+    position: absolute;
+    inset: auto 0 0;
+    width: 100%;
+    height: auto;
+    padding: 0 18px 1.4rem;
+  }
+
+  .dji-service-band--overlay {
+    margin-top: 1rem;
+  }
+
+  .dji-section__heading h2 {
+    font-size: clamp(1.65rem, 7vw, 2.05rem);
   }
 
   .dji-service-band__grid,
@@ -2121,24 +2155,23 @@ body {
     height: 36px;
   }
 
-  .dji-hero {
-    height: clamp(220px, 62vw, 340px);
-    aspect-ratio: 4 / 3;
+  .dji-hero.dji-hero-slider {
+    height: auto;
+    aspect-ratio: auto;
   }
 
   .dji-hero-slider .dji-hero__content {
     width: 100%;
-    padding-left: 12px;
-    padding-bottom: 2.25rem;
+    padding: 0 12px 1rem;
   }
 
   .dji-hero-slider h1 {
-    font-size: clamp(1.05rem, 7.2vw, 1.8rem);
+    font-size: clamp(0.95rem, 6vw, 1.35rem);
   }
 
   .dji-hero-slider h2 {
-    margin-top: 0.35rem;
-    font-size: clamp(0.58rem, 3.2vw, 0.78rem);
+    margin-top: 0.25rem;
+    font-size: clamp(0.54rem, 2.9vw, 0.7rem);
     letter-spacing: 0.05em;
   }
 
