@@ -322,9 +322,19 @@ export function HomePage() {
             <Link to="/katalog">TÜM KATEGORİLER</Link>
           </div>
           <div className="dji-category-grid">
-            {storefrontSections.slice(0, 4).map((section) => {
-              const category = categories.find((item) => item.slug === section.slug);
-              const categoryImageUrl = category?.heroImageUrl;
+            {(categories.length > 0
+              ? categories.slice(0, 4).map((category) => ({
+                  slug: category.slug,
+                  label: category.name,
+                  path: `/kategori/${category.slug}`,
+                  category,
+                }))
+              : storefrontSections.slice(0, 4).map((section) => ({
+                  ...section,
+                  category: categories.find((item) => item.slug === section.slug),
+                }))
+            ).map((section) => {
+              const categoryImageUrl = section.category?.heroImageUrl;
               return (
                 <Link className="dji-category-card" key={section.slug} to={section.path}>
                   <div className="dji-category-card__media">
@@ -332,7 +342,7 @@ export function HomePage() {
                   </div>
                   <div className="dji-category-card__content">
                     <h3>{section.label}</h3>
-                    <p>{category?.description ?? translateCategoryName(language, section.slug, section.label)}</p>
+                    <p>{section.category?.description ?? translateCategoryName(language, section.slug, section.label)}</p>
                   </div>
                 </Link>
               );
@@ -515,7 +525,7 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
             <span>›</span>
             <span>{activeCategory?.name ?? section?.label ?? 'Katalog'}</span>
           </div>
-          <h1>{activeCategory?.heroTitle ?? section?.label?.toUpperCase() ?? 'KATALOG'}</h1>
+          <h1>{activeCategory?.heroTitle ?? activeCategory?.name ?? section?.label?.toUpperCase() ?? 'KATALOG'}</h1>
           <p>{activeCategory?.heroDescription ?? activeCategory?.description ?? 'Bora Bilgiç kataloğunu teknik ve görsel olarak tek akışta keşfedin.'}</p>
         </div>
       </section>
