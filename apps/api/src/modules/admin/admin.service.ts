@@ -174,6 +174,7 @@ const categorySchema = z.object({
   description: z.string().trim().optional().default(''),
   heroTitle: z.preprocess(emptyStringToNull, z.string().trim().nullable().optional()),
   heroDescription: z.preprocess(emptyStringToNull, z.string().trim().nullable().optional()),
+  heroImageUrl: optionalMediaUrlSchema,
   sortOrder: z.number().int().min(0).optional().default(0),
 });
 
