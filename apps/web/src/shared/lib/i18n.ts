@@ -63,3 +63,20 @@ export function translatePaymentStatus(language: Language, status?: string) {
 
   return dictionary[normalized]?.[language] ?? status;
 }
+
+/** Normalize kargo durumu (packages/types CargoStatus) için arayüz etiketi. */
+export function translateCargoStatus(status?: string | null) {
+  if (!status) return null;
+
+  const dictionary: Record<string, string> = {
+    DELIVERED: 'Teslim Edildi',
+    OUT_FOR_DELIVERY: 'Dağıtımda',
+    IN_TRANSIT: 'Yolda',
+    AT_BRANCH: 'Şubede',
+    EXCEPTION: 'Sorunlu',
+    CANCELLED: 'İptal Edildi',
+    UNKNOWN: 'Bilinmiyor',
+  };
+
+  return dictionary[status] ?? status;
+}

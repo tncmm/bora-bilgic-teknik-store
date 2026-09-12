@@ -15,6 +15,8 @@ import type {
   PaymentStatusResponse,
   PaytrTokenResponse,
   Product,
+  ShipmentInfo,
+  ShipmentReturnCode,
   ThemeMode,
   User,
   Wishlist,
@@ -359,6 +361,26 @@ export const api = {
     return request<Order>(`/admin/orders/${orderId}/invoice`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    }, token);
+  },
+  createAdminOrderShipment(token: string, orderId: string) {
+    return request<ShipmentInfo>(`/admin/orders/${orderId}/shipment`, {
+      method: 'POST',
+    }, token);
+  },
+  syncAdminOrderShipment(token: string, orderId: string) {
+    return request<ShipmentInfo>(`/admin/orders/${orderId}/shipment/sync`, {
+      method: 'POST',
+    }, token);
+  },
+  cancelAdminOrderShipment(token: string, orderId: string) {
+    return request<ShipmentInfo>(`/admin/orders/${orderId}/shipment/cancel`, {
+      method: 'POST',
+    }, token);
+  },
+  createAdminRefundReturnCode(token: string, refundId: string) {
+    return request<ShipmentReturnCode>(`/admin/refunds/${refundId}/return-code`, {
+      method: 'POST',
     }, token);
   },
   getAdminUsers(token: string) {

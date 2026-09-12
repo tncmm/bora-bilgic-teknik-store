@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+import { Seo } from '../../shared/components/Seo';
 import { ServiceBand, StoreFooter } from './pages';
 
 interface InfoSection {
@@ -14,11 +15,16 @@ interface InfoPageProps {
   pathLabel: string;
   highlights: Array<{ title: string; description: string }>;
   sections: InfoSection[];
+  /** <title> için başlık-kasalı SEO metni (ör. "İade ve Değişim"). */
+  seoTitle: string;
+  /** Canonical yol (ör. "/iade"). */
+  seoPath: string;
 }
 
-function InfoPage({ title, summary, pathLabel, highlights, sections }: InfoPageProps) {
+function InfoPage({ title, summary, pathLabel, highlights, sections, seoTitle, seoPath }: InfoPageProps) {
   return (
     <>
+      <Seo description={summary} path={seoPath} title={seoTitle} />
       <section className="dji-contact-hero">
         <div className="ui-shell">
           <div className="dji-breadcrumbs">
@@ -134,6 +140,8 @@ export function DeliveryPage() {
       ]}
       summary="Sipariş hazırlama, kargo ücreti, ücretsiz kargo eşiği, teslimat süreleri, sipariş takibi ve teslimatta kontrol adımları bu sayfada detaylı olarak açıklanmıştır."
       title="KARGO VE TESLİMAT"
+      seoTitle="Kargo ve Teslimat Bilgileri"
+      seoPath="/teslimat"
     />
   );
 }
@@ -211,6 +219,8 @@ export function ReturnPage() {
       ]}
       summary="14 günlük cayma hakkı, iade koşulları, adım adım iade süreci, geri ödeme süreleri, değişim işlemleri ve hasarlı teslimat prosedürü bu sayfada detaylı olarak açıklanmıştır."
       title="İADE VE DEĞİŞİM"
+      seoTitle="İade ve Değişim"
+      seoPath="/iade"
     />
   );
 }
@@ -294,6 +304,8 @@ export function DistanceSalesPage() {
       ]}
       summary="Mesafeli satış sözleşmesine ilişkin taraflar, sözleşme konusu, ürün bilgileri, fiyatlandırma, ödeme ve teslimat koşulları, cayma hakkı ile uyuşmazlık çözümüne dair genel ön bilgilendirme bu sayfada yer almaktadır."
       title="MESAFELİ SATIŞ ÖN BİLGİLENDİRME"
+      seoTitle="Mesafeli Satış Ön Bilgilendirme"
+      seoPath="/mesafeli-satis"
     />
   );
 }
@@ -336,6 +348,8 @@ export function PrivacyPage() {
       ]}
       summary="Kişisel verilerin hangi kapsamda toplandığı, ne amaçla kullanıldığı ve hangi güvenlik tedbirleriyle korunduğu bu sayfada açıkça belirtilir."
       title="GİZLİLİK POLİTİKASI"
+      seoTitle="Gizlilik Politikası"
+      seoPath="/gizlilik"
     />
   );
 }
@@ -420,6 +434,8 @@ export function WarrantyPage() {
       ]}
       summary="2 yıllık yasal garanti kapsamı, garanti dışı durumlar, DOA değişim politikası, garanti başvuru süreci ve sarf malzemelerine dair bilgiler bu sayfada detaylı olarak açıklanmıştır."
       title="GARANTİ ŞARTLARI"
+      seoTitle="Garanti Şartları"
+      seoPath="/garanti"
     />
   );
 }
@@ -476,6 +492,8 @@ export function FaqPage() {
       ]}
       summary="Sipariş, ödeme, kargo, iade, garanti, üyelik ve destek konularında en sık sorulan soruların yanıtları bu sayfada yer almaktadır."
       title="SIKÇA SORULAN SORULAR"
+      seoTitle="Sıkça Sorulan Sorular"
+      seoPath="/sss"
     />
   );
 }

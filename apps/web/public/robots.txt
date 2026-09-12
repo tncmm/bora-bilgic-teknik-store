@@ -1,0 +1,15 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin
+Disallow: /sepet
+Disallow: /checkout
+Disallow: /odeme/
+Disallow: /siparis-takip/
+Disallow: /profil
+Disallow: /favoriler
+Disallow: /siparislerim
+Disallow: /giris
+Disallow: /kayit
+Disallow: /dogrula
+
+Sitemap: https://borabilgic.net.tr/sitemap.xml

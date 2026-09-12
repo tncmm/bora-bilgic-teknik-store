@@ -354,6 +354,17 @@ model Order {
   invoiceUploadedAt     DateTime?
   invoiceSentAt         DateTime?
 
+  // --- Kargo (Yurtiçi) ---------------------------------------------------
+  // cargoBarcode, Yurtiçi Kargo gönderisinin takip numarasıdır; admin paneli
+  // ve sipariş takibi bu barkod üzerinden ilerler. cargoEvents, satıcının
+  // hareket listesinin en fazla son 20 kaydını tutar (sınırsız büyümesin).
+  cargoBarcode      String?   @unique
+  cargoCompany      String?   @default("Yurtiçi Kargo")
+  cargoStatus       String?
+  cargoLastEvent    String?
+  cargoLastSyncedAt DateTime?
+  cargoEvents       Json?
+
   items OrderItem[]
   user  User?      @relation(fields: [userId], references: [id], onDelete: Restrict)
   refunds Refund[]
@@ -394,6 +405,10 @@ model Refund {
   restock        Boolean       @default(false)
   paytrReference String?
   failureReason  String?
+  // Yurtiçi Kargo RMA (saveReturnShipmentCode): müşteri ürünü şubeye
+  // ücretsiz gönderebilsin diye üretilen iade onay kodu ve geçerlilik aralığı.
+  returnCode           String?
+  returnCodeValidUntil DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   completedAt    DateTime?

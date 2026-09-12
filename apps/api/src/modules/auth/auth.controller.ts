@@ -3,10 +3,11 @@ import { Request, Response } from 'express';
 import { env } from '../../config/env.js';
 import { AuthService } from './auth.service.js';
 
-// Refresh çerezi production'da (veya WEB_URL https ile başlıyorsa) yalnızca
+// Refresh çerezi secure bayrağı COOKIE_SECURE env'i ile zorlanabilir;
+// tanımsızsa production'da (veya WEB_URL https ile başlıyorsa) yalnızca
 // HTTPS üzerinden iletilir. Trust proxy ayarlı olduğu için ters proxy
-// (nginx/Render) arkasında güvenli çerezler doğru çalışır.
-const useSecureCookies = env.NODE_ENV === 'production' || env.WEB_URL.startsWith('https://');
+// (nginx) arkasında güvenli çerezler doğru çalışır.
+const useSecureCookies = env.secureCookies;
 
 const refreshCookieOptions = {
   httpOnly: true,

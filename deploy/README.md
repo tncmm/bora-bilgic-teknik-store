@@ -27,3 +27,15 @@ with certbot/Let's Encrypt (add a 443 server block and redirect port 80 to it)
 or in front of the server with a CDN such as Cloudflare. If TLS is already
 terminated upstream (CDN or another layer), treat this section as
 informational; the nginx behavior is intentionally left unchanged.
+
+## Nginx config ve SEO notları
+
+- `deploy/nginx/bora-bilgic-teknik-store.conf` deploy akışına dahil değildir;
+  dosyadaki değişiklikler (gzip, asset cache, www→apex 301, sitemap proxy)
+  VPS'te elle kopyalanır ve `sudo nginx -t && sudo systemctl reload nginx`
+  ile uygulanır.
+- `https://borabilgic.net.tr/sitemap.xml` API'den dinamik üretilir
+  (`GET /api/v1/seo/sitemap.xml`); nginx bu yolu API'ye yönlendirir.
+  Yayındaki ürün/kategoriler admin işlemleriyle otomatik güncel kalır.
+- `robots.txt` statiktir (`apps/web/public/robots.txt`) ve deploy bundle'ı
+  ile birlikte yayına çıkar.

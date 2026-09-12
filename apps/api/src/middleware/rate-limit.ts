@@ -1,7 +1,13 @@
 import { rateLimit } from 'express-rate-limit';
 
+import { env } from '../config/env.js';
+
 /**
  * IP tabanli hiz sinirlayicilar (express-rate-limit).
+ *
+ * Esikler RATE_LIMIT_* env degiskenleriyle ayarlanabilir (varsayilanlar ve
+ * dokumantasyon icin apps/api/.env.example'a bakin); mesajlar pencere
+ * uzunluguna gore dinamik kurulur.
  *
  * Varsayilan memory store tek instance'lik dagitim icin yeterlidir; yatay
  * olceklemede (birden fazla replica) sinirlar gevser, cunku her instance
@@ -10,61 +16,63 @@ import { rateLimit } from 'express-rate-limit';
  * 429 yanitlari uygulamanin hata formatiyla ayni olan `{ message }` govdesiyle
  * doner; boylece istemci tarafinda tek bir hata isleme yolu kullanilir.
  */
-function createLimiter(options: { windowMs: number; limit: number; message: string }) {
+function createLimiter(options: { windowMinutes: number; limit: number; message: string }) {
   return rateLimit({
-    windowMs: options.windowMs,
+    windowMs: options.windowMinutes * 60 * 1000,
     limit: options.limit,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: options.message },
+    message: {
+      message: `${options.message} Lütfen ${options.windowMinutes} dakika sonra tekrar deneyin.`,
+    },
   });
 }
 
-/** Giris: 15 dakikada 10 deneme — kaba kuvvet sifre denemelerini yavaslatir. */
+/** Giris — kaba kuvvet sifre denemelerini yavaslatir. */
 export const loginLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  message: 'Çok fazla giriş denemesi yapıldı. Lütfen 15 dakika sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_LOGIN_MAX,
+  message: 'Çok fazla giriş denemesi yapıldı.',
 });
 
-/** Kayit: saatte 5 hesap — otomatik hesap acma ve spam kayitlari engellenir. */
+/** Kayit — otomatik hesap acma ve spam kayitlari engellenir. */
 export const registerLimiter = createLimiter({
-  windowMs: 60 * 60 * 1000,
-  limit: 5,
-  message: 'Çok fazla kayıt denemesi yapıldı. Lütfen bir saat sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_HOURLY_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_REGISTER_MAX,
+  message: 'Çok fazla kayıt denemesi yapıldı.',
 });
 
-/** E-posta dogrulama: saatte 20 token denemesi. */
+/** E-posta dogrulama token denemeleri. */
 export const verifyEmailLimiter = createLimiter({
-  windowMs: 60 * 60 * 1000,
-  limit: 20,
-  message: 'Çok fazla doğrulama denemesi yapıldı. Lütfen bir saat sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_HOURLY_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_VERIFY_EMAIL_MAX,
+  message: 'Çok fazla doğrulama denemesi yapıldı.',
 });
 
-/** Dogrulama e-postasi tekrar gonderimi: saatte 5 (serviste 60 sn cooldown da var). */
+/** Dogrulama e-postasi tekrar gonderimi (serviste 60 sn cooldown da var). */
 export const resendVerificationLimiter = createLimiter({
-  windowMs: 60 * 60 * 1000,
-  limit: 5,
-  message: 'Çok fazla istek gönderildi. Lütfen bir saat sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_HOURLY_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_RESEND_VERIFICATION_MAX,
+  message: 'Çok fazla istek gönderildi.',
 });
 
-/** Oturum yenileme: 15 dakikada 30 istek. */
+/** Oturum yenileme. */
 export const refreshLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  limit: 30,
-  message: 'Çok fazla oturum yenileme isteği gönderildi. Lütfen daha sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_REFRESH_MAX,
+  message: 'Çok fazla oturum yenileme isteği gönderildi.',
 });
 
-/** Cikis: 15 dakikada 30 istek. */
+/** Cikis. */
 export const logoutLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  limit: 30,
-  message: 'Çok fazla çıkış isteği gönderildi. Lütfen daha sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_LOGOUT_MAX,
+  message: 'Çok fazla çıkış isteği gönderildi.',
 });
 
-/** Odeme checkout: orta seviye — 15 dakikada 20 istek (yeniden denemelere izin verir). */
+/** Odeme checkout: orta seviye — yeniden denemelere izin verir. */
 export const checkoutLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  limit: 20,
-  message: 'Çok fazla ödeme isteği gönderildi. Lütfen kısa bir süre sonra tekrar deneyin.',
+  windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_CHECKOUT_MAX,
+  message: 'Çok fazla ödeme isteği gönderildi.',
 });

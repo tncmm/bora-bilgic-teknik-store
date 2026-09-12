@@ -229,9 +229,20 @@ export interface Refund {
   restock: boolean;
   paytrReference?: string | null;
   failureReason?: string | null;
+  /** Yurtiçi Kargo RMA iade onay kodu; müşteri şubeye bunu ibraz eder. */
+  returnCode?: string | null;
+  /** İade kodunun geçerlilik bitişi. */
+  returnCodeValidUntil?: string | null;
   createdAt: string;
   completedAt?: string | null;
   items?: RefundItem[];
+}
+
+/** Admin'in iade için Yurtiçi Kargo kodu üretmesinin yanıtı. */
+export interface ShipmentReturnCode {
+  refundId: string;
+  returnCode: string;
+  validUntil: string | null;
 }
 
 export interface RefundItem {
@@ -271,6 +282,50 @@ export interface Order {
   paidWithoutOrderAt?: string | null;
   /** Odemesi alinip siparis olusmayan denemeler icin operator notu. */
   reviewNote?: string | null;
+  // --- Kargo (Yurtiçi) -----------------------------------------------------
+  // Alanlar opsiyoneldir: eski serileştiriciler bunları doldurmayabilir.
+  /** Yurtiçi Kargo takip numarası (barkod); kargo kaydı oluşturulunca dolar. */
+  cargoBarcode?: string | null;
+  /** Kargo firması adı; varsayılan "Yurtiçi Kargo". */
+  cargoCompany?: string | null;
+  /** Normalize edilmiş kargo durumu; senkronize edilmeden null. */
+  cargoStatus?: CargoStatus | null;
+  /** Satıcının bildirdiği son hareket açıklaması. */
+  cargoLastEvent?: string | null;
+  /** Son takip senkronizasyonu zamanı. */
+  cargoLastSyncedAt?: string | null;
+  /** Son ~20 hareket kaydı. */
+  cargoEvents?: CargoEvent[] | null;
+}
+
+/**
+ * Yurtiçi Kargo entegrasyonunun normalize edilmiş kargo durumları. Satıcının
+ * ham hareket kodları bu tabloda eşlenir; eşleşmeyen kodlar UNKNOWN olur.
+ */
+export type CargoStatus = 'DELIVERED' | 'OUT_FOR_DELIVERY' | 'IN_TRANSIT' | 'AT_BRANCH' | 'EXCEPTION' | 'CANCELLED' | 'UNKNOWN';
+
+/** Kargo hareket kaydı (takip listesi öğesi). */
+export interface CargoEvent {
+  /** Satıcının ham hareket kodu. */
+  code: string;
+  /** Hareket açıklaması (ham metin). */
+  description: string;
+  /** Hareket zamanı (ISO 8601); satıcıdan okunamadıysa null. */
+  occurredAt: string | null;
+  /** Hareketin gerçekleştiği birim/şube; bilinmiyorsa null. */
+  location: string | null;
+}
+
+/** Admin kargo kaydı oluşturma ve senkronizasyon uç noktalarının yanıtı. */
+export interface ShipmentInfo {
+  orderId: string;
+  orderNumber: string;
+  cargoCompany: string | null;
+  cargoBarcode: string | null;
+  cargoStatus: CargoStatus | null;
+  cargoLastEvent: string | null;
+  cargoLastSyncedAt: string | null;
+  cargoEvents: CargoEvent[];
 }
 
 export interface PaytrTokenResponse {

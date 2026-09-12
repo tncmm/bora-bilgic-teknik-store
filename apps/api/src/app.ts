@@ -14,6 +14,8 @@ import { catalogRoutes } from './modules/catalog/routes.js';
 import { heroSlidesRoutes } from './modules/hero-slides/routes.js';
 import { ordersRoutes } from './modules/orders/routes.js';
 import { paymentsRoutes } from './modules/payments/routes.js';
+import { seoRoutes } from './modules/seo/routes.js';
+import { shippingRoutes } from './modules/shipping/routes.js';
 import { usersRoutes } from './modules/users/routes.js';
 
 export function createApp() {
@@ -68,6 +70,8 @@ export function createApp() {
   app.use('/api/v1/payments', paymentsRoutes);
   app.use('/api/v1/users', usersRoutes);
   app.use('/api/v1/admin', adminRoutes);
+  app.use('/api/v1/admin', shippingRoutes);
+  app.use('/api/v1/seo', seoRoutes);
 
   app.use(errorHandler);
 

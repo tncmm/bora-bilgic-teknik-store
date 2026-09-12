@@ -27,6 +27,6 @@ app.listen(env.PORT, env.HOST, () => {
     paymentsService.sweepStaleAttempts().catch((error) => {
       console.error('[PAYTR] Stale payment attempt sweep failed', { error });
     });
-  }, 10 * 60 * 1000);
+  }, env.SWEEP_INTERVAL_MINUTES * 60 * 1000);
   staleAttemptSweeper.unref();
 });

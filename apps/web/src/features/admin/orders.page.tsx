@@ -6,7 +6,7 @@ import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api } from '../../shared/api/client';
 import { formatCurrency, formatDate } from '../../shared/lib/format';
-import { translatePaymentStatus } from '../../shared/lib/i18n';
+import { translateCargoStatus, translatePaymentStatus } from '../../shared/lib/i18n';
 
 type AdminOrder = Order & { customer: string; email: string };
 
@@ -43,6 +43,8 @@ export function AdminOrdersPage() {
   const [refundQuantities, setRefundQuantities] = useState<Record<string, number>>({});
   const [refunding, setRefunding] = useState(false);
   const [invoiceUploadingOrderId, setInvoiceUploadingOrderId] = useState<string | null>(null);
+  const [shipmentBusyOrderId, setShipmentBusyOrderId] = useState<string | null>(null);
+  const [returnCodeBusyId, setReturnCodeBusyId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -70,6 +72,9 @@ export function AdminOrdersPage() {
   }, [orders, paymentFilter, search]);
   const totalSales = visibleOrders.reduce((total, order) => total + order.total, 0);
   const pendingRefundCount = orders.reduce((total, order) => total + (order.refunds?.filter((refund) => refund.status === 'pending').length ?? 0), 0);
+  // Modal açıkken kargo oluşturma/sorgulama loadOrders'ı tazeler; detay da
+  // listenin en güncel kopyasından okunmalı, aksi halde bayat barkod görünür.
+  const detailOrderLive = detailOrder ? (orders.find((order) => order.id === detailOrder.id) ?? detailOrder) : null;
 
   async function loadOrders() {
     if (!token) return;
@@ -156,6 +161,92 @@ export function AdminOrdersPage() {
       showToast({ tone: 'error', title: 'İade yapılamadı', description: (error as Error).message });
     } finally {
       setRefunding(false);
+    }
+  }
+
+  async function handleCreateShipment(order: AdminOrder) {
+    if (!token) return;
+
+    const confirmed = window.confirm(
+      `${order.orderNumber} için Yurtiçi Kargo gönderi kaydı oluşturulacak. Onaylıyor musunuz?`,
+    );
+    if (!confirmed) return;
+
+    setShipmentBusyOrderId(order.id);
+    try {
+      await api.createAdminOrderShipment(token, order.id);
+      await loadOrders();
+      showToast({
+        tone: 'success',
+        title: 'Kargo kaydı oluşturuldu',
+        description: `${order.orderNumber} için Yurtiçi Kargo barkodu alındı.`,
+      });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'Kargo kaydı oluşturulamadı', description: (error as Error).message });
+    } finally {
+      setShipmentBusyOrderId(null);
+    }
+  }
+
+  async function handleSyncShipment(order: AdminOrder) {
+    if (!token) return;
+
+    setShipmentBusyOrderId(order.id);
+    try {
+      await api.syncAdminOrderShipment(token, order.id);
+      await loadOrders();
+      showToast({
+        tone: 'success',
+        title: 'Kargo durumu güncellendi',
+        description: `${order.orderNumber} için takip bilgileri Yurtiçi Kargo'dan yenilendi.`,
+      });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'Kargo durumu sorgulanamadı', description: (error as Error).message });
+    } finally {
+      setShipmentBusyOrderId(null);
+    }
+  }
+
+  async function handleCancelShipment(order: AdminOrder) {
+    if (!token) return;
+
+    const confirmed = window.confirm(
+      `${order.orderNumber} (${order.cargoBarcode}) için Yurtiçi Kargo kaydı iptal edilecek. Onaylıyor musunuz?`,
+    );
+    if (!confirmed) return;
+
+    setShipmentBusyOrderId(order.id);
+    try {
+      await api.cancelAdminOrderShipment(token, order.id);
+      await loadOrders();
+      showToast({
+        tone: 'success',
+        title: 'Kargo kaydı iptal edildi',
+        description: `${order.orderNumber} gönderisi Yurtiçi Kargo tarafında iptal edildi.`,
+      });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'Kargo kaydı iptal edilemedi', description: (error as Error).message });
+    } finally {
+      setShipmentBusyOrderId(null);
+    }
+  }
+
+  async function handleCreateReturnCode(refund: Refund) {
+    if (!token) return;
+
+    setReturnCodeBusyId(refund.id);
+    try {
+      const result = await api.createAdminRefundReturnCode(token, refund.id);
+      await loadOrders();
+      showToast({
+        tone: 'success',
+        title: 'İade kargo kodu oluşturuldu',
+        description: `${result.returnCode} — kodu müşteriyle paylaşın; müşteri ürünü Yurtiçi Kargo şubesine bu kodla ücretsiz gönderir.`,
+      });
+    } catch (error) {
+      showToast({ tone: 'error', title: 'İade kargo kodu oluşturulamadı', description: (error as Error).message });
+    } finally {
+      setReturnCodeBusyId(null);
     }
   }
 
@@ -264,6 +355,7 @@ export function AdminOrdersPage() {
                   <th style={{ textAlign: 'right' }}>İade</th>
                   <th style={{ textAlign: 'right' }}>Durum</th>
                   <th>Fatura</th>
+                  <th>Kargo</th>
                   <th style={{ textAlign: 'right' }}>Aksiyon</th>
                 </tr>
               </thead>
@@ -315,6 +407,43 @@ export function AdminOrdersPage() {
                         <span className="text-muted">Yok</span>
                       )}
                       <div className="text-muted">{order.invoiceSentAt ? 'Mail gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</div>
+                    </td>
+                    <td>
+                      {order.cargoBarcode ? (
+                        <>
+                          <strong>{order.cargoBarcode}</strong>
+                          <div className="text-muted">{translateCargoStatus(order.cargoStatus) ?? 'Sorgulanmadı'}</div>
+                          <button
+                            className="admin-table-action"
+                            disabled={shipmentBusyOrderId === order.id}
+                            onClick={() => void handleSyncShipment(order)}
+                            type="button"
+                          >
+                            {shipmentBusyOrderId === order.id ? 'Sorgulanıyor...' : 'Durumu Sorgula'}
+                          </button>
+                          {order.cargoStatus !== 'DELIVERED' && order.cargoStatus !== 'CANCELLED' ? (
+                            <button
+                              className="admin-table-action"
+                              disabled={shipmentBusyOrderId === order.id}
+                              onClick={() => void handleCancelShipment(order)}
+                              type="button"
+                            >
+                              Kargo İptal
+                            </button>
+                          ) : null}
+                        </>
+                      ) : order.paymentStatus === 'paid' ? (
+                        <button
+                          className="admin-table-action"
+                          disabled={shipmentBusyOrderId === order.id}
+                          onClick={() => void handleCreateShipment(order)}
+                          type="button"
+                        >
+                          {shipmentBusyOrderId === order.id ? 'Oluşturuluyor...' : 'Kargo Oluştur'}
+                        </button>
+                      ) : (
+                        <span className="text-muted">Ödeme bekliyor</span>
+                      )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="admin-table-action" onClick={() => setDetailOrder(order)} type="button">
@@ -435,6 +564,32 @@ export function AdminOrdersPage() {
               <div className="full">
                 <textarea className="ui-textarea" onChange={(e) => setRefundReason(e.target.value)} placeholder="İade sebebi" value={refundReason} />
               </div>
+              {(refundRequest || pendingRefundRequests.length > 0) ? (
+                <div className="full refund-history-list">
+                  <div className="refund-admin-note">
+                    <strong>İade Kargo Kodu (RMA)</strong>
+                    <p>Müşteri, ürünü Yurtiçi Kargo şubesine bu kodla ücretsiz gönderir; kod sipariş detayında müşteriye de görünür.</p>
+                  </div>
+                  {(refundRequest ? [refundRequest] : pendingRefundRequests).map((refund) => (
+                    <div className="refund-history-item" key={refund.id}>
+                      <div>
+                        <strong>{refund.returnCode ? `Kod: ${refund.returnCode}` : 'Kod oluşturulmadı'}</strong>
+                        <span>{refund.returnCodeValidUntil ? `Geçerlilik: ${formatDate(refund.returnCodeValidUntil, 'tr')}` : 'Üretim bekliyor'}</span>
+                      </div>
+                      {refund.returnCode ? null : (
+                        <button
+                          className="admin-table-action"
+                          disabled={returnCodeBusyId === refund.id}
+                          onClick={() => void handleCreateReturnCode(refund)}
+                          type="button"
+                        >
+                          {returnCodeBusyId === refund.id ? 'Oluşturuluyor...' : 'İade Kodu Oluştur'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="admin-modal-actions">
               <button className="admin-table-action" disabled={refunding} onClick={() => setRefundOrder(null)} type="button">
@@ -506,6 +661,51 @@ export function AdminOrdersPage() {
                   <div><dt>İade Edilen</dt><dd>{formatCurrency(detailOrder.refundedAmount, 'tr')}</dd></div>
                   <div><dt>Kalan İade</dt><dd>{formatCurrency(detailOrder.refundableAmount, 'tr')}</dd></div>
                 </dl>
+              </section>
+
+              <section className="admin-order-detail-block">
+                <h3>Kargo</h3>
+                <dl>
+                  <div><dt>Firma</dt><dd>{detailOrderLive?.cargoCompany ?? 'Yurtiçi Kargo'}</dd></div>
+                  <div><dt>Barkod</dt><dd>{detailOrderLive?.cargoBarcode ?? '-'}</dd></div>
+                  <div><dt>Durum</dt><dd>{translateCargoStatus(detailOrderLive?.cargoStatus) ?? 'Sorgulanmadı'}</dd></div>
+                  <div><dt>Son Hareket</dt><dd>{detailOrderLive?.cargoLastEvent ?? '-'}</dd></div>
+                  <div>
+                    <dt>Son Sorgu</dt>
+                    <dd>{detailOrderLive?.cargoLastSyncedAt ? formatDate(detailOrderLive.cargoLastSyncedAt, 'tr') : '-'}</dd>
+                  </div>
+                </dl>
+                {detailOrderLive?.cargoBarcode ? (
+                  <>
+                    <button
+                      className="admin-table-action"
+                      disabled={shipmentBusyOrderId === detailOrderLive.id}
+                      onClick={() => void handleSyncShipment(detailOrderLive)}
+                      type="button"
+                    >
+                      {shipmentBusyOrderId === detailOrderLive.id ? 'Sorgulanıyor...' : 'Durumu Sorgula'}
+                    </button>
+                    {detailOrderLive.cargoStatus !== 'DELIVERED' && detailOrderLive.cargoStatus !== 'CANCELLED' ? (
+                      <button
+                        className="admin-table-action"
+                        disabled={shipmentBusyOrderId === detailOrderLive.id}
+                        onClick={() => void handleCancelShipment(detailOrderLive)}
+                        type="button"
+                      >
+                        Kargo İptal
+                      </button>
+                    ) : null}
+                  </>
+                ) : detailOrderLive && detailOrderLive.paymentStatus === 'paid' ? (
+                  <button
+                    className="admin-table-action"
+                    disabled={shipmentBusyOrderId === detailOrderLive.id}
+                    onClick={() => void handleCreateShipment(detailOrderLive)}
+                    type="button"
+                  >
+                    {shipmentBusyOrderId === detailOrderLive.id ? 'Oluşturuluyor...' : 'Kargo Oluştur'}
+                  </button>
+                ) : null}
               </section>
             </div>
 

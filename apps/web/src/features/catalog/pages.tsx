@@ -10,6 +10,8 @@ import { api } from '../../shared/api/client';
 import { CampaignSlider } from '../../shared/components/CampaignSlider';
 import { PriceTag } from '../../shared/components/PriceTag';
 import { RichTextContent } from '../../shared/components/RichTextContent';
+import { Seo } from '../../shared/components/Seo';
+import { buildBreadcrumbJsonLd, buildOrganizationJsonLd, buildProductJsonLd, buildWebSiteJsonLd } from '../../shared/lib/seo';
 import { formatCurrency } from '../../shared/lib/format';
 import { computePackageUnitPrice } from '../../shared/lib/pricing';
 import { findSectionBySlug, mapLegacyCategoryToSection, storefrontSections } from '../../shared/lib/storefront';
@@ -292,6 +294,12 @@ export function HomePage() {
 
   return (
     <>
+      <Seo
+        description="DJI drone, gimbal, aksiyon kamera ve kurumsal çözümler; %100 orijinal ürün, güvenli ödeme ve hızlı kargo ile Bora Bilgiç Teknik'te."
+        jsonLd={[buildOrganizationJsonLd(), buildWebSiteJsonLd()]}
+        path="/"
+        title="DJI Drone, Gimbal ve Teknoloji Mağazası"
+      />
       <HeroSlider />
 
       <ServiceBand overlay />
@@ -551,8 +559,28 @@ export function CatalogPage({ forcedSection }: { forcedSection?: CatalogSectionS
       : items;
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
 
+  const catalogLabel = activeCategory?.name ?? section?.label ?? 'Katalog';
+  // Forced bölüm rotaları (/drone gibi) kendi yolunu, kategori rotası
+  // /kategori/:slug yolunu canonical ilan eder.
+  const catalogPath = forcedSection ? `/${forcedSection}` : sectionSlug ? `/kategori/${sectionSlug}` : '/katalog';
+  const catalogDescription =
+    activeCategory?.heroDescription ??
+    activeCategory?.description ??
+    `${catalogLabel} modelleri, kampanyalı fiyatları ve teknik özellikleriyle Bora Bilgiç Teknik'te.`;
+
   return (
     <>
+      <Seo
+        description={catalogDescription}
+        jsonLd={[
+          buildBreadcrumbJsonLd([
+            { name: 'Ana Sayfa', path: '/' },
+            { name: catalogLabel, path: catalogPath },
+          ]),
+        ]}
+        path={catalogPath}
+        title={`${catalogLabel} Modelleri ve Fiyatları`}
+      />
       <section className="dji-listing-hero">
         <div className="dji-listing-hero__background">
           <img alt={section?.label ?? 'Bora Bilgiç kataloğu'} src={activeCategory?.heroImageUrl ?? items[0]?.heroImageUrl ?? getPrimaryImage(items[0])?.url} />
@@ -792,11 +820,14 @@ export function ProductDetailPage() {
 
   if (error) {
     return (
-      <section className="page-section">
-        <div className="ui-shell">
-          <EmptyState description={error} title="Ürün bulunamadı" />
-        </div>
-      </section>
+      <>
+        <Seo description="Aradığınız ürün bulunamadı; Bora Bilgiç Teknik kataloğundaki güncel modelleri inceleyin." noindex path="/katalog" title="Ürün bulunamadı" />
+        <section className="page-section">
+          <div className="ui-shell">
+            <EmptyState description={error} title="Ürün bulunamadı" />
+          </div>
+        </section>
+      </>
     );
   }
 
@@ -842,6 +873,34 @@ export function ProductDetailPage() {
 
   return (
     <>
+      <Seo
+        description={product.shortDescription || product.description?.slice(0, 300) || `${product.name} — Bora Bilgiç Teknik'te.`}
+        jsonLd={[
+          buildProductJsonLd({
+            name: product.name,
+            slug: product.slug,
+            description: product.description,
+            shortDescription: product.shortDescription,
+            imageUrls: product.images.filter((image) => image.kind !== 'video').map((image) => image.url),
+            sku: product.sku,
+            brand: product.brand,
+            effectivePrice: product.effectivePrice,
+            stock: product.stock,
+            isPurchasable: product.isPurchasable,
+            ratingAverage: product.ratingAverage,
+            reviewCount: product.reviewCount,
+          }),
+          buildBreadcrumbJsonLd([
+            { name: 'Ana Sayfa', path: '/' },
+            { name: product.category.name, path: findSectionBySlug(product.section)?.path ?? `/kategori/${product.category.slug}` },
+            { name: product.name, path: `/urun/${product.slug}` },
+          ]),
+        ]}
+        ogType="product"
+        ogImage={product.images.find((image) => image.kind !== 'video')?.url ?? product.heroImageUrl ?? undefined}
+        path={`/urun/${product.slug}`}
+        title={product.name}
+      />
       <section className="dji-detail">
         <div className="ui-shell">
           <div className="dji-breadcrumbs">
@@ -997,6 +1056,11 @@ export function ProductDetailPage() {
 export function ContactPage() {
   return (
     <>
+      <Seo
+        description="Kurumsal projeler, teknik keşif, stok teyidi ve satış sonrası destek için Bora Bilgiç Teknik iletişim bilgileri."
+        path="/iletisim"
+        title="İletişim"
+      />
       <section className="dji-contact-hero">
         <div className="ui-shell">
           <div className="dji-breadcrumbs">

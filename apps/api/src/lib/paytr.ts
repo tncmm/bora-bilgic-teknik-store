@@ -24,8 +24,8 @@ const PAYTR_TOKEN_URL = 'https://www.paytr.com/odeme/api/get-token';
 const PAYTR_REFUND_URL = 'https://www.paytr.com/odeme/iade';
 
 /** PayTR yanit vermezse istek bu surede kesilir; askida kalan istekler
- *  odeme akisini bloklamamali. */
-const PAYTR_REQUEST_TIMEOUT_MS = 15_000;
+ *  odeme akisini bloklamamali. Sure PAYTR_TIMEOUT_MS ile ayarlanabilir. */
+const PAYTR_REQUEST_TIMEOUT_MS = env.PAYTR_TIMEOUT_MS ?? 15_000;
 
 /** AbortSignal.timeout ile kesilen istekleri diger ag hatalarindan ayirir.
  *  DOMException Error'dan turetmedigi icin yalnizca name alanina bakilir. */

@@ -9,7 +9,7 @@ import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
 import { api, type RefundRequestPayload } from '../../shared/api/client';
 import { formatCurrency, formatDate } from '../../shared/lib/format';
-import { translateOrderStatus, translatePaymentStatus } from '../../shared/lib/i18n';
+import { translateCargoStatus, translateOrderStatus, translatePaymentStatus } from '../../shared/lib/i18n';
 
 interface OrderDetailLocationState {
   justPlaced?: boolean;
@@ -271,6 +271,13 @@ function OrderDetailView({
                       <div>
                         <strong>{refund.source === 'customer' ? refund.customerReason : refund.reason || 'Admin iadesi'}</strong>
                         <span>{refund.items?.map((item) => `${item.quantity} adet`).join(', ') || 'Tutar bazlı iade'}</span>
+                        {refund.returnCode ? (
+                          <span>
+                            İade kargo kodu: <strong>{refund.returnCode}</strong>
+                            {refund.returnCodeValidUntil ? ` · ${formatDate(refund.returnCodeValidUntil, language)} tarihine kadar geçerli` : ''}
+                            {' — Yurtiçi Kargo şubesine ibraz edin.'}
+                          </span>
+                        ) : null}
                       </div>
                       <div>
                         <span className={`order-badge order-badge--payment-${refund.status}`}>{refund.status === 'pending' ? 'Onay bekliyor' : 'Tamamlandı'}</span>
@@ -290,11 +297,28 @@ function OrderDetailView({
               <p>{order.shippingPhone}</p>
               <p>{order.shippingAddressLine}</p>
               <p>{order.shippingDistrict} / {order.shippingCity}</p>
-              {(order.status === 'shipped' || order.status === 'delivered') && (
+              {order.cargoBarcode ? (
+                <>
+                  <p>
+                    <strong>{order.cargoCompany ?? 'Yurtiçi Kargo'}</strong> · {order.cargoBarcode}
+                  </p>
+                  {translateCargoStatus(order.cargoStatus) ? (
+                    <p>
+                      <span className={`order-badge order-badge--payment-${order.cargoStatus === 'DELIVERED' ? 'paid' : order.cargoStatus === 'EXCEPTION' ? 'failed' : 'pending'}`}>
+                        {translateCargoStatus(order.cargoStatus)}
+                      </span>
+                      {order.cargoLastEvent ? ` ${order.cargoLastEvent}` : ''}
+                    </p>
+                  ) : null}
+                  <a href={`${appConfig.cargoTrackingUrl}?code=${encodeURIComponent(order.cargoBarcode)}`} rel="noreferrer" target="_blank">
+                    Kargoyu takip et
+                  </a>
+                </>
+              ) : (order.status === 'shipped' || order.status === 'delivered') ? (
                 <a href={appConfig.cargoTrackingUrl} rel="noreferrer" target="_blank">
                   Kargo takip sayfası
                 </a>
-              )}
+              ) : null}
             </div>
 
             <div className="profile-card compact-info-card">

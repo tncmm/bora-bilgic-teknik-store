@@ -2,6 +2,8 @@ import type {
   Address,
   Cart,
   Category,
+  CargoEvent,
+  CargoStatus,
   DashboardMetrics,
   Order,
   PaymentStatus,
@@ -82,6 +84,17 @@ export function computeLineUnitPrice(
 function readJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
   if (!Array.isArray(value)) return fallback;
   return value as T[];
+}
+
+/**
+ * Order.cargoEvents JSON kolonunu okur; bozuk/eski kayıtlarda güvenle boş
+ * liste döner (shipping service'in yazdığı şemaya göre filtreler).
+ */
+function readCargoEvents(value: unknown): CargoEvent[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (event): event is CargoEvent => Boolean(event) && typeof event === 'object' && 'code' in (event as object),
+  );
 }
 
 function normalizeDetailSections(sections: ProductDetailSection[]) {
@@ -300,6 +313,12 @@ export function serializeOrder(order: any): Order {
     invoiceFileName: order.invoiceFileName ?? null,
     invoiceUploadedAt: order.invoiceUploadedAt ? order.invoiceUploadedAt.toISOString() : null,
     invoiceSentAt: order.invoiceSentAt ? order.invoiceSentAt.toISOString() : null,
+    cargoBarcode: order.cargoBarcode ?? null,
+    cargoCompany: order.cargoCompany ?? null,
+    cargoStatus: (order.cargoStatus as CargoStatus | null) ?? null,
+    cargoLastEvent: order.cargoLastEvent ?? null,
+    cargoLastSyncedAt: order.cargoLastSyncedAt ? order.cargoLastSyncedAt.toISOString() : null,
+    cargoEvents: readCargoEvents(order.cargoEvents),
     items: order.items.map((item: any) => ({
       id: item.id,
       productName: item.productName,
@@ -329,6 +348,8 @@ export function serializeOrder(order: any): Order {
           restock: refund.restock,
           paytrReference: refund.paytrReference ?? null,
           failureReason: refund.failureReason ?? null,
+          returnCode: refund.returnCode ?? null,
+          returnCodeValidUntil: refund.returnCodeValidUntil ? refund.returnCodeValidUntil.toISOString() : null,
           createdAt: refund.createdAt.toISOString(),
           completedAt: refund.completedAt ? refund.completedAt.toISOString() : null,
           items: Array.isArray(refund.items)

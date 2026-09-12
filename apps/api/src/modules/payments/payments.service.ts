@@ -91,8 +91,8 @@ const checkoutSchema = z.object({
   notes: z.string().optional(),
 });
 
-/** PayTR collects the card for 30 minutes; after that the attempt expires. */
-const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
+/** PayTR collects the card for the configured window; after that the attempt expires. */
+const PAYMENT_WINDOW_MS = env.PAYMENT_WINDOW_MINUTES * 60 * 1000;
 
 export class PaymentsService {
   constructor(private readonly repository = new PaymentsRepository()) {}
