@@ -8,6 +8,8 @@ import { api } from '../../shared/api/client';
 
 /** Formda düzenlenen alanlar; boş string "kartı gizle" anlamına gelir. */
 const EMPTY_SETTINGS: SiteSettings = {
+  maintenanceMode: false,
+  maintenanceMessage: '',
   contactHeroTitle: '',
   contactHeroDescription: '',
   contactAddress: '',
@@ -92,6 +94,30 @@ export function AdminSiteSettingsPage() {
           </Button>
         </div>
       ) : (
+        <>
+        <div className="admin-card" style={{ marginBottom: '1rem', borderColor: form.maintenanceMode ? 'var(--primary, #ff6a1a)' : undefined }}>
+          <div className="admin-card__head">
+            <h2>Bakım Modu</h2>
+            <p>Açıkken ziyaretçiler ve müşteri API'si bakım sayfası görür; admin panel ve giriş akışı açık kalır.</p>
+          </div>
+          <label className="admin-field" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <input
+              checked={Boolean(form.maintenanceMode)}
+              onChange={(event) => setForm((current) => ({ ...current, maintenanceMode: event.target.checked }))}
+              type="checkbox"
+            />
+            <strong>{form.maintenanceMode ? 'BAKIM MODU AKTİF' : 'Bakım modu kapalı'}</strong>
+          </label>
+          <label className="admin-field">
+            <span>Bakım Mesajı</span>
+            <textarea
+              className="ui-textarea"
+              onChange={(event) => setForm((current) => ({ ...current, maintenanceMessage: event.target.value }))}
+              rows={2}
+              value={form.maintenanceMessage ?? ''}
+            />
+          </label>
+        </div>
         <div className="admin-card">
           <div className="admin-form-grid">
             {FIELDS.map((field) =>
@@ -103,7 +129,7 @@ export function AdminSiteSettingsPage() {
                       className="ui-textarea"
                       onChange={(event) => updateField(field.key, event.target.value)}
                       rows={field.key === 'contactAddress' ? 3 : 2}
-                      value={form[field.key] ?? ''}
+                      value={String(form[field.key] ?? '')}
                     />
                     {field.hint ? <small>{field.hint}</small> : null}
                   </label>
@@ -113,17 +139,18 @@ export function AdminSiteSettingsPage() {
                   key={field.key}
                   label={field.label}
                   onChange={(event) => updateField(field.key, event.target.value)}
-                  value={form[field.key] ?? ''}
+                  value={String(form[field.key] ?? '')}
                 />
               ),
             )}
           </div>
           <div className="admin-modal-actions">
             <Button disabled={saving} onClick={() => void handleSubmit()} type="button">
-              {saving ? 'Kaydediliyor...' : 'Kaydet'}
+              {saving ? 'Kaydediliyor...' : form.maintenanceMode ? 'Kaydet ve Bakım Moduna Al' : 'Kaydet'}
             </Button>
           </div>
         </div>
+        </>
       )}
     </div>
   );

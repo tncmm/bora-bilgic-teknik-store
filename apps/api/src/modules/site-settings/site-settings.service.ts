@@ -19,6 +19,8 @@ export const CONTACT_INFO_DEFAULTS: SiteSettings = {
   contactHoursTime: '09:00 - 19:00',
   contactRemoteNote: 'Uzaktan teknik destek: 7/24 kayıt oluşturma',
   contactCorporateNote: 'Kurumsal projeler ve toplu alımlar için bizimle iletişime geçin; ekibimiz stok ve termin bilgisiyle hızlı teklif hazırlar.',
+  maintenanceMode: false,
+  maintenanceMessage: 'Sitemiz şu anda bakım altında. Kısa süre içinde geri döneceğiz.',
 };
 
 const shortText = (max: number) => z.string().trim().min(1).max(max);
@@ -36,17 +38,40 @@ export const siteSettingsSchema = z.object({
   contactHoursTime: optionalShortText(80),
   contactRemoteNote: optionalShortText(200),
   contactCorporateNote: optionalShortText(400),
+  maintenanceMode: z.boolean().optional(),
+  maintenanceMessage: optionalShortText(300),
 });
 
 export type SiteSettingsUpdate = z.infer<typeof siteSettingsSchema>;
 
+let maintenanceCache: { value: boolean; expiresAt: number } | null = null;
+const MAINTENANCE_CACHE_TTL_MS = 10_000;
+
+function invalidateMaintenanceCache() {
+  maintenanceCache = null;
+}
+
 export class SiteSettingsService {
   constructor(private readonly repository = new SiteSettingsRepository()) {}
+
+  /** Bakım gate'i her istekte çağırır; 10 sn'lik bellek önbelleği kullanır. */
+  async isMaintenanceMode(): Promise<boolean> {
+    const now = Date.now();
+    if (maintenanceCache && maintenanceCache.expiresAt > now) {
+      return maintenanceCache.value;
+    }
+    const row = (await this.repository.findMain()) as Record<string, unknown> | null;
+    const value = row ? Boolean(row.maintenanceMode) : false;
+    maintenanceCache = { value, expiresAt: now + MAINTENANCE_CACHE_TTL_MS };
+    return value;
+  }
 
   /** Public iletişim bilgileri; satır yoksa defaults ile döner. */
   async getContactInfo(): Promise<SiteSettings> {
     const row = await this.repository.findMain();
-    return this.serialize(row);
+    const settings = this.serialize(row);
+    maintenanceCache = { value: settings.maintenanceMode, expiresAt: Date.now() + MAINTENANCE_CACHE_TTL_MS };
+    return settings;
   }
 
   async getSettings(): Promise<SiteSettings> {
@@ -59,6 +84,7 @@ export class SiteSettingsService {
       throw new Error('Guncellenecek alan gonderilmedi.');
     }
     const row = await this.repository.upsertMain(data);
+    invalidateMaintenanceCache();
     return this.serialize(row);
   }
 
@@ -69,6 +95,10 @@ export class SiteSettingsService {
       const value = record[key];
       // null/undefined (satir yok/alan hic yazilmamis) -> varsayilan; ''
       // bilincli bos birakma oldugu icin oldugu gibi korunur (kart gizlenir).
+      if (key === 'maintenanceMode') {
+        result.maintenanceMode = value === undefined ? CONTACT_INFO_DEFAULTS.maintenanceMode : Boolean(value);
+        continue;
+      }
       result[key] = value === undefined || value === null ? CONTACT_INFO_DEFAULTS[key] : (value as string | null);
     }
     return result;

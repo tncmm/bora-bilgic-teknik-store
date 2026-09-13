@@ -1,4 +1,4 @@
-import { Suspense, lazy, type ComponentType, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
@@ -7,6 +7,7 @@ import { Seo } from '../../shared/components/Seo';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
 import { useSession } from '../providers/SessionProvider';
+import { api } from '../../shared/api/client';
 
 // Storefront kritik yolu (ana sayfa, katalog, ürün detay, bilgi sayfaları)
 // eager kalır; hesap/checkout/admin kodu ilk yüklemede inmez. React.lazy
@@ -49,6 +50,48 @@ const payments = lazyFeature(() => import('../../features/orders/payment-pages')
 ]);
 const cart = lazyFeature(() => import('../../features/cart/pages'), ['CartPage']);
 const checkout = lazyFeature(() => import('../../features/cart/checkout.page'), ['CheckoutPage']);
+
+/** Bakım modunda ziyaretçilere gösterilen tam ekran sayfa. */
+function MaintenancePage({ message }: { message: string | null }) {
+  return (
+    <div className="page-section" style={{ display: 'grid', minHeight: '85vh', placeItems: 'center', textAlign: 'center' }}>
+      <div>
+        <span className="material-symbols-outlined" style={{ fontSize: 64 }}>construction</span>
+        <h1>Bakım Modundayız</h1>
+        <p className="dji-muted">{message ?? 'Sitemiz şu anda bakım altında. Kısa süre içinde geri döneceğiz.'}</p>
+        <p className="dji-muted">Acil durumlar için destek@borabilgicteknik.com</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Site genelinde bakım modu: admin panel 30 sn'de bir /site-status'ü yoklar.
+ * Admin alanı ve giriş sayfası her zaman açıktır (bakımı kapatmak için).
+ */
+function MaintenanceGate({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const [status, setStatus] = useState<{ on: boolean; message: string | null } | null>(null);
+  const isAdminArea = location.pathname.startsWith('/admin') || location.pathname === '/giris' || location.pathname === '/dogrula';
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      api
+        .getSiteStatus()
+        .then((s) => { if (!cancelled) setStatus({ on: s.maintenanceMode, message: s.maintenanceMessage }); })
+        .catch(() => undefined);
+    };
+    void load();
+    const interval = window.setInterval(load, 30000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, []);
+
+  if (status?.on && !isAdminArea) {
+    return <MaintenancePage message={status.message} />;
+  }
+  return <>{children}</>;
+}
 
 function ProtectedRoute({ adminOnly = false }: { adminOnly?: boolean }) {
   const { isAuthenticated, isAdmin } = useSession();
@@ -120,6 +163,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
+        <MaintenanceGate>
         <Routes>
           <Route element={<SiteChrome />}>
             <Route element={<HomePage />} index />
@@ -175,6 +219,7 @@ export function AppRouter() {
 
           <Route element={<NotFoundPage />} path="*" />
         </Routes>
+        </MaintenanceGate>
       </Suspense>
     </BrowserRouter>
   );

@@ -1066,6 +1066,8 @@ const CONTACT_FALLBACK: SiteSettings = {
   contactHoursTime: '09:00 - 19:00',
   contactRemoteNote: 'Uzaktan teknik destek: 7/24 kayıt oluşturma',
   contactCorporateNote: 'Kurumsal projeler ve toplu alımlar için bizimle iletişime geçin; ekibimiz stok ve termin bilgisiyle hızlı teklif hazırlar.',
+  maintenanceMode: false,
+  maintenanceMessage: null,
 };
 
 export function ContactPage() {

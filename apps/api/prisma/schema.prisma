@@ -95,6 +95,8 @@ model SiteSettings {
   contactHoursTime       String?
   contactRemoteNote      String?
   contactCorporateNote   String?
+  maintenanceMode        Boolean  @default(false)
+  maintenanceMessage     String?
   updatedAt              DateTime @updatedAt
 }
 

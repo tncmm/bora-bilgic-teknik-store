@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 import type { Category } from '@bora/types';
@@ -11,49 +11,45 @@ export function SiteChrome() {
   const { cartCount, isAuthenticated } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const location = useLocation();
 
   useEffect(() => {
     void api.listCategories().then(setCategories).catch(() => undefined);
   }, []);
 
-  // Mobilde menü açıkken herhangi bir navigasyon olursa paneli kapat
-  // (kategori linki dahil tüm header linkleri; kullanıcıyı açık panelde bırakmaz).
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [location.pathname]);
+  /** Tüm header linklerinde: mobil panel açıkken tıklanan link paneli kapatır. */
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="dji-site-shell">
       <header className="dji-header">
         <div className="ui-shell dji-header__inner">
-          <NavLink className="dji-wordmark" to="/">
+          <NavLink className="dji-wordmark" onClick={closeMenu} to="/">
             <img src="/logo.png" alt="Bora Bilgiç" className="dji-logo" />
           </NavLink>
 
           <nav className={`dji-nav ${menuOpen ? 'is-open' : ''}`}>
-            <NavLink end to="/">
+            <NavLink end onClick={closeMenu} to="/">
               ANASAYFA
             </NavLink>
             {(categories.length > 0
               ? categories.map((category) => ({ slug: category.slug, label: category.name, path: `/kategori/${category.slug}` }))
               : storefrontSections
             ).map((section) => (
-              <NavLink key={section.slug} to={section.path}>
+              <NavLink key={section.slug} onClick={closeMenu} to={section.path}>
                 {section.label.toUpperCase()}
               </NavLink>
             ))}
-            <NavLink to="/iletisim">İLETİŞİM</NavLink>
+            <NavLink onClick={closeMenu} to="/iletisim">İLETİŞİM</NavLink>
           </nav>
 
           <div className="dji-header__actions">
-            <NavLink aria-label="Katalogda ara" className="dji-header__icon" to="/katalog">
+            <NavLink aria-label="Katalogda ara" className="dji-header__icon" onClick={closeMenu} to="/katalog">
               <span className="material-symbols-outlined">search</span>
             </NavLink>
-            <NavLink aria-label="Hesap" className="dji-header__icon" to={isAuthenticated ? '/profil' : '/giris'}>
+            <NavLink aria-label="Hesap" className="dji-header__icon" onClick={closeMenu} to={isAuthenticated ? '/profil' : '/giris'}>
               <span className="material-symbols-outlined">person</span>
             </NavLink>
-            <NavLink aria-label="Sepet" className="dji-header__icon dji-cart-link" to="/sepet">
+            <NavLink aria-label="Sepet" className="dji-header__icon dji-cart-link" onClick={closeMenu} to="/sepet">
               <span className="material-symbols-outlined">shopping_cart</span>
               {cartCount > 0 ? <span className="dji-cart-count">{cartCount}</span> : null}
             </NavLink>

@@ -11,6 +11,12 @@ siteSettingsPublicRouter.get('/contact-info', async (_req, res) => {
   res.json(await service.getContactInfo());
 });
 
+// Bakim gate'i ve SPA'nin okudugu hafif durum endpoint'i.
+siteSettingsPublicRouter.get('/site-status', async (_req, res) => {
+  const settings = await service.getContactInfo();
+  res.json({ maintenanceMode: settings.maintenanceMode, maintenanceMessage: settings.maintenanceMessage });
+});
+
 // app.ts /api/v1/admin altina baglanir; requireAuth+requireAdmin guard'i icerir.
 export const siteSettingsAdminRouter = Router();
 siteSettingsAdminRouter.use(requireAuth, requireAdmin);

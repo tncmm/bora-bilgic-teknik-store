@@ -1,6 +1,18 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { api } from '../api/client';
+
 export function AdminChrome() {
+  const [maintenanceOn, setMaintenanceOn] = useState(false);
+
+  useEffect(() => {
+    api
+      .getSiteStatus()
+      .then((status) => setMaintenanceOn(status.maintenanceMode))
+      .catch(() => undefined);
+  }, []);
+
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
@@ -19,6 +31,11 @@ export function AdminChrome() {
           <NavLink to="/admin/iletisim">İletişim Bilgileri</NavLink>
           <NavLink to="/">Mağazayı Gör</NavLink>
         </nav>
+        {maintenanceOn ? (
+          <div style={{ background: '#b91c1c', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, margin: '0.75rem', padding: '0.5rem', textAlign: 'center' }}>
+            BAKIM MODU AKTİF
+          </div>
+        ) : null}
         <div className="admin-sidebar__profile">
           <strong>Yönetici Kullanıcı</strong>
           <div className="footer-caption">Sistem Yönetimi</div>

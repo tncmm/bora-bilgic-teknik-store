@@ -251,6 +251,10 @@ export interface SiteSettings {
   contactHoursTime: string | null;
   contactRemoteNote: string | null;
   contactCorporateNote: string | null;
+  /** true iken storefront bakım sayfası gösterilir ve müşteri API'si 503 döner. */
+  maintenanceMode: boolean;
+  /** Bakım sayfasında gösterilen mesaj. */
+  maintenanceMessage: string | null;
 }
 
 /** Admin'in iade için Yurtiçi Kargo kodu üretmesinin yanıtı. */

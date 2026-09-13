@@ -15,6 +15,7 @@ import { heroSlidesRoutes } from './modules/hero-slides/routes.js';
 import { ordersRoutes } from './modules/orders/routes.js';
 import { paymentsRoutes } from './modules/payments/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
+import { maintenanceGate } from './middleware/maintenance.js';
 import { siteSettingsAdminRouter, siteSettingsPublicRouter } from './modules/site-settings/routes.js';
 import { shippingRoutes } from './modules/shipping/routes.js';
 import { usersRoutes } from './modules/users/routes.js';
@@ -59,6 +60,8 @@ export function createApp() {
   });
 
   app.use('/api/v1/auth', authRoutes);
+  // Bakim gate'i en basta: acikken musteriye donuk tum /api/v1 yollari 503 doner.
+  app.use('/api/v1', maintenanceGate);
   app.use('/api/v1', catalogRoutes);
   app.use('/api/v1', campaignsRoutes);
   app.use('/api/v1', heroSlidesRoutes);

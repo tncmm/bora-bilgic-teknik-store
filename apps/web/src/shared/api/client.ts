@@ -268,6 +268,9 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  getSiteStatus() {
+    return request<{ maintenanceMode: boolean; maintenanceMessage: string | null }>('/site-status');
+  },
   getContactInfo() {
     return request<SiteSettings>('/contact-info');
   },
