@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { AppError } from '../../lib/app-error.js';
-import { findPackageOption, serializeCart } from '../../lib/serializers.js';
+import { findPackageOption, isFallbackPackageRequest, serializeCart } from '../../lib/serializers.js';
 import { CartRepository } from './cart.repository.js';
 
 const addItemSchema = z.object({
@@ -42,8 +42,11 @@ export class CartService {
 
     // Paket secimi urunun guncel packageOptions listesinden dogrulanir:
     // bilinmeyen bir paket id'si sepette fiyat zimbalanmadan reddedilir.
+    // İstisna: packageOptions DB'de hic tanimli olmayan urunlerde serializer
+    // fallback'iden gelen 'standard' secimi taban urun sayilir.
     const packageOption = findPackageOption(product, data.packageOptionId);
-    if (data.packageOptionId && !packageOption) {
+    const fallbackPackage = isFallbackPackageRequest(product, data.packageOptionId);
+    if (data.packageOptionId && !packageOption && !fallbackPackage) {
       throw new AppError('Gecersiz paket secimi.', 400);
     }
 

@@ -52,6 +52,24 @@ export function computeEffectivePrice(price: Prisma.Decimal | number, discountPe
   return Math.round(base * (100 - discount)) / 100;
 }
 
+/** Serializer'ın paketsiz ürünler için ürettiği fallback paket id'si. */
+export const FALLBACK_PACKAGE_ID = 'standard';
+
+/**
+ * Paketsiz (packageOptions JSON'u boş) ürünler için istemcinin serializer
+ * fallback'idinden gelen paket seçimini tanır: bu istek taban ürün gibi
+ * işlenir, reddedilmez. (Aksi halde packageOptions'ı DB'de tanımlı olmayan
+ * ürünler satılamaz.)
+ */
+export function isFallbackPackageRequest(
+  product: { packageOptions?: unknown } | null | undefined,
+  packageOptionId: string | null | undefined,
+) {
+  if (!packageOptionId) return false;
+  const options = readJsonArray(product?.packageOptions);
+  return options.length === 0 && packageOptionId === FALLBACK_PACKAGE_ID;
+}
+
 /**
  * Finds the chosen package option on a product's packageOptions JSON.
  * Returns null for the base product (no/empty packageOptionId) or when the

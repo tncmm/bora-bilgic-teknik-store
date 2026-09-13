@@ -6,7 +6,7 @@ import { AppError } from '../../lib/app-error.js';
 import { decryptBillingIdentity, encryptBillingIdentity, hashTrackingToken } from '../../lib/crypto.js';
 import { sendMail } from '../../lib/mail/transport.js';
 import { guestOrderTrackingEmail } from '../../lib/mail/templates.js';
-import { computeLineUnitPrice, findPackageOption } from '../../lib/serializers.js';
+import { computeLineUnitPrice, findPackageOption, isFallbackPackageRequest } from '../../lib/serializers.js';
 import {
   isPaytrConfigured,
   newMerchantOid,
@@ -243,9 +243,12 @@ export class PaymentsService {
       }
 
       // Misafir sepetinden gelen paket secimi de urunun guncel listesine
-      // gore dogrulanir; bilinmeyen paket id'si odemeyi durdurur.
+      // gore dogrulanir; bilinmeyen paket id'si odemeyi durdurur. İstisna:
+      // packageOptions tanimli olmayan urunlerde serializer fallback'idinden
+      // gelen 'standard' secimi taban urun sayilir.
       const packageOption = findPackageOption(product, item.packageOptionId);
-      if (item.packageOptionId && !packageOption) {
+      const fallbackPackage = isFallbackPackageRequest(product, item.packageOptionId);
+      if (item.packageOptionId && !packageOption && !fallbackPackage) {
         throw new AppError('Gecersiz paket secimi.', 400);
       }
 
