@@ -1,3 +1,10 @@
+import dns from 'node:dns';
+
+// VPS'te global IPv6 atanmış ama çıkış yolu çalışmıyor olabilir; Gmail gibi
+// AAAA kaydı olan sunucular bu durumda zaman aşımına düşer. Giden tüm
+// bağlantılar (SMTP, PayTR, Yurtiçi) IPv4'ü öncelesin.
+dns.setDefaultResultOrder('ipv4first');
+
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { isR2Configured } from './lib/r2.js';
