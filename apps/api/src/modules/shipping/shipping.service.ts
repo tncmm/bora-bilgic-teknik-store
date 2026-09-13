@@ -94,9 +94,11 @@ export function normalizeReceiverPhone(rawPhone: string): string {
 }
 
 function toTrDate(date: Date): string {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${day}.${month}.${date.getFullYear()}`;
+  // YK web servisleri tarihleri YYYYMMDD bekliyor (doküman örnekleri: 20110711).
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}`;
 }
 
 export class ShippingService {
