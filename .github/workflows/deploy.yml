@@ -86,9 +86,9 @@ jobs:
           RELEASE_PATH: /opt/bora-bilgic-teknik-store/releases/${{ github.sha }}
         run: |
           set -euo pipefail
-          SSH_OPTS="-i $HOME/.ssh/deploy_key -p $SSH_PORT -o ServerAliveInterval=15 -o ServerAliveCountMax=10"
-          ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" "mkdir -p '$RELEASE_PATH'"
-          rsync -az --delete -e "$SSH_OPTS" .deploy/app/ "$SSH_USER@$SSH_HOST:$RELEASE_PATH/"
+          SSH_CMD="ssh -i $HOME/.ssh/deploy_key -p $SSH_PORT -o ServerAliveInterval=15 -o ServerAliveCountMax=10"
+          $SSH_CMD "$SSH_USER@$SSH_HOST" "mkdir -p '$RELEASE_PATH'"
+          rsync -az --delete -e "$SSH_CMD" .deploy/app/ "$SSH_USER@$SSH_HOST:$RELEASE_PATH/"
 
       - name: Activate release
         env:
@@ -98,10 +98,10 @@ jobs:
           RELEASE_PATH: /opt/bora-bilgic-teknik-store/releases/${{ github.sha }}
         run: |
           set -euo pipefail
-          SSH_OPTS="-i $HOME/.ssh/deploy_key -p $SSH_PORT -o ServerAliveInterval=15 -o ServerAliveCountMax=10"
+          SSH_CMD="ssh -i $HOME/.ssh/deploy_key -p $SSH_PORT -o ServerAliveInterval=15 -o ServerAliveCountMax=10"
           for attempt in 1 2 3; do
             echo "Aktivasyon denemesi $attempt..."
-            if ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" \
+            if $SSH_CMD "$SSH_USER@$SSH_HOST" \
               "bash '$RELEASE_PATH/scripts/deploy/remote-deploy.sh' '$RELEASE_PATH' '${{ env.DEPLOY_PATH }}' '${{ env.API_SERVICE_NAME }}'"; then
               echo "Aktivasyon basarili."
               exit 0
