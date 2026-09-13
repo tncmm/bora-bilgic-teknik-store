@@ -28,6 +28,7 @@ const admin = lazyFeature(() => import('../../features/admin/pages'), [
   'AdminOrdersPage',
   'AdminProductFormPage',
   'AdminProductsPage',
+  'AdminSiteSettingsPage',
   'AdminUsersPage',
 ]);
 const auth = lazyFeature(() => import('../../features/auth/pages'), ['LoginPage', 'RegisterPage', 'VerifyEmailPage']);
@@ -168,6 +169,7 @@ export function AppRouter() {
               <Route element={<admin.AdminBrandsPage />} path="/admin/markalar" />
               <Route element={<admin.AdminOrdersPage />} path="/admin/siparisler" />
               <Route element={<admin.AdminUsersPage />} path="/admin/kullanicilar" />
+              <Route element={<admin.AdminSiteSettingsPage />} path="/admin/iletisim" />
             </Route>
           </Route>
 

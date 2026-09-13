@@ -17,6 +17,7 @@ import type {
   Product,
   ShipmentInfo,
   ShipmentReturnCode,
+  SiteSettings,
   ThemeMode,
   User,
   Wishlist,
@@ -266,6 +267,18 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  },
+  getContactInfo() {
+    return request<SiteSettings>('/contact-info');
+  },
+  getAdminSiteSettings(token: string) {
+    return request<SiteSettings>('/admin/site-settings', {}, token);
+  },
+  updateAdminSiteSettings(token: string, payload: Partial<SiteSettings>) {
+    return request<SiteSettings>('/admin/site-settings', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }, token);
   },
   getAdminDashboard(token: string) {
     return request<DashboardMetrics>('/admin/dashboard', {}, token);

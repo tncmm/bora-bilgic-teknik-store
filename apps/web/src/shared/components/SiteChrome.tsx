@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 import type { Category } from '@bora/types';
@@ -11,10 +11,17 @@ export function SiteChrome() {
   const { cartCount, isAuthenticated } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const location = useLocation();
 
   useEffect(() => {
     void api.listCategories().then(setCategories).catch(() => undefined);
   }, []);
+
+  // Mobilde menü açıkken herhangi bir navigasyon olursa paneli kapat
+  // (kategori linki dahil tüm header linkleri; kullanıcıyı açık panelde bırakmaz).
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="dji-site-shell">

@@ -16,6 +16,7 @@ export function AdminChrome() {
           <NavLink to="/admin/markalar">Markalar / Ekle</NavLink>
           <NavLink to="/admin/siparisler">Siparişler</NavLink>
           <NavLink to="/admin/kullanicilar">Kullanıcılar</NavLink>
+          <NavLink to="/admin/iletisim">İletişim Bilgileri</NavLink>
           <NavLink to="/">Mağazayı Gör</NavLink>
         </nav>
         <div className="admin-sidebar__profile">

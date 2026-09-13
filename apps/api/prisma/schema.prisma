@@ -81,6 +81,23 @@ model RefreshToken {
   @@index([userId])
 }
 
+// Tek satirlik site geneli ayarlar (iletisim bilgileri vb.) — id sabit 'main'.
+model SiteSettings {
+  id                     String   @id @default("main")
+  contactHeroTitle       String?
+  contactHeroDescription String?
+  contactAddress         String?
+  contactPhone           String?
+  contactEmail           String?
+  contactWhatsapp        String?
+  contactMapUrl          String?
+  contactHoursDays       String?
+  contactHoursTime       String?
+  contactRemoteNote      String?
+  contactCorporateNote   String?
+  updatedAt              DateTime @updatedAt
+}
+
 model Campaign {
   id          String   @id @default(cuid())
   title       String

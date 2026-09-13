@@ -916,6 +916,37 @@ const campaignFixtures = [
   },
 ];
 
+async function upsertSiteSettings() {
+  // Internet kaynaklarindan dogrulanan iletisim bilgileri (Facebook sayfasi +
+  // Yurtici Kargo kaydi: Sirkeci/Hayyam Carsisi). Kapi numarasi admin
+  // panelinden guncellenebilir; upsert idempotent, admin duzenlemeleri korunur.
+  const contactFixture = {
+    contactHeroTitle: 'İLETİŞİM',
+    contactHeroDescription: 'Kurumsal projeler, teknik keşif, stok teyidi ve satış sonrası destek için bizimle hızla iletişime geçin.',
+    contactAddress: 'Hayyam Çarşısı (Hayyam Pasajı), Hoca Paşa Mah. Muradiye Cad., Sirkeci / Fatih / İstanbul',
+    contactPhone: '+90 552 355 79 83',
+    contactEmail: 'destek@borabilgicteknik.com',
+    contactMapUrl: 'https://www.google.com/maps?q=Hayyam+Pasaj%C4%B1+Sirkeci+%C4%B0stanbul&output=embed',
+    contactHoursDays: 'Pazartesi - Cumartesi',
+    contactHoursTime: '09:00 - 19:00',
+    contactRemoteNote: 'Uzaktan teknik destek: 7/24 kayıt oluşturma',
+    contactCorporateNote: 'Kurumsal projeler ve toplu alımlar için bizimle iletişime geçin; ekibimiz stok ve termin bilgisiyle hızlı teklif hazırlar.',
+  };
+
+  const existing = await prisma.siteSettings.findUnique({ where: { id: 'main' } });
+  if (existing) {
+    // Alanlar null ise varsayilani doldur; admin'in doldurdugunu ezme.
+    await prisma.siteSettings.update({
+      where: { id: 'main' },
+      data: Object.fromEntries(
+        Object.entries(contactFixture).map(([key, value]) => [key, (existing as unknown as Record<string, unknown>)[key] ?? value]),
+      ),
+    });
+    return;
+  }
+  await prisma.siteSettings.create({ data: { id: 'main', ...contactFixture } });
+}
+
 async function upsertCampaigns() {
   for (const fixture of campaignFixtures) {
     const existing = await prisma.campaign.findFirst({ where: { title: fixture.title } });
@@ -1273,6 +1304,7 @@ async function seedOrders() {
 
 async function main() {
   await upsertCategories();
+  await upsertSiteSettings();
   await upsertCampaigns();
   await upsertHeroSlides();
   await cleanupCatalog();

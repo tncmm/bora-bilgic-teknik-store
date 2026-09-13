@@ -1,5 +1,5 @@
 import { Badge, Button, EmptyState } from '@bora/ui';
-import type { CatalogListResponse, CatalogSectionSlug, Category, Product, ProductDetailSection, ProductPackageOption } from '@bora/types';
+import type { CatalogListResponse, CatalogSectionSlug, Category, Product, ProductDetailSection, ProductPackageOption, SiteSettings } from '@bora/types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -1053,7 +1053,32 @@ export function ProductDetailPage() {
   );
 }
 
+/** İletişim kartlarının yükleme anındaki (ve API erişilemezse) yedek değerleri. */
+const CONTACT_FALLBACK: SiteSettings = {
+  contactHeroTitle: 'İLETİŞİM',
+  contactHeroDescription: 'Kurumsal projeler, teknik keşif, stok teyidi ve satış sonrası destek için bizimle hızla iletişime geçin.',
+  contactAddress: 'Hayyam Çarşısı (Hayyam Pasajı), Hoca Paşa Mah. Muradiye Cad., Sirkeci / Fatih / İstanbul',
+  contactPhone: '+90 552 355 79 83',
+  contactEmail: 'destek@borabilgicteknik.com',
+  contactWhatsapp: null,
+  contactMapUrl: 'https://www.google.com/maps?q=Hayyam+Pasaj%C4%B1+Sirkeci+%C4%B0stanbul&output=embed',
+  contactHoursDays: 'Pazartesi - Cumartesi',
+  contactHoursTime: '09:00 - 19:00',
+  contactRemoteNote: 'Uzaktan teknik destek: 7/24 kayıt oluşturma',
+  contactCorporateNote: 'Kurumsal projeler ve toplu alımlar için bizimle iletişime geçin; ekibimiz stok ve termin bilgisiyle hızlı teklif hazırlar.',
+};
+
 export function ContactPage() {
+  const [contact, setContact] = useState<SiteSettings>(CONTACT_FALLBACK);
+
+  useEffect(() => {
+    // Admin panelinden yönetilen iletişim bilgileri; API erişilemezse fallback.
+    void api
+      .getContactInfo()
+      .then(setContact)
+      .catch(() => undefined);
+  }, []);
+
   return (
     <>
       <Seo
@@ -1068,30 +1093,63 @@ export function ContactPage() {
             <span>›</span>
             <span>İletişim</span>
           </div>
-          <h1>İLETİŞİM</h1>
-          <p>Kurumsal projeler, teknik keşif, stok teyidi ve satış sonrası destek için bizimle hızla iletişime geçin.</p>
+          <h1>{contact.contactHeroTitle ?? 'İLETİŞİM'}</h1>
+          <p>{contact.contactHeroDescription}</p>
         </div>
       </section>
 
       <section className="dji-section">
         <div className="ui-shell dji-contact-grid">
-          <div className="dji-contact-card">
-            <h2>Merkez Ofis</h2>
-            <p>Maslak Mah. Teknik Plaza No: 18 / İstanbul</p>
-            <p>+90 212 555 00 00</p>
-            <p>info@borabilgicteknik.com</p>
-          </div>
-          <div className="dji-contact-card">
-            <h2>Kurumsal Satış</h2>
-            <p>Drone filoları, inspection ihtiyaçları ve kurumsal demo akışları için uzman ekip.</p>
-            <Badge>Enterprise Discovery</Badge>
-          </div>
-          <div className="dji-contact-card">
-            <h2>Destek Saatleri</h2>
-            <p>Pazartesi - Cumartesi</p>
-            <p>09:00 - 19:00</p>
-            <p>Uzaktan teknik destek: 7/24 kayıt oluşturma</p>
-          </div>
+          {contact.contactAddress || contact.contactPhone || contact.contactEmail ? (
+            <div className="dji-contact-card">
+              <h2>Merkez Ofis</h2>
+              {contact.contactAddress ? <p>{contact.contactAddress}</p> : null}
+              {contact.contactPhone ? (
+                <p>
+                  <a href={`tel:${contact.contactPhone.replace(/\s/g, '')}`}>{contact.contactPhone}</a>
+                </p>
+              ) : null}
+              {contact.contactEmail ? (
+                <p>
+                  <a href={`mailto:${contact.contactEmail}`}>{contact.contactEmail}</a>
+                </p>
+              ) : null}
+              {contact.contactWhatsapp ? (
+                <p>
+                  <a href={`https://wa.me/${contact.contactWhatsapp.replace(/\D/g, '')}`} rel="noreferrer" target="_blank">
+                    WhatsApp ile yazın
+                  </a>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {contact.contactCorporateNote ? (
+            <div className="dji-contact-card">
+              <h2>Kurumsal Satış</h2>
+              <p>{contact.contactCorporateNote}</p>
+              <Badge>Enterprise Discovery</Badge>
+            </div>
+          ) : null}
+          {contact.contactHoursDays || contact.contactHoursTime ? (
+            <div className="dji-contact-card">
+              <h2>Destek Saatleri</h2>
+              {contact.contactHoursDays ? <p>{contact.contactHoursDays}</p> : null}
+              {contact.contactHoursTime ? <p>{contact.contactHoursTime}</p> : null}
+              {contact.contactRemoteNote ? <p>{contact.contactRemoteNote}</p> : null}
+            </div>
+          ) : null}
+          {contact.contactMapUrl ? (
+            <div className="dji-contact-card dji-contact-card--map">
+              <h2>Konum</h2>
+              <iframe
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={contact.contactMapUrl}
+                title="Bora Bilgiç Teknik konum"
+              />
+            </div>
+          ) : null}
         </div>
       </section>
 

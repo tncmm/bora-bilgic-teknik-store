@@ -238,6 +238,21 @@ export interface Refund {
   items?: RefundItem[];
 }
 
+/** Site geneli iletişim ayarları (singleton, admin panelinden yönetilir). */
+export interface SiteSettings {
+  contactHeroTitle: string | null;
+  contactHeroDescription: string | null;
+  contactAddress: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  contactWhatsapp: string | null;
+  contactMapUrl: string | null;
+  contactHoursDays: string | null;
+  contactHoursTime: string | null;
+  contactRemoteNote: string | null;
+  contactCorporateNote: string | null;
+}
+
 /** Admin'in iade için Yurtiçi Kargo kodu üretmesinin yanıtı. */
 export interface ShipmentReturnCode {
   refundId: string;

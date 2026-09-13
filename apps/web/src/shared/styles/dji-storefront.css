@@ -2210,3 +2210,17 @@ body {
     height: 8px;
   }
 }
+
+/* --- İletişim sayfası harita kartı -------------------------------------- */
+.dji-contact-card--map {
+  grid-column: 1 / -1;
+}
+
+.dji-contact-card--map iframe {
+  border: 0;
+  border-radius: 12px;
+  display: block;
+  filter: grayscale(0.35) contrast(1.05);
+  height: 320px;
+  width: 100%;
+}
