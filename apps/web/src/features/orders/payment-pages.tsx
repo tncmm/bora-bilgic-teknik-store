@@ -6,6 +6,18 @@ import { useSession } from '../../app/providers/SessionProvider';
 import { ApiError, api } from '../../shared/api/client';
 
 const MAX_POLL_ATTEMPTS = 20;
+/** Saklanan takip adresi tam URL olabilir (örn. https://site/siparis-takip/x);
+ *  navigate/Link mutlak URL'i relative path sanıp bozuk rota üretir. */
+function toAppPath(url: string | null | undefined): string {
+  if (!url) return '/';
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return url.startsWith('/') ? url : `/${url}`;
+  }
+}
+
 const POLL_INTERVAL_MS = 2500;
 
 function useMerchantOid() {
@@ -46,7 +58,7 @@ export function PaymentSuccessPage() {
             navigate(`/siparislerim/${status.orderId}`, { replace: true, state: { justPlaced: true } });
             return;
           }
-          navigate(trackingUrl ?? status.trackingUrl ?? '/', { replace: true });
+          navigate(toAppPath(trackingUrl ?? status.trackingUrl), { replace: true });
           return;
         }
 
@@ -98,7 +110,7 @@ export function PaymentSuccessPage() {
               title="Ödeme sonucu doğrulanamadı"
             />
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
-              <Link to={trackingUrl ?? '/'}>
+              <Link to={toAppPath(trackingUrl)}>
                 <Button>{trackingUrl ? 'Sipariş Takibine Git' : 'Ana Sayfaya Dön'}</Button>
               </Link>
               <Link to="/sepet">
