@@ -76,7 +76,7 @@ export function DeliveryPage() {
   return (
     <InfoPage
       highlights={[
-        { title: 'Ücretsiz Kargo', description: '2.500 TL ve üzeri siparişlerde Türkiye geneli ücretsiz kargo uygulanır; altındaki siparişler için sabit kargo ücreti sepet aşamasında gösterilir.' },
+        { title: 'Kargo Bilgilendirmesi', description: 'Siparişin teslimat yöntemi, kargo firması ve varsa kargo ücreti sepet ve ödeme adımlarında açıkça gösterilir.' },
         { title: 'Hızlı Sevkiyat', description: 'Hafta içi mesai saatlerinde onaylanan stoklu siparişler aynı gün veya en geç ertesi iş günü kargoya verilir.' },
         { title: 'Sipariş Takibi', description: 'Kargo çıkışı sonrası takip numarası e-posta ve SMS ile iletilir; teslimat süreci bilgi mesajlarıyla desteklenir.' },
       ]}
@@ -92,10 +92,10 @@ export function DeliveryPage() {
           ],
         },
         {
-          heading: 'Kargo Ücreti ve Ücretsiz Kargo Eşiği',
-          body: 'Sipariş tutarı 2.500 TL ve üzerinde ise Türkiye genelinde ücretsiz kargo uygulanır. Bu eşiğin altındaki siparişler için sabit kargo ücreti sepet ve ödeme adımlarında açıkça gösterilir.',
+          heading: 'Kargo Ücreti',
+          body: 'Kargo ücreti; sipariş içeriği, teslimat adresi, kampanya koşulları ve tercih edilen gönderim yöntemine göre ödeme adımında açıkça gösterilir.',
           bullets: [
-            'Kampanya dönemlerinde ücretsiz kargo eşiği veya kargo bedava kodu ile farklı uygulamalar yapılabilir; bu durum ilgili kampanya sayfasında belirtilir.',
+            'Kampanya dönemlerinde gönderim koşulları değişebilir; geçerli uygulama sepet ve ödeme adımlarında belirtilir.',
             'Adres değişikliği veya ikinci gönderim taleplerinde ek kargo ücreti oluşabilir.',
           ],
         },
@@ -138,7 +138,7 @@ export function DeliveryPage() {
           ],
         },
       ]}
-      summary="Sipariş hazırlama, kargo ücreti, ücretsiz kargo eşiği, teslimat süreleri, sipariş takibi ve teslimatta kontrol adımları bu sayfada detaylı olarak açıklanmıştır."
+      summary="Sipariş hazırlama, kargo ücreti, teslimat süreleri, sipariş takibi ve teslimatta kontrol adımları bu sayfada genel bilgilerle açıklanmıştır."
       title="KARGO VE TESLİMAT"
       seoTitle="Kargo ve Teslimat Bilgileri"
       seoPath="/teslimat"
@@ -270,7 +270,7 @@ export function DistanceSalesPage() {
           body: 'Teslimat, anlaşmalı ulusal kargo firmaları aracılığıyla alıcının belirttiği adrese yapılır. Detaylı kargo ve teslimat bilgileri için "Kargo ve Teslimat" sayfasına bakınız.',
           bullets: [
             'Stoklu ürünlerde teslimat süresi İstanbul içi 1 iş günü, diğer iller 1–3 iş günüdür.',
-            '2.500 TL ve üzeri siparişlerde ücretsiz kargo uygulanır.',
+            'Kargo ücreti ve gönderim yöntemi sepet ve ödeme adımlarında ayrıca belirtilir.',
             'Resmi tatiller ve olağanüstü durumlarda teslimat süreleri uzayabilir.',
           ],
         },
@@ -350,150 +350,6 @@ export function PrivacyPage() {
       title="GİZLİLİK POLİTİKASI"
       seoTitle="Gizlilik Politikası"
       seoPath="/gizlilik"
-    />
-  );
-}
-
-export function WarrantyPage() {
-  return (
-    <InfoPage
-      highlights={[
-        { title: '2 Yıl Yasal Garanti', description: 'Türkiye\'de satılan tüm ürünler, Tüketicinin Korunması Hakkında Kanun uyarınca en az 2 yıl yasal garanti kapsamındadır.' },
-        { title: 'Yetkili Servis Güvencesi', description: 'Garanti işlemleri üreticinin yetkili servis noktaları veya Bora Bilgiç aracılığıyla yürütülür; onarım ücretsizdir.' },
-        { title: 'DOA Değişimi', description: 'Teslimattan itibaren ilk 14 gün içinde arızalı olduğu tespit edilen ürünler, stok durumu uygunsa yenisiyle değiştirilir.' },
-      ]}
-      pathLabel="Garanti"
-      sections={[
-        {
-          heading: 'Yasal Garanti Kapsamı',
-          body: 'Bora Bilgiç üzerinden satın alınan tüm ürünler, Tüketicinin Korunması Hakkında Kanun ve ilgili yönetmelikler çerçevesinde en az 2 yıl yasal garanti altındadır. Üretici tarafından sunulan ek garanti süreleri, yasal garantiye ilave olarak geçerlidir.',
-          bullets: [
-            'Garanti süresi, ürünün tüketiciye teslim tarihinden itibaren başlar.',
-            'Garanti belgesi veya e-garanti kaydı, ürünün seri numarası ile ilişkilendirilir.',
-            'Garanti kapsamında yapılan onarımlar için herhangi bir ücret talep edilmez.',
-          ],
-        },
-        {
-          heading: 'Garanti Neleri Kapsar?',
-          body: 'Garanti, normal kullanım koşullarında ortaya çıkan üretim ve montaj hatalarını kapsar.',
-          bullets: [
-            'Donanım arızaları ve fabrika kaynaklı üretim kusurları.',
-            'Yazılım güncellemeleriyle giderilemeyen donanımsal sorunlar.',
-            'Garanti süresi içinde tekrarlayan aynı arıza durumunda ürün değişimi hakkı.',
-          ],
-        },
-        {
-          heading: 'Garanti Dışı Durumlar',
-          body: 'Aşağıdaki durumlarda garanti geçersiz sayılır ve onarım ücretli olarak yapılır:',
-          bullets: [
-            'Kullanıcı hatasından kaynaklanan fiziksel hasarlar (düşme, çarpma, kırılma).',
-            'Sıvı teması, nem hasarı veya korozyon.',
-            'Yetkisiz kişi veya kurumlar tarafından yapılan müdahale, tamir veya modifikasyon.',
-            'Kaza, doğal afet, yangın veya elektrik dalgalanması gibi dış etkenlerden kaynaklanan hasarlar.',
-            'Ürünün kullanım kılavuzuna aykırı şekilde kullanılması.',
-            'Seri numarasının silinmesi, okunamaz hale gelmesi veya değiştirilmesi.',
-          ],
-        },
-        {
-          heading: 'Garanti Süreci',
-          body: 'Garanti talepleri, üreticinin yetkili servis noktaları veya doğrudan Bora Bilgiç aracılığıyla işleme alınır.',
-          bullets: [
-            'İlk adım olarak info@borabilgicteknik.com adresine veya +90 212 555 00 00 telefon hattına başvuru yapılmalıdır.',
-            'Başvuruda sipariş numarası, ürün seri numarası ve arıza açıklaması paylaşılmalıdır.',
-            'Destek ekibi, ürünü yetkili servise yönlendirir veya gerekirse kargo ile gönderim talimatı verir.',
-            'Servis incelemesi sonrası onarım, parça değişimi veya ürün değişimi kararı verilir ve müşteri bilgilendirilir.',
-          ],
-        },
-        {
-          heading: 'DOA – İlk 14 Gün Arızalı Ürün Değişimi',
-          body: 'Dead on Arrival (DOA) kapsamında, teslimattan itibaren ilk 14 gün içinde çalışmadığı veya arızalı olduğu tespit edilen ürünler için hızlı değişim uygulanır.',
-          bullets: [
-            'Ürün orijinal kutusu, tüm aksesuarları ve faturası ile birlikte eksiksiz gönderilmelidir.',
-            'Teknik ekip tarafından arıza doğrulandıktan sonra, aynı modelin stokta bulunması halinde yenisiyle değiştirilir.',
-            'Stokta bulunmaması durumunda ürün bedeli iade edilir veya farklı bir modelle fark karşılığında değişim yapılabilir.',
-          ],
-        },
-        {
-          heading: 'Fatura ve Seri Numarası Gerekliliği',
-          body: 'Garanti işlemi başlatılabilmesi için ürünün faturası (veya e-fatura çıktısı) ve seri numarası ibraz edilmelidir. Fatura üzerinde satın alma tarihi açıkça görünmelidir.',
-          bullets: [
-            'E-fatura kullanıcıları, faturayı e-posta veya hesap panelinden temin edebilir.',
-            'Seri numarası genellikle ürünün alt yüzeyinde, batarya bölmesinde veya orijinal kutu üzerinde yer alır.',
-            'Fatura veya seri numarası ibraz edilemeyen ürünlerde garanti hizmeti verilemeyebilir.',
-          ],
-        },
-        {
-          heading: 'Pil, Aksesuar ve Sarf Malzemeleri',
-          body: 'Batarya, şarj kablosu, pervane, filtre, taşıma çantası gibi sarf malzemeleri ve aksesuarların garanti koşulları ana üründen farklılık gösterebilir.',
-          bullets: [
-            'Pillerde kapasite kaybı normal kullanım ömrü kapsamında değerlendirilir; üretim hatası dışında kalan durumlar garanti kapsamı dışındadır.',
-            'Aksesuarların garanti süresi, ürün sayfasında veya garanti belgesinde ayrıca belirtilmedikçe ana ürünle aynıdır.',
-            'Sarf malzemelerinin düzenli bakım ve değiştirme periyotları kullanım kılavuzunda yer alır.',
-          ],
-        },
-      ]}
-      summary="2 yıllık yasal garanti kapsamı, garanti dışı durumlar, DOA değişim politikası, garanti başvuru süreci ve sarf malzemelerine dair bilgiler bu sayfada detaylı olarak açıklanmıştır."
-      title="GARANTİ ŞARTLARI"
-      seoTitle="Garanti Şartları"
-      seoPath="/garanti"
-    />
-  );
-}
-
-export function FaqPage() {
-  return (
-    <InfoPage
-      highlights={[
-        { title: 'Hızlı Yanıt', description: 'En çok sorulan sorulara anında ulaşarak sipariş, kargo, iade ve hesap işlemlerinizi hızlandırabilirsiniz.' },
-        { title: 'Canlı Destek', description: 'Yanıt bulamadığınız konularda Pazartesi–Cumartesi 09:00–19:00 saatleri arasında +90 212 555 00 00 hattından bize ulaşabilirsiniz.' },
-        { title: 'E-posta Desteği', description: 'Detaylı talepleriniz için info@borabilgicteknik.com adresine yazabilirsiniz; ekibimiz en kısa sürede dönüş yapar.' },
-      ]}
-      pathLabel="SSS"
-      sections={[
-        {
-          heading: 'Sipariş ve Ödeme',
-          body: 'Sipariş oluşturma, ödeme yöntemleri ve fatura süreçleriyle ilgili sıkça sorulan sorular:',
-          bullets: [
-            'S: Siparişimin durumunu nasıl öğrenebilirim? — C: Hesabınıza giriş yaparak "Siparişlerim" bölümünden güncel durumu görebilirsiniz. Ayrıca sipariş onayı ve kargo çıkışı e-postaları da bilgilendirme içerir.',
-            'S: Hangi ödeme yöntemlerini kabul ediyorsunuz? — C: Kredi kartı, banka kartı ve havale/EFT ile ödeme yapabilirsiniz. Taksit seçenekleri kartınızın bankasına göre değişmektedir.',
-            'S: Faturamı nasıl alabilirim? — C: E-faturanız sipariş onayından sonra kayıtlı e-posta adresinize gönderilir. Kurumsal fatura talebinizi sipariş sırasında veya sonrasında info@borabilgicteknik.com adresinden iletebilirsiniz.',
-            'S: Siparişimi iptal edebilir miyim? — C: Henüz kargoya verilmemiş siparişlerinizi info@borabilgicteknik.com adresinden iptal talebi oluşturarak iptal edebilirsiniz. Kargoya verilmiş siparişlerde iade süreci uygulanır.',
-          ],
-        },
-        {
-          heading: 'Kargo ve Teslimat',
-          body: 'Gönderim süreleri, kargo takibi ve teslimat detaylarıyla ilgili sorular:',
-          bullets: [
-            'S: Siparişim ne kadar sürede elime ulaşır? — C: İstanbul içi teslimatlar genellikle 1 iş günü, diğer iller 1–3 iş günüdür. Resmi tatillerde süreler uzayabilir.',
-            'S: Kargo takip numaramı nasıl alabilirim? — C: Kargo çıkışı yapıldığında takip numaranız e-posta ve SMS ile size iletilir. Bu numara ile kargo firmasının sitesinden anlık takip yapabilirsiniz.',
-            'S: Ücretsiz kargo koşulu nedir? — C: 2.500 TL ve üzeri siparişlerde Türkiye geneli ücretsiz kargo uygulanır. Altındaki tutarlarda sabit kargo ücreti sepet aşamasında gösterilir.',
-            'S: Adresimde yokken kargo gelirse ne olur? — C: Kargo firması şubede belirli bir süre bekletir. Bu süre içinde teslim alamazsanız paket iade edilir; yeniden gönderim için bizimle iletişime geçebilirsiniz.',
-          ],
-        },
-        {
-          heading: 'İade ve Garanti',
-          body: 'Cayma hakkı, iade süreci ve garanti uygulamalarıyla ilgili sorular:',
-          bullets: [
-            'S: Cayma hakkımı nasıl kullanırım? — C: Teslimattan itibaren 14 gün içinde info@borabilgicteknik.com adresine yazılı bildirim yaparak cayma hakkınızı kullanabilirsiniz. Ürünün kullanılmamış ve eksiksiz olması gerekir.',
-            'S: İade sonrası geri ödemem ne zaman yapılır? — C: Ürün kontrolü tamamlandıktan sonra geri ödeme en geç 14 gün içinde orijinal ödeme yönteminize yapılır. Banka işlem sürelerine göre hesaba yansıması değişebilir.',
-            'S: Ürünüm arızalı çıktı, ne yapmalıyım? — C: İlk 14 gün içinde DOA kapsamında hızlı değişim uygulanır. Sonrasında garanti süreci başlatılır; info@borabilgicteknik.com veya +90 212 555 00 00 üzerinden başvuru yapabilirsiniz.',
-            'S: Satılan ürünler orijinal mi? — C: Evet, tüm ürünlerimiz yetkili distribütörlerden temin edilen %100 orijinal ürünlerdir. Her ürün üretici garantisiyle birlikte sunulur.',
-          ],
-        },
-        {
-          heading: 'Üyelik ve Destek',
-          body: 'Hesap yönetimi, kurumsal talepler ve iletişim bilgileri:',
-          bullets: [
-            'S: Şifremi unuttum, nasıl sıfırlayabilirim? — C: Giriş sayfasındaki "Şifremi Unuttum" bağlantısına tıklayarak kayıtlı e-posta adresinize sıfırlama bağlantısı gönderebilirsiniz.',
-            'S: Kurumsal teklif almak istiyorum, nasıl başvurabilirim? — C: Kurumsal satış ve toplu alım teklifleri için info@borabilgicteknik.com adresine firma bilgileriniz ve talep ettiğiniz ürün listesiyle birlikte yazabilirsiniz.',
-            'S: Destek ekibine hangi saatlerde ulaşabilirim? — C: Müşteri destek ekibimize Pazartesi–Cumartesi günleri 09:00–19:00 saatleri arasında +90 212 555 00 00 telefonundan veya info@borabilgicteknik.com e-posta adresinden ulaşabilirsiniz.',
-          ],
-        },
-      ]}
-      summary="Sipariş, ödeme, kargo, iade, garanti, üyelik ve destek konularında en sık sorulan soruların yanıtları bu sayfada yer almaktadır."
-      title="SIKÇA SORULAN SORULAR"
-      seoTitle="Sıkça Sorulan Sorular"
-      seoPath="/sss"
     />
   );
 }

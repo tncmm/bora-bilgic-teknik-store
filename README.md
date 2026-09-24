@@ -81,14 +81,23 @@ Bes deger de dolmadan yukleme calismaz; API, belirsiz bir 500 yerine net bir
 yapilandirma hatasi doner. Bu davranis `src/lib/r2.ts` icindeki
 `isR2Configured()` ile saglanir.
 
-`R2_PUBLIC_BASE_URL` iki sekilde olabilir:
+`R2_PUBLIC_BASE_URL` üretimde R2 custom domain olarak ayarlanır:
 
-- **Ayni domain media yolu** — uretim icin onerilen yontem. Ornek:
-  `https://borabilgic.net.tr/media`. Nginx bu yolu R2 public bucket'a proxy eder;
-  tarayicilar R2'nin `r2.dev` domainine dogrudan baglanmaz.
-- **r2.dev** — bucket'ta "Public access" acilip verilen `https://pub-<hash>.r2.dev`
-  adresi. Hizli baslangic icin uygundur, ancak bazi aglarda veya tarayicilarda
-  baglanti resetleri gorulebildigi icin uretim icin onerilmez.
+```env
+R2_PUBLIC_BASE_URL="https://borabilgic.net.tr"
+```
+
+Yeni yüklenen dosyalar bu domain altında object key'iyle döner:
+`https://borabilgic.net.tr/products/images/...`,
+`https://borabilgic.net.tr/products/videos/...`,
+`https://borabilgic.net.tr/orders/invoices/...`.
+
+Nginx örneği bu prefix'leri R2 public bucket origin'ine proxy eder; böylece
+tarayıcılar R2'nin `r2.dev` domainine doğrudan bağlanmaz. Eski kayıtlar için
+`https://borabilgic.net.tr/media/...` path'i de desteklenmeye devam eder.
+
+Lokal geliştirmede veya hızlı testte bucket'ın public `https://pub-<hash>.r2.dev`
+adresi hâlâ kullanılabilir.
 
 ### Yukleme kurallari
 

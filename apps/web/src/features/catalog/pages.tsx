@@ -209,7 +209,6 @@ export function StoreFooter() {
         <div>
           <h4>KURUMSAL</h4>
           <nav>
-            <Link to="/kurumsal">Hakkımızda</Link>
             <Link to="/kurumsal">Yetki Belgeleri</Link>
             <Link to="/gizlilik">KVKK / Gizlilik</Link>
             <Link to="/iletisim">İletişim</Link>
@@ -221,8 +220,6 @@ export function StoreFooter() {
             <Link to="/teslimat">Kargo & Teslimat</Link>
             <Link to="/iade">İade & Değişim</Link>
             <Link to="/mesafeli-satis">Mesafeli Satış</Link>
-            <Link to="/garanti">Garanti Şartları</Link>
-            <Link to="/sss">Sıkça Sorulan Sorular</Link>
           </nav>
         </div>
         <div>

@@ -392,3 +392,25 @@ describe('AdminService orphaned media cleanup', () => {
     expect(repository.deleteProduct).toHaveBeenCalledWith('p1');
   });
 });
+
+describe('R2 custom domain URL parsing', () => {
+  beforeEach(() => {
+    sendMock.mockReset();
+  });
+
+  it('extracts object keys from the apex custom domain and legacy /media URLs', async () => {
+    vi.resetModules();
+    for (const [key, value] of Object.entries({ ...R2_ENV, R2_PUBLIC_BASE_URL: 'https://borabilgic.net.tr' })) {
+      process.env[key] = value;
+    }
+
+    const { extractR2KeyFromUrl } = await import('../../lib/r2.js');
+
+    expect(extractR2KeyFromUrl('https://borabilgic.net.tr/products/images/2026/09/drone.png')).toBe(
+      'products/images/2026/09/drone.png',
+    );
+    expect(extractR2KeyFromUrl('https://borabilgic.net.tr/media/products/images/2026/09/drone.png')).toBe(
+      'products/images/2026/09/drone.png',
+    );
+  });
+});

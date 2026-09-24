@@ -18,6 +18,15 @@ Runtime API environment lives on the server at:
 ```
 
 R2 and PayTR keys can be added to that file later without changing the workflow.
+For production R2 custom-domain media, set:
+
+```text
+R2_PUBLIC_BASE_URL="https://borabilgic.net.tr"
+```
+
+The nginx config proxies `/products/images/`, `/products/posters/`,
+`/products/videos/`, `/orders/invoices/`, and legacy `/media/` paths to the
+R2 public bucket origin.
 
 ## TLS
 
@@ -31,9 +40,9 @@ informational; the nginx behavior is intentionally left unchanged.
 ## Nginx config ve SEO notları
 
 - `deploy/nginx/bora-bilgic-teknik-store.conf` deploy akışına dahil değildir;
-  dosyadaki değişiklikler (gzip, asset cache, www→apex 301, sitemap proxy)
-  VPS'te elle kopyalanır ve `sudo nginx -t && sudo systemctl reload nginx`
-  ile uygulanır.
+  dosyadaki değişiklikler (gzip, asset cache, www→apex 301, sitemap proxy,
+  R2 media proxy) VPS'te elle kopyalanır ve
+  `sudo nginx -t && sudo systemctl reload nginx` ile uygulanır.
 - `https://borabilgic.net.tr/sitemap.xml` API'den dinamik üretilir
   (`GET /api/v1/seo/sitemap.xml`); nginx bu yolu API'ye yönlendirir.
   Yayındaki ürün/kategoriler admin işlemleriyle otomatik güncel kalır.

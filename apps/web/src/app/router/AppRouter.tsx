@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useState, type ComponentType, type ReactNode
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
-import { DeliveryPage, DistanceSalesPage, FaqPage, PrivacyPage, ReturnPage, WarrantyPage } from '../../features/catalog/info-pages';
+import { DeliveryPage, DistanceSalesPage, PrivacyPage, ReturnPage } from '../../features/catalog/info-pages';
 import { Seo } from '../../shared/components/Seo';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
@@ -180,8 +180,6 @@ export function AppRouter() {
             <Route element={<ReturnPage />} path="/iade" />
             <Route element={<DistanceSalesPage />} path="/mesafeli-satis" />
             <Route element={<PrivacyPage />} path="/gizlilik" />
-            <Route element={<WarrantyPage />} path="/garanti" />
-            <Route element={<FaqPage />} path="/sss" />
             <Route element={<SeoRoute path="/sepet" title="Sepetim"><cart.CartPage /></SeoRoute>} path="/sepet" />
             <Route element={<SeoRoute path="/checkout" title="Ödeme"><checkout.CheckoutPage /></SeoRoute>} path="/checkout" />
             <Route element={<SeoRoute path="/odeme/basarili" title="Ödeme Başarılı"><payments.PaymentSuccessPage /></SeoRoute>} path="/odeme/basarili" />

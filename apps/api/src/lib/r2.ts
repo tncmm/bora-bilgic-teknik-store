@@ -44,12 +44,18 @@ interface R2Config {
  * what makes the public R2 bucket cheap to serve from.
  */
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+const R2_OBJECT_PREFIXES = ['products/images/', 'products/posters/', 'products/videos/', 'orders/invoices/'];
 
 let cachedClient: S3Client | null = null;
 let cachedConfig: R2Config | null = null;
 
 function normalizeBaseUrl(value: string) {
   return value.replace(/\/+$/, '');
+}
+
+function normalizeR2KeyFromPath(pathname: string) {
+  const key = pathname.replace(/^\/+/, '').replace(/^media\/+/, '');
+  return R2_OBJECT_PREFIXES.some((prefix) => key.startsWith(prefix)) ? key : null;
 }
 
 /**
@@ -386,12 +392,17 @@ export function extractR2KeyFromUrl(url: string | null | undefined): string | nu
         return null;
       }
 
-      return parsed.pathname.replace(/^\/+/, '') || null;
+      return normalizeR2KeyFromPath(parsed.pathname);
     } catch {
       return null;
     }
   }
 
-  const key = url.slice(publicBaseUrl.length + 1);
-  return key.length ? key : null;
+  try {
+    const parsed = new URL(url);
+    return normalizeR2KeyFromPath(parsed.pathname);
+  } catch {
+    const key = url.slice(publicBaseUrl.length + 1);
+    return normalizeR2KeyFromPath(key);
+  }
 }
