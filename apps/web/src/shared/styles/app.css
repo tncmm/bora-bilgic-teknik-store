@@ -1922,12 +1922,15 @@
 }
 
 .admin-order-detail-modal {
-  max-width: 1040px;
+  width: min(1280px, calc(100vw - 96px));
+  max-width: none;
+  max-height: min(86vh, 1080px);
+  overflow: auto;
 }
 
 .admin-order-detail-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  grid-template-columns: minmax(320px, 0.95fr) minmax(520px, 1.05fr);
   gap: 16px;
   margin-bottom: 16px;
   padding: 18px;
@@ -1942,6 +1945,7 @@
   display: grid;
   align-content: center;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .admin-order-detail-hero span,
@@ -1959,12 +1963,15 @@
 
 .admin-order-detail-hero > div:first-child > strong {
   font-family: var(--font-heading);
-  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  font-size: clamp(1.25rem, 1.6vw, 1.75rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
 }
 
 .admin-order-detail-hero p {
   margin: 0;
   color: var(--text-soft);
+  overflow-wrap: anywhere;
 }
 
 .admin-order-detail-hero__facts {
@@ -1975,16 +1982,22 @@
 
 .admin-order-detail-hero__facts > div {
   display: grid;
+  align-content: start;
   gap: 0.35rem;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: color-mix(in srgb, #05070a 24%, transparent);
+  min-width: 0;
+}
+
+.admin-order-detail-hero__facts strong {
+  overflow-wrap: anywhere;
 }
 
 .admin-order-detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -2103,6 +2116,11 @@
   .admin-order-line__meta {
     justify-items: start;
     text-align: left;
+  }
+
+  .admin-order-detail-modal {
+    width: min(760px, calc(100vw - 32px));
+    max-height: 88vh;
   }
 }
 
