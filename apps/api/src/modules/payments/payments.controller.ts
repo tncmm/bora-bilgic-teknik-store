@@ -15,7 +15,7 @@ export class PaymentsController {
     // proof; missing or wrong tokens must be indistinguishable from unknown
     // merchant oids (see PaymentsService.getStatus).
     const trackingToken = typeof req.query.t === 'string' ? req.query.t : undefined;
-    const result = await this.service.getStatus(String(req.params.merchantOid), trackingToken);
+    const result = await this.service.getStatus(String(req.params.merchantOid), trackingToken, req.auth?.userId);
     res.json(result);
   };
 

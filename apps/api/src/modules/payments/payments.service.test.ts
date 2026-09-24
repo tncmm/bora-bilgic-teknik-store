@@ -137,7 +137,8 @@ describe('PayTR refund and timeout handling', () => {
 
     const result = await requestRefund({ merchantOid: 'OID', amount: 25.5 });
 
-    expect(result).toEqual({ referenceNo: 'REF-1' });
+    expect(result).toEqual({
+      referenceNo: 'REF-1' });
   });
 
   it('treats errNo 000 as a successful refund even when the status field disagrees', async () => {
@@ -148,7 +149,8 @@ describe('PayTR refund and timeout handling', () => {
 
     const result = await requestRefund({ merchantOid: 'OID', amount: 25.5 });
 
-    expect(result).toEqual({ referenceNo: null });
+    expect(result).toEqual({
+      referenceNo: null });
   });
 
   it('throws a refund error carrying the PayTR error code on failure', async () => {
@@ -740,6 +742,7 @@ describe('PaymentsService.getStatus', () => {
     const result = await service.getStatus(baseAttempt.merchantOid, 'test-token');
 
     expect(result).toEqual({
+      belongsToAccount: false,
       merchantOid: baseAttempt.merchantOid,
       status: 'completed',
       orderId: 'order-1',
@@ -760,6 +763,7 @@ describe('PaymentsService.getStatus', () => {
     const result = await service.getStatus(baseAttempt.merchantOid, 'test-token');
 
     expect(result).toEqual({
+      belongsToAccount: false,
       merchantOid: baseAttempt.merchantOid,
       status: 'completed',
       orderId: 'order-1',
@@ -816,5 +820,18 @@ describe('PaymentsService.getStatus', () => {
       statusCode: 404,
       message: 'Odeme denemesi bulunamadi.',
     });
+  });
+
+  it('belongsToAccount bayragini talep eden kullaniciyla eslestirir', async () => {
+    const repository = createRepository();
+    repository.findAttemptStatus.mockResolvedValue({ ...baseAttempt, userId: 'user-1' });
+    const service = new PaymentsService(repository as never);
+
+    const result = await service.getStatus(baseAttempt.merchantOid, 'test-token', 'user-1');
+
+    expect(result.belongsToAccount).toBe(true);
+
+    const other = await service.getStatus(baseAttempt.merchantOid, 'test-token', 'another-user');
+    expect(other.belongsToAccount).toBe(false);
   });
 });

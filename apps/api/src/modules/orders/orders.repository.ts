@@ -3,7 +3,10 @@ import { randomBytes } from 'node:crypto';
 import { prisma } from '../../db/prisma.js';
 import { hashTrackingToken } from '../../lib/crypto.js';
 
-const orderInclude = { items: true, refunds: { include: { items: true }, orderBy: { createdAt: 'desc' as const } } };
+const orderInclude = {
+  items: { include: { product: { include: { images: true } } } },
+  refunds: { include: { items: true }, orderBy: { createdAt: 'desc' as const } },
+};
 
 export function generateOrderNumber() {
   return `BBT-${Date.now().toString(36).toUpperCase()}${randomBytes(3).toString('hex').toUpperCase()}`;

@@ -7,9 +7,10 @@ const router = Router();
 const controller = new PaymentsController();
 
 router.post('/paytr/checkout', optionalAuth, controller.checkout);
-// Ownership comes solely from the ?t= tracking token; no session is needed
-// (or consulted) here — see PaymentsService.getStatus.
-router.get('/paytr/status/:merchantOid', controller.status);
+// Ownership comes from the ?t= tracking token; optionalAuth additionally
+// supplies req.auth when a valid session exists so the response can carry
+// belongsToAccount (frontend decides between account page and tracking URL).
+router.get('/paytr/status/:merchantOid', optionalAuth, controller.status);
 
 // Server-to-server notification: PayTR has no session cookie or bearer token,
 // authenticity comes from the HMAC hash verified inside the service. The body

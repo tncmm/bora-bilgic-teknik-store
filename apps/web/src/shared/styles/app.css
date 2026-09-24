@@ -3495,3 +3495,153 @@
     width: 100%;
   }
 }
+
+/* --- Siparis detayi: urun gorselleri ------------------------------------ */
+.order-line-card {
+  align-items: center;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 64px 1fr auto;
+}
+
+.order-line-thumb {
+  border-radius: 10px;
+  height: 64px;
+  object-fit: cover;
+  width: 64px;
+}
+
+.order-line-thumb--fallback {
+  align-items: center;
+  background: var(--surface, #14181f);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted, #8b93a3);
+  display: grid;
+  place-items: center;
+}
+
+.order-line-card__info {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.order-line-package {
+  color: var(--text-muted, #8b93a3);
+  font-size: 0.8rem;
+}
+
+/* --- Iade talebi modalinin yeniden tasarimi ------------------------------ */
+.order-refund-items {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.order-refund-item {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 56px 1fr auto;
+  padding: 0.7rem 0.8rem;
+  transition: border-color 0.15s ease;
+}
+
+.order-refund-item.is-selected {
+  border-color: var(--primary, #ff6a1a);
+}
+
+.order-refund-item.is-disabled {
+  opacity: 0.45;
+}
+
+.order-refund-item__image {
+  border-radius: 8px;
+  height: 56px;
+  object-fit: cover;
+  width: 56px;
+}
+
+.order-refund-item__image--fallback {
+  align-items: center;
+  background: var(--surface, #14181f);
+  color: var(--text-muted, #8b93a3);
+  display: grid;
+  place-items: center;
+}
+
+.order-refund-item__info {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.order-refund-item__info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-refund-item__amount {
+  color: var(--primary, #ff6a1a);
+  font-weight: 600;
+}
+
+.order-refund-stepper {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.2rem 0.3rem;
+}
+
+.order-refund-stepper button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1rem;
+  height: 28px;
+  line-height: 1;
+  width: 28px;
+}
+
+.order-refund-stepper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.order-refund-stepper span {
+  min-width: 1.6rem;
+  text-align: center;
+}
+
+.order-refund-fields {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0.8rem 0;
+}
+
+.order-refund-summary {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 2rem;
+  justify-content: flex-end;
+  margin-top: 0.6rem;
+  padding: 0.8rem 0.2rem 0.2rem;
+}
+
+.order-refund-summary div {
+  display: grid;
+  gap: 0.1rem;
+  text-align: right;
+}
+
+.order-refund-summary span {
+  color: var(--text-muted, #8b93a3);
+  font-size: 0.8rem;
+}

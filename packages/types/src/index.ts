@@ -189,6 +189,9 @@ export interface Wishlist {
 
 export interface OrderItem {
   id: string;
+  productId?: string | null;
+  /** Siparis satirindaki urunun kapak gorseli; eski kayitlarda null. */
+  productImage?: string | null;
   productName: string;
   /** Siparis anindaki paket adi; null = taban urun. */
   packageLabel?: string | null;
@@ -366,6 +369,8 @@ export interface PaymentStatusResponse {
   status: 'pending' | 'completed' | 'failed' | 'expired';
   orderId?: string;
   trackingUrl?: string;
+  /** Odeme bir hesaba bagli ise true; misafirse takip linkine yonlendirilir. */
+  belongsToAccount?: boolean;
 }
 
 export interface User {

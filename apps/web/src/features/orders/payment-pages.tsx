@@ -54,7 +54,10 @@ export function PaymentSuccessPage() {
           window.sessionStorage.removeItem('bora-pending-tracking-token');
           window.sessionStorage.removeItem('bora-pending-tracking-url');
           window.localStorage.removeItem('bora-guest-cart');
-          if (isAuthenticated && status.orderId) {
+          // Siparis yalnizca o anki oturumun hesabina bagliysa hesap
+          // sayfasina; misafir ödemede takip linkine yonlendirilir (aksi
+          // halde /siparislerim 404 "bulunamadi" verir).
+          if (status.belongsToAccount && isAuthenticated && status.orderId) {
             navigate(`/siparislerim/${status.orderId}`, { replace: true, state: { justPlaced: true } });
             return;
           }

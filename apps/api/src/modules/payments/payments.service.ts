@@ -393,7 +393,7 @@ export class PaymentsService {
    * missing or wrong token answers with the exact same 404 as an unknown
    * merchantOid, so the existence of an attempt is never revealed.
    */
-  async getStatus(merchantOid: string, trackingToken: string | undefined) {
+  async getStatus(merchantOid: string, trackingToken: string | undefined, requestingUserId?: string) {
     const attempt = await this.repository.findAttemptStatus(merchantOid);
     if (!attempt || !this.hasValidTrackingToken(attempt.trackingTokenHash, trackingToken)) {
       throw new AppError('Odeme denemesi bulunamadi.', 404);
@@ -414,6 +414,9 @@ export class PaymentsService {
       status: attempt.status.toLowerCase(),
       orderId: order?.id,
       trackingUrl,
+      // Odeme misafir olarak yapildiysa frontend, hesap siparisleri yerine
+      // takip linkine yonlendirmeli; aksi halde 404 "bulunamadi" gorunur.
+      belongsToAccount: Boolean(attempt.userId && attempt.userId === requestingUserId),
     };
   }
 

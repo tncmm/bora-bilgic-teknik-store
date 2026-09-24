@@ -286,6 +286,17 @@ export function serializeWishlist(wishlist: any): Wishlist {
   };
 }
 
+/**
+ * Siparis satiri icin urunun kapak gorselini secer: once isPrimary + video
+ * olmayan, sonra ilk video olmayan, en sonunda ilk gorsel.
+ */
+function pickPrimaryProductImage(product: any): string | null {
+  const images = Array.isArray(product?.images) ? product.images : [];
+  const nonVideo = images.filter((image: any) => (image.kind ?? 'image') !== 'video');
+  const primary = nonVideo.find((image: any) => image.isPrimary) ?? nonVideo[0] ?? images[0];
+  return primary ? resolveMediaUrl(primary.url) : null;
+}
+
 export function serializeOrder(order: any): Order {
   const total = decimalToNumber(order.total);
   const refundedAmount = decimalToNumber(order.refundedAmount ?? 0);
@@ -348,6 +359,8 @@ export function serializeOrder(order: any): Order {
     cargoEvents: readCargoEvents(order.cargoEvents),
     items: order.items.map((item: any) => ({
       id: item.id,
+      productId: item.productId ?? null,
+      productImage: pickPrimaryProductImage(item.product),
       productName: item.productName,
       packageLabel: item.packageLabel ?? null,
       quantity: item.quantity,

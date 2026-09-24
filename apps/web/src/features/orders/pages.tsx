@@ -1,6 +1,6 @@
-import type { Order } from '@bora/types';
+import type { Order, OrderItem } from '@bora/types';
 import { Button, EmptyState } from '@bora/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { useI18n } from '../../app/providers/I18nProvider';
@@ -55,6 +55,7 @@ function RefundRequestModal({
   onSubmit: (payload: RefundRequestPayload) => Promise<void>;
 }) {
   const { showToast } = useToast();
+  const { language } = useI18n();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
@@ -63,7 +64,15 @@ function RefundRequestModal({
   const selectedItems = order.items
     .map((item) => ({ item, quantity: Math.min(quantities[item.id] ?? 0, item.refundableQuantity) }))
     .filter((entry) => entry.quantity > 0);
-  const canSubmit = selectedItems.length > 0 && reason.length >= 3 && note.trim().length >= 10 && !submitting;
+  const refundTotal = selectedItems.reduce((total, entry) => total + entry.item.unitPrice * entry.quantity, 0);
+  const selectedPieceCount = selectedItems.reduce((total, entry) => total + entry.quantity, 0);
+  const noteLength = note.trim().length;
+  const canSubmit = selectedItems.length > 0 && reason && noteLength >= 10 && !submitting;
+
+  function setQuantity(item: OrderItem, next: number) {
+    const clamped = Math.max(0, Math.min(next, item.refundableQuantity));
+    setQuantities((current) => ({ ...current, [item.id]: clamped }));
+  }
 
   async function handleSubmit() {
     if (!canSubmit) {
@@ -103,47 +112,78 @@ function RefundRequestModal({
           <p>İade etmek istediğiniz ürünleri ayrı ayrı seçin. Talep onaylandıktan sonra ödeme iadesi admin tarafından yapılır.</p>
         </div>
 
-        <div className="refund-picker-list">
-          {order.items.map((item) => (
-            <label className={`refund-picker-item ${item.refundableQuantity <= 0 ? 'is-disabled' : ''}`} key={item.id}>
-              <div>
-                <strong>{item.productName}</strong>
-                <span>{getRefundStatusLabel(item)}</span>
+        <div className="order-refund-items">
+          {order.items.map((item) => {
+            const qty = Math.min(quantities[item.id] ?? 0, item.refundableQuantity);
+            const disabled = item.refundableQuantity <= 0;
+            const selected = qty > 0;
+            return (
+              <div className={`order-refund-item ${disabled ? 'is-disabled' : ''} ${selected ? 'is-selected' : ''}`} key={item.id}>
+                {item.productImage ? (
+                  <img alt={item.productName} className="order-refund-item__image" loading="lazy" src={item.productImage} />
+                ) : (
+                  <span aria-hidden="true" className="order-refund-item__image order-refund-item__image--fallback">
+                    <span className="material-symbols-outlined">photo_camera</span>
+                  </span>
+                )}
+                <div className="order-refund-item__info">
+                  <strong>{item.productName}</strong>
+                  {item.packageLabel ? <span className="order-line-package">{item.packageLabel}</span> : null}
+                  <span>{disabled ? 'Bu ürün iade edilemiyor' : `İade edilebilir: ${item.refundableQuantity} adet`}</span>
+                  {selected ? (
+                    <span className="order-refund-item__amount">{formatCurrency(item.unitPrice * qty, language)}</span>
+                  ) : null}
+                </div>
+                <div aria-label={`${item.productName} iade adedi`} className="order-refund-stepper">
+                  <button aria-label="Adet azalt" disabled={disabled || qty <= 0} onClick={() => setQuantity(item, qty - 1)} type="button">
+                    −
+                  </button>
+                  <span aria-live="polite">{qty}</span>
+                  <button aria-label="Adet artır" disabled={disabled || qty >= item.refundableQuantity} onClick={() => setQuantity(item, qty + 1)} type="button">
+                    +
+                  </button>
+                </div>
               </div>
-              <input
-                disabled={item.refundableQuantity <= 0}
-                max={item.refundableQuantity}
-                min="0"
-                onChange={(event) => setQuantities((current) => ({ ...current, [item.id]: Number(event.target.value) }))}
-                type="number"
-                value={quantities[item.id] ?? 0}
-              />
-            </label>
-          ))}
+            );
+          })}
         </div>
 
-        <label className="admin-field">
-          <span>İade sebebi</span>
-          <select className="ui-select" onChange={(event) => setReason(event.target.value)} value={reason}>
-            <option value="">Sebep seçin</option>
-            {refundReasons.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="order-refund-fields">
+          <label className="admin-field">
+            <span>İade sebebi</span>
+            <select className="ui-select" onChange={(event) => setReason(event.target.value)} value={reason}>
+              <option value="">Sebep seçin</option>
+              {refundReasons.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="admin-field">
-          <span>Açıklama</span>
-          <textarea
-            className="ui-textarea"
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Talebinizi kısaca açıklayın."
-            value={note}
-          />
-          <small>En az 10 karakter girmeniz gerekir.</small>
-        </label>
+          <label className="admin-field">
+            <span>Açıklama</span>
+            <textarea
+              className="ui-textarea"
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Talebinizi kısaca açıklayın."
+              rows={3}
+              value={note}
+            />
+            <small>{noteLength >= 10 ? 'Açıklama hazır.' : `En az ${10 - noteLength} karakter daha girin.`}</small>
+          </label>
+        </div>
+
+        <div className="order-refund-summary">
+          <div>
+            <span>Seçim</span>
+            <strong>{selectedPieceCount} adet</strong>
+          </div>
+          <div>
+            <span>İade tutarı</span>
+            <strong>{formatCurrency(refundTotal, language)}</strong>
+          </div>
+        </div>
 
         <div className="admin-modal-actions">
           <button className="admin-table-action" disabled={submitting} onClick={onClose} type="button">
@@ -242,8 +282,16 @@ function OrderDetailView({
               <div className="order-line-list">
                 {order.items.map((item) => (
                   <div className="order-line-card" key={item.id}>
-                    <div>
+                    {item.productImage ? (
+                      <img alt={item.productName} className="order-line-thumb" loading="lazy" src={item.productImage} />
+                    ) : (
+                      <span aria-hidden="true" className="order-line-thumb order-line-thumb--fallback">
+                        <span className="material-symbols-outlined">photo_camera</span>
+                      </span>
+                    )}
+                    <div className="order-line-card__info">
                       <strong>{item.productName}</strong>
+                      {item.packageLabel ? <span className="order-line-package">{item.packageLabel}</span> : null}
                       <span>{getRefundStatusLabel(item)}</span>
                     </div>
                     <div className="order-line-card__numbers">
@@ -429,10 +477,32 @@ export function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const loadOrder = useCallback(() => {
+    if (!token || !orderId) return;
+    setError(null);
+    void api.getMyOrder(token, orderId).then(setOrder).catch((nextError: Error) => setError(nextError.message));
+  }, [orderId, token]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
+
+  // Admin durum degisikliklerinin sayfaya yansimasi: 20 sn'de bir sessiz
+  // yenileme + sekmeye donuste aninda tazeleme.
   useEffect(() => {
     if (!token || !orderId) return;
-    void Promise.resolve().then(() => setError(null));
-    void api.getMyOrder(token, orderId).then(setOrder).catch((nextError: Error) => setError(nextError.message));
+    const refresh = () => {
+      void api.getMyOrder(token, orderId).then(setOrder).catch(() => undefined);
+    };
+    const timer = window.setInterval(refresh, 20_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [orderId, token]);
 
   if (!user || !token) {
@@ -454,9 +524,21 @@ export function OrderDetailPage() {
         <div className="ui-shell">
           <div className="profile-card profile-card--full">
             <EmptyState
-              description={error ?? 'Sipariş detayları yükleniyor...'}
+              description={
+                error
+                  ? `${error} — Sipariş hesabınıza bağlı değilse yalnızca ödeme sonrası verilen takip bağlantısıyla görüntülenebilir.`
+                  : 'Sipariş detayları yükleniyor...'
+              }
               title={error ? 'Sipariş yüklenemedi' : 'Lütfen bekleyin'}
             />
+            {error ? (
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
+                <Button onClick={loadOrder}>Tekrar Dene</Button>
+                <Link to="/siparislerim">
+                  <Button variant="secondary">Siparişlerime Dön</Button>
+                </Link>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -485,6 +567,23 @@ export function GuestOrderTrackingPage() {
   useEffect(() => {
     if (!token) return;
     void api.trackOrder(token).then(setOrder).catch((nextError: Error) => setError(nextError.message));
+  }, [token]);
+
+  // Admin durum guncellemelerinin misafir takip sayfasina da canli yansimasi.
+  useEffect(() => {
+    if (!token) return;
+    const refresh = () => {
+      void api.trackOrder(token).then(setOrder).catch(() => undefined);
+    };
+    const timer = window.setInterval(refresh, 20_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [token]);
 
   const content = useMemo(() => {
