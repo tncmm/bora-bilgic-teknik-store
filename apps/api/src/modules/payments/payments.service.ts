@@ -298,7 +298,10 @@ export class PaymentsService {
    * retry the callback; the repository transitions are PENDING-guarded, so
    * retries are safe.
    */
-  async handleCallback(body: Record<string, unknown>) {
+  async handleCallback(rawBody: Record<string, unknown>) {
+    // body-parser'in ortama bagli olarak bos govdeyi undefined birakabilmesi
+    // 500 (TypeError) degil temiz 400 uretsin; PayTR retry'i da boylece durur.
+    const body = rawBody ?? {};
     const merchantOid = String(body.merchant_oid ?? '');
     const status = String(body.status ?? '');
     const totalAmount = String(body.total_amount ?? '');

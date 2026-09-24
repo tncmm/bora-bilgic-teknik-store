@@ -98,6 +98,21 @@ function createRepository() {
   };
 }
 
+describe('PaymentsService.handleCallback — boş/eksik gövde savunması', () => {
+  it('undefined gövde için 500 yerine temiz 400 döner', async () => {
+    const service = new PaymentsService();
+    await expect(service.handleCallback(undefined as never)).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'Odeme bildiriminde eksik alanlar var.',
+    });
+  });
+
+  it('boş gövde için de 400 döner', async () => {
+    const service = new PaymentsService();
+    await expect(service.handleCallback({})).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
 describe('PayTR helpers', () => {
   it('converts TL amounts to kurus strings', () => {
     expect(toKurus(1499.5)).toBe('149950');

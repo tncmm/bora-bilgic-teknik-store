@@ -26,7 +26,9 @@ export class PaymentsController {
       totalAmount: req.body?.total_amount,
       host: req.headers.host,
     });
-    await this.service.handleCallback(req.body as Record<string, unknown>);
+    // body-parser bazı ortamlarda boş gövdeyi undefined bırakabiliyor; guard
+    // hizmet katmanında eksik-alan 400'i üretsin diye burada normalize edilir.
+    await this.service.handleCallback((req.body ?? {}) as Record<string, string>);
     // PayTR treats anything but the literal "OK" as a failure and retries.
     res.type('text/plain').send('OK');
   };
