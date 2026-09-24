@@ -17,6 +17,17 @@ const STATUS_OPTIONS = [
   { value: 'DELIVERED', label: 'Teslim Edildi' },
 ] as const;
 
+function getOrderStatusLabel(status: string) {
+  return STATUS_OPTIONS.find((option) => option.value === status.toUpperCase())?.label ?? status;
+}
+
+function getOrderItemRefundLabel(item: Order['items'][number]) {
+  if (item.refundedQuantity >= item.quantity) return 'İade edildi';
+  if (item.pendingRefundQuantity > 0) return 'İade talebi var';
+  if (item.refundedQuantity > 0) return 'Kısmi iade';
+  return null;
+}
+
 function readFileAsBase64(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -616,27 +627,43 @@ export function AdminOrdersPage() {
             <div className="admin-card__head admin-card__head--row">
               <div>
                 <h2>Sipariş Detayı</h2>
-                <p>{detailOrder.orderNumber} faturası için gerekli müşteri, teslimat, fatura ve ürün bilgileri.</p>
+                <p>Fatura, teslimat, kargo ve ürün kalemleri tek ekranda sadeleştirildi.</p>
               </div>
               <button className="admin-table-action" onClick={() => setDetailOrder(null)} type="button">
                 Kapat
               </button>
             </div>
 
+            <div className="admin-order-detail-hero">
+              <div>
+                <span>Sipariş No</span>
+                <strong>{detailOrder.orderNumber}</strong>
+                <p>{detailOrder.customer} · {detailOrder.email}</p>
+              </div>
+              <div className="admin-order-detail-hero__facts">
+                <div>
+                  <span>Sipariş Durumu</span>
+                  <strong>{getOrderStatusLabel(detailOrder.status)}</strong>
+                </div>
+                <div>
+                  <span>Ödeme</span>
+                  <strong>{translatePaymentStatus('tr', detailOrder.paymentStatus)}</strong>
+                </div>
+                <div>
+                  <span>Toplam</span>
+                  <strong>{formatCurrency(detailOrder.total, 'tr')}</strong>
+                </div>
+              </div>
+            </div>
+
             <div className="admin-order-detail-grid">
               <section className="admin-order-detail-block">
-                <h3>Müşteri</h3>
+                <h3>Müşteri ve Fatura</h3>
                 <dl>
                   <div><dt>Ad Soyad</dt><dd>{detailOrder.customer}</dd></div>
                   <div><dt>E-posta</dt><dd>{detailOrder.email}</dd></div>
                   <div><dt>Telefon</dt><dd>{detailOrder.shippingPhone}</dd></div>
                   <div><dt>Sipariş Tarihi</dt><dd>{formatDate(detailOrder.createdAt, 'tr')}</dd></div>
-                </dl>
-              </section>
-
-              <section className="admin-order-detail-block">
-                <h3>Fatura Bilgileri</h3>
-                <dl>
                   <div><dt>Fatura Tipi</dt><dd>{detailOrder.billing.type === 'corporate' ? 'Kurumsal' : 'Bireysel'}</dd></div>
                   <div><dt>Ad / Ünvan</dt><dd>{detailOrder.billing.companyName || detailOrder.billing.name}</dd></div>
                   <div><dt>TC Kimlik</dt><dd>{detailOrder.billing.identityNumber ?? `***${detailOrder.billing.identityNumberLast4}`}</dd></div>
@@ -662,7 +689,7 @@ export function AdminOrdersPage() {
               </section>
 
               <section className="admin-order-detail-block">
-                <h3>Ödeme</h3>
+                <h3>Ödeme ve İade</h3>
                 <dl>
                   <div><dt>Durum</dt><dd>{translatePaymentStatus('tr', detailOrder.paymentStatus)}</dd></div>
                   <div><dt>Toplam</dt><dd>{formatCurrency(detailOrder.total, 'tr')}</dd></div>
@@ -730,13 +757,32 @@ export function AdminOrdersPage() {
             <div className="admin-order-detail-block">
               <h3>Ürün Kalemleri</h3>
               <div className="admin-order-lines">
-                {detailOrder.items.map((item) => (
-                  <div className="admin-order-line" key={item.id}>
-                    <strong>{item.productName}</strong>
-                    <span>{item.quantity} adet × {formatCurrency(item.unitPrice, 'tr')}</span>
-                    <strong>{formatCurrency(item.lineTotal, 'tr')}</strong>
-                  </div>
-                ))}
+                {detailOrder.items.map((item) => {
+                  const refundLabel = getOrderItemRefundLabel(item);
+                  return (
+                    <div className="admin-order-line" key={item.id}>
+                      <div className="admin-order-line__product">
+                        <strong>{item.productName}</strong>
+                        <span>{item.quantity} adet × {formatCurrency(item.unitPrice, 'tr')}</span>
+                        {item.packageLabel ? <small>{item.packageLabel}</small> : null}
+                      </div>
+                      <div className="admin-order-line__meta">
+                        <span>Satır Toplamı</span>
+                        <strong>{formatCurrency(item.lineTotal, 'tr')}</strong>
+                      </div>
+                      <div className="admin-order-line__meta">
+                        <span>İade Durumu</span>
+                        {refundLabel ? (
+                          <strong className="admin-order-line__refund">{refundLabel}</strong>
+                        ) : (
+                          <strong>İade yok</strong>
+                        )}
+                        {item.pendingRefundQuantity > 0 ? <small>{item.pendingRefundQuantity} adet onay bekliyor</small> : null}
+                        {item.refundedQuantity > 0 ? <small>{item.refundedQuantity} adet tamamlandı</small> : null}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
