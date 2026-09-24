@@ -17,6 +17,7 @@ import type {
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 
 import { env } from '../config/env.js';
+import { buildYurticiTrackingUrl } from './yurtici.js';
 
 const r2PublicBaseUrl = env.R2_PUBLIC_BASE_URL?.replace(/\/+$/, '') ?? null;
 
@@ -333,6 +334,11 @@ export function serializeOrder(order: any): Order {
     invoiceSentAt: order.invoiceSentAt ? order.invoiceSentAt.toISOString() : null,
     cargoBarcode: order.cargoBarcode ?? null,
     cargoCompany: order.cargoCompany ?? null,
+    cargoCreatedAt: order.cargoCreatedAt ? new Date(order.cargoCreatedAt).toISOString() : null,
+    cargoTrackingUrl: buildYurticiTrackingUrl({
+      reference: order.cargoBarcode ?? null,
+      shipmentDate: order.cargoCreatedAt ?? order.createdAt,
+    }),
     cargoStatus: (order.cargoStatus as CargoStatus | null) ?? null,
     cargoLastEvent: order.cargoLastEvent ?? null,
     cargoLastSyncedAt: order.cargoLastSyncedAt ? order.cargoLastSyncedAt.toISOString() : null,

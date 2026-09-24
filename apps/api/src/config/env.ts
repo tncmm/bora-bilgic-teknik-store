@@ -64,6 +64,9 @@ const envSchema = z.object({
   YURTICI_KARGO_PASSWORD: optionalText,
   YURTICI_KARGO_CUSTOMER_ID: optionalText,
   YURTICI_KARGO_TIMEOUT_MS: z.preprocess(blankToUndefined, z.coerce.number().positive().int().optional()),
+  // Parametrik takip linkinde kullanılacak özel alan. Web servisle oluşturulan
+  // gönderilerde cargoKey/Anahtar Alan için varsayılan 53 kullanılır.
+  YURTICI_KARGO_TRACKING_FIELD_ID: z.preprocess(blankToUndefined, z.string().default('53')),
   // RMA iade kodunun kaydedildiği özel alan (ssfldvn): canlıda 16 ("İade Onay
   // Kodu"); test kullanıcısında tanım olmadığından 53/3 ile test edilir.
   YURTICI_KARGO_RETURN_FIELD_ID: z.preprocess(blankToUndefined, z.string().default('16')),

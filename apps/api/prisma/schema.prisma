@@ -379,6 +379,7 @@ model Order {
   // hareket listesinin en fazla son 20 kaydını tutar (sınırsız büyümesin).
   cargoBarcode      String?   @unique
   cargoCompany      String?   @default("Yurtiçi Kargo")
+  cargoCreatedAt    DateTime?
   cargoStatus       String?
   cargoLastEvent    String?
   cargoLastSyncedAt DateTime?

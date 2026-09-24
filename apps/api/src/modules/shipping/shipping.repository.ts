@@ -5,6 +5,7 @@ import { prisma } from '../../db/prisma.js';
 export interface ShipmentCreateData {
   cargoBarcode: string;
   cargoCompany: string;
+  cargoCreatedAt: Date;
 }
 
 export interface ShipmentSyncData {

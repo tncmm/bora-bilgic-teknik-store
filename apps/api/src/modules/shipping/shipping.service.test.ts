@@ -27,7 +27,7 @@ vi.mock('../../lib/yurtici.js', async (importOriginal) => {
   };
 });
 
-const { cancelShipment, createShipment, isYurticiConfigured, mapYurticiEventCode, queryShipment, saveReturnShipmentCode } = await import('../../lib/yurtici.js');
+const { buildYurticiTrackingUrl, cancelShipment, createShipment, isYurticiConfigured, mapYurticiEventCode, mapYurticiOperationStatus, queryShipment, saveReturnShipmentCode } = await import('../../lib/yurtici.js');
 const realYurtici = await vi.importActual<typeof import('../../lib/yurtici.js')>('../../lib/yurtici.js');
 
 const paidOrder = {
@@ -39,8 +39,10 @@ const paidOrder = {
   shippingCity: 'Istanbul',
   shippingDistrict: 'Kadikoy',
   shippingAddressLine: 'Moda Caddesi No: 1',
+  createdAt: new Date('2026-09-20T12:00:00.000Z'),
   cargoBarcode: null as string | null,
   cargoCompany: 'Yurtiçi Kargo',
+  cargoCreatedAt: null as Date | null,
   cargoStatus: null as string | null,
   cargoLastEvent: null,
   cargoLastSyncedAt: null,
@@ -64,7 +66,7 @@ function createRefundRepository(refund: typeof refundFixture | null = refundFixt
 function createRepository(order: typeof paidOrder | null = paidOrder) {
   return {
     findOrderById: vi.fn(async () => order),
-    setShipment: vi.fn(async (_orderId: string, data: { cargoBarcode: string; cargoCompany: string }) => ({
+    setShipment: vi.fn(async (_orderId: string, data: { cargoBarcode: string; cargoCompany: string; cargoCreatedAt: Date }) => ({
       ...paidOrder,
       ...data,
     })),
@@ -97,12 +99,14 @@ describe('ShippingService.createShipmentForOrder', () => {
     expect(repository.setShipment).toHaveBeenCalledWith('order-1', {
       cargoBarcode: 'YK-TEST-BARCODE',
       cargoCompany: 'Yurtiçi Kargo',
+      cargoCreatedAt: expect.any(Date),
     });
     expect(result).toMatchObject({
       orderId: 'order-1',
       orderNumber: 'BBT-2026-0001',
       cargoBarcode: 'YK-TEST-BARCODE',
       cargoCompany: 'Yurtiçi Kargo',
+      cargoCreatedAt: expect.any(String),
     });
   });
 
@@ -237,6 +241,29 @@ describe('Yurtici event code mapping', () => {
   it('maps unknown codes to UNKNOWN', () => {
     expect(mapYurticiEventCode('9999')).toBe('UNKNOWN');
     expect(mapYurticiEventCode('')).toBe('UNKNOWN');
+  });
+
+  it('maps documented operation statuses to safe normalized statuses', () => {
+    expect(mapYurticiOperationStatus('IND')).toBe('IN_TRANSIT');
+    expect(mapYurticiOperationStatus('ISR')).toBe('IN_TRANSIT');
+    expect(mapYurticiOperationStatus('DLV')).toBe('DELIVERED');
+    expect(mapYurticiOperationStatus('CNL')).toBe('CANCELLED');
+    expect(mapYurticiOperationStatus('ISC')).toBe('CANCELLED');
+    expect(mapYurticiOperationStatus('BI')).toBe('CANCELLED');
+    expect(mapYurticiOperationStatus('NOP')).toBe('UNKNOWN');
+  });
+
+  it('builds the documented parametric self-service tracking URL without frontend secrets', () => {
+    const url = buildYurticiTrackingUrl({
+      reference: 'BBT-2026-0001',
+      shipmentDate: '2026-09-24T12:00:00.000Z',
+    });
+
+    expect(url).toContain('https://selfservis.yurticikargo.com/reports/SswReportsFromParamFields.aspx?');
+    expect(url).toContain('ssfldvn=53');
+    expect(url).toContain('sskurkod=12345');
+    expect(url).toContain('refnumber=BBT-2026-0001');
+    expect(url).toContain('date=24.09.2026');
   });
 });
 
@@ -415,6 +442,15 @@ describe('ShippingService.cancelShipmentForOrder', () => {
     const repository = createRepository({ ...paidOrder, cargoBarcode: 'YK-TEST-BARCODE' });
     const service = new ShippingService(repository as any);
     vi.mocked(cancelShipment).mockResolvedValueOnce({ cancelled: false, operationStatus: 'DLV', message: 'Teslim edilmis.' });
+
+    await expect(service.cancelShipmentForOrder('order-1')).rejects.toMatchObject({ statusCode: 409 });
+    expect(repository.setShipmentSync).not.toHaveBeenCalled();
+  });
+
+  it('does not mark the order cancelled when the vendor reports the shipment is still in transit', async () => {
+    const repository = createRepository({ ...paidOrder, cargoBarcode: 'YK-TEST-BARCODE' });
+    const service = new ShippingService(repository as any);
+    vi.mocked(cancelShipment).mockResolvedValueOnce({ cancelled: false, operationStatus: 'IND', message: 'Kargo Teslimattadır.' });
 
     await expect(service.cancelShipmentForOrder('order-1')).rejects.toMatchObject({ statusCode: 409 });
     expect(repository.setShipmentSync).not.toHaveBeenCalled();

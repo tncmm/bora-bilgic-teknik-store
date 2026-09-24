@@ -209,7 +209,6 @@ export function StoreFooter() {
         <div>
           <h4>KURUMSAL</h4>
           <nav>
-            <Link to="/kurumsal">Yetki Belgeleri</Link>
             <Link to="/gizlilik">KVKK / Gizlilik</Link>
             <Link to="/iletisim">İletişim</Link>
           </nav>

@@ -29,8 +29,9 @@ import { AppError } from './app-error.js';
  *   - queryShipment girdisi: keys / keyType(0=Cargo Key,1=Invoice Key) /
  *     addHistoricalData / onlyTracking; hareket listesi addHistoricalData=true
  *     ile döner.
- *   - Gönderi durumu sinyali operationStatus: IND=Teslimatta, DLV=Teslim
- *     edildi, CNL=İptal.
+ *   - Gönderi durumu sinyali operationStatus: NOP=İşlem görmemiş,
+ *     IND=Teslimatta, ISR=İşlem görmüş/fatura kesilmemiş, CNL=Çıkış
+ *     engellendi, ISC=Daha önce iptal, DLV=Teslim, BI=Fatura iptal.
  */
 const YURTICI_DEFAULT_API_URL =
   'https://webservices.yurticikargo.com/KOPSWebServices/ShippingOrderDispatcherServices?wsdl';
@@ -106,17 +107,48 @@ export function mapYurticiEventCode(code: string): CargoStatus {
 }
 
 /**
- * Gönderi seviyesi operationStatus → normalize durum. Dokümandaki tablo:
- * IND=Teslimattadır, DLV=Teslim edilmiş, CNL=İptal; kalan değerler için ham
- * operationMessage son olay olarak saklanır.
+ * Gönderi seviyesi operationStatus → normalize durum. CNL/ISC/BI çıkışı
+ * durdurulmuş veya iptal edilmiş kayıt sayılır; IND/ISR hâlâ aktif sevkiyattır.
+ * Eşleşmeyen değerlerde ham operationMessage son olay olarak saklanır.
  */
 export function mapYurticiOperationStatus(status: string): CargoStatus | null {
   const normalized = String(status).trim().toUpperCase();
   if (!normalized) return null;
   if (normalized === 'DLV') return 'DELIVERED';
-  if (normalized === 'IND') return 'IN_TRANSIT';
-  if (normalized === 'CNL') return 'EXCEPTION';
+  if (normalized === 'IND' || normalized === 'ISR') return 'IN_TRANSIT';
+  if (normalized === 'CNL' || normalized === 'ISC' || normalized === 'BI') return 'CANCELLED';
+  if (normalized === 'NOP') return 'UNKNOWN';
   return 'UNKNOWN';
+}
+
+function formatYurticiTrackingDate(date: Date) {
+  return [
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getFullYear()),
+  ].join('.');
+}
+
+/**
+ * Yurtiçi'nin parametrik raporlama dokümanındaki self-servis takip linki.
+ * Frontend müşteri kodunu bilmez; API sipariş cevabında hazır URL döndürür.
+ */
+export function buildYurticiTrackingUrl(input: { reference: string | null | undefined; shipmentDate?: Date | string | null }) {
+  const reference = input.reference?.trim();
+  if (!reference || !env.YURTICI_KARGO_CUSTOMER_ID) {
+    return null;
+  }
+
+  const date = input.shipmentDate ? new Date(input.shipmentDate) : new Date();
+  const trackingDate = Number.isNaN(date.getTime()) ? formatYurticiTrackingDate(new Date()) : formatYurticiTrackingDate(date);
+  const params = new URLSearchParams({
+    ssfldvn: env.YURTICI_KARGO_TRACKING_FIELD_ID,
+    sskurkod: env.YURTICI_KARGO_CUSTOMER_ID,
+    refnumber: reference,
+    date: trackingDate,
+  });
+
+  return `https://selfservis.yurticikargo.com/reports/SswReportsFromParamFields.aspx?${params.toString()}`;
 }
 
 interface YurticiConfig {

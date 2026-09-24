@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
-import { cancelShipment, createShipment, isYurticiConfigured, queryShipment, saveReturnShipmentCode } from '../../lib/yurtici.js';
+import { buildYurticiTrackingUrl, cancelShipment, createShipment, isYurticiConfigured, queryShipment, saveReturnShipmentCode } from '../../lib/yurtici.js';
 import { ShippingRepository } from './shipping.repository.js';
 
 const orderIdSchema = z.string().trim().min(1, 'Siparis kimligi zorunludur.');
@@ -46,8 +46,10 @@ interface CargoOrder {
   shippingCity: string;
   shippingDistrict: string;
   shippingAddressLine: string;
+  createdAt?: Date | string | null;
   cargoBarcode?: string | null;
   cargoCompany?: string | null;
+  cargoCreatedAt?: Date | string | null;
   cargoStatus?: string | null;
   cargoLastEvent?: string | null;
   cargoLastSyncedAt?: Date | null;
@@ -167,6 +169,7 @@ export class ShippingService {
     const updated = (await this.repository.setShipment(order.id, {
       cargoBarcode: result.barcode,
       cargoCompany: CARGO_COMPANY,
+      cargoCreatedAt: new Date(),
     })) as CargoOrder;
 
     return this.toShipmentInfo(updated);
@@ -252,6 +255,10 @@ export class ShippingService {
       throw new AppError('Teslim edilmis gonderi iptal edilemez.', 409);
     }
 
+    if (result.operationStatus && !['CNL', 'ISC'].includes(result.operationStatus)) {
+      throw new AppError(result.message ?? 'Yurtici Kargo bu gonderiyi iptal edilebilir durumda bildirmedi.', 409);
+    }
+
     const updated = (await this.repository.setShipmentSync(order.id, {
       cargoStatus: 'CANCELLED',
       cargoLastEvent: result.message ?? 'Kargo kaydi iptal edildi.',
@@ -325,6 +332,11 @@ export class ShippingService {
       orderNumber: order.orderNumber,
       cargoCompany: order.cargoCompany ?? null,
       cargoBarcode: order.cargoBarcode ?? null,
+      cargoCreatedAt: order.cargoCreatedAt ? new Date(order.cargoCreatedAt).toISOString() : null,
+      cargoTrackingUrl: buildYurticiTrackingUrl({
+        reference: order.cargoBarcode ?? null,
+        shipmentDate: order.cargoCreatedAt ?? order.createdAt,
+      }),
       cargoStatus: (order.cargoStatus as CargoStatus | null) ?? null,
       cargoLastEvent: order.cargoLastEvent ?? null,
       cargoLastSyncedAt: order.cargoLastSyncedAt ? new Date(order.cargoLastSyncedAt).toISOString() : null,

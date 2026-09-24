@@ -1,4 +1,3 @@
-import { appConfig } from '@bora/config';
 import type { Order } from '@bora/types';
 import { Button, EmptyState } from '@bora/ui';
 import { useEffect, useMemo, useState } from 'react';
@@ -310,14 +309,16 @@ function OrderDetailView({
                       {order.cargoLastEvent ? ` ${order.cargoLastEvent}` : ''}
                     </p>
                   ) : null}
-                  <a href={`${appConfig.cargoTrackingUrl}?code=${encodeURIComponent(order.cargoBarcode)}`} rel="noreferrer" target="_blank">
-                    Kargoyu takip et
-                  </a>
+                  {order.cargoTrackingUrl ? (
+                    <a href={order.cargoTrackingUrl} rel="noreferrer" target="_blank">
+                      Kargoyu takip et
+                    </a>
+                  ) : (
+                    <p>Kargo takip linki hazırlanıyor.</p>
+                  )}
                 </>
               ) : (order.status === 'shipped' || order.status === 'delivered') ? (
-                <a href={appConfig.cargoTrackingUrl} rel="noreferrer" target="_blank">
-                  Kargo takip sayfası
-                </a>
+                <p>Kargo takip bilgisi hazırlanıyor.</p>
               ) : null}
             </div>
 

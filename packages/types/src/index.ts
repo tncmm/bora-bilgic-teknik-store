@@ -307,6 +307,10 @@ export interface Order {
   cargoBarcode?: string | null;
   /** Kargo firması adı; varsayılan "Yurtiçi Kargo". */
   cargoCompany?: string | null;
+  /** Yurtiçi Kargo kaydının oluşturulduğu zaman; parametrik takip linki için kullanılır. */
+  cargoCreatedAt?: string | null;
+  /** Yurtiçi Kargo parametrik takip linki; API müşteri kodunu gizleyerek üretir. */
+  cargoTrackingUrl?: string | null;
   /** Normalize edilmiş kargo durumu; senkronize edilmeden null. */
   cargoStatus?: CargoStatus | null;
   /** Satıcının bildirdiği son hareket açıklaması. */
@@ -341,6 +345,8 @@ export interface ShipmentInfo {
   orderNumber: string;
   cargoCompany: string | null;
   cargoBarcode: string | null;
+  cargoCreatedAt?: string | null;
+  cargoTrackingUrl?: string | null;
   cargoStatus: CargoStatus | null;
   cargoLastEvent: string | null;
   cargoLastSyncedAt: string | null;

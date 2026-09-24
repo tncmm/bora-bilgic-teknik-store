@@ -343,49 +343,38 @@ export function AdminOrdersPage() {
         ) : visibleOrders.length === 0 ? (
           <EmptyState description="Arama veya filtreyi değiştirerek tekrar deneyin." title="Sipariş bulunamadı" />
         ) : (
-          <div className="admin-table admin-table--flat">
-            <table>
-              <thead>
-                <tr>
-                  <th>Sipariş No</th>
-                  <th>Müşteri</th>
-                  <th>Tarih</th>
-                  <th>Ödeme</th>
-                  <th style={{ textAlign: 'right' }}>Tutar</th>
-                  <th style={{ textAlign: 'right' }}>İade</th>
-                  <th style={{ textAlign: 'right' }}>Durum</th>
-                  <th>Fatura</th>
-                  <th>Kargo</th>
-                  <th style={{ textAlign: 'right' }}>Aksiyon</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td>
+          <div className="admin-order-card-list">
+            {visibleOrders.map((order) => {
+              const pendingRefunds = order.refunds?.filter((refund) => refund.status === 'pending') ?? [];
+              return (
+                <article className="admin-order-card" key={order.id}>
+                  <div className="admin-order-card__main">
+                    <div className="admin-order-card__identity">
+                      <span className="admin-order-card__eyebrow">{formatDate(order.createdAt, 'tr')}</span>
                       <strong>{order.orderNumber}</strong>
-                    </td>
-                    <td>
-                      <strong>{order.customer}</strong>
-                      <div className="text-muted">{order.email}</div>
-                    </td>
-                    <td>{formatDate(order.createdAt, 'tr')}</td>
-                    <td>
+                      <span>{order.customer}</span>
+                      <small>{order.email}</small>
+                    </div>
+
+                    <div className="admin-order-card__total">
                       <span className={`order-badge order-badge--payment-${order.paymentStatus}`}>
                         {translatePaymentStatus('tr', order.paymentStatus)}
                       </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
                       <strong>{formatCurrency(order.total, 'tr')}</strong>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <strong>{formatCurrency(order.refundedAmount, 'tr')}</strong>
-                      <div className="text-muted">Kalan {formatCurrency(order.refundableAmount, 'tr')}</div>
-                      {(order.refunds?.filter((refund) => refund.status === 'pending').length ?? 0) > 0 ? (
-                        <div className="text-muted">Bekleyen talep var</div>
-                      ) : null}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
+                      {order.refundedAmount > 0 || pendingRefunds.length > 0 ? (
+                        <small>
+                          {order.refundedAmount > 0 ? `${formatCurrency(order.refundedAmount, 'tr')} iade` : ''}
+                          {pendingRefunds.length > 0 ? `${order.refundedAmount > 0 ? ' · ' : ''}${pendingRefunds.length} talep bekliyor` : ''}
+                        </small>
+                      ) : (
+                        <small>İade yok</small>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="admin-order-card__sections">
+                    <section className="admin-order-card__section">
+                      <span>Durum</span>
                       <select
                         className="ui-select"
                         onChange={(event) => void handleStatusChange(order, event.target.value)}
@@ -397,85 +386,104 @@ export function AdminOrdersPage() {
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td>
+                    </section>
+
+                    <section className="admin-order-card__section">
+                      <span>Fatura</span>
+                      <strong>{order.invoicePdfUrl ? 'PDF yüklendi' : 'PDF bekliyor'}</strong>
+                      <small>{order.invoiceSentAt ? 'Müşteriye gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</small>
                       {order.invoicePdfUrl ? (
                         <a className="admin-table-action" href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
                           PDF Aç
                         </a>
-                      ) : (
-                        <span className="text-muted">Yok</span>
-                      )}
-                      <div className="text-muted">{order.invoiceSentAt ? 'Mail gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</div>
-                    </td>
-                    <td>
+                      ) : null}
+                    </section>
+
+                    <section className="admin-order-card__section">
+                      <span>Kargo</span>
                       {order.cargoBarcode ? (
                         <>
                           <strong>{order.cargoBarcode}</strong>
-                          <div className="text-muted">{translateCargoStatus(order.cargoStatus) ?? 'Sorgulanmadı'}</div>
-                          <button
-                            className="admin-table-action"
-                            disabled={shipmentBusyOrderId === order.id}
-                            onClick={() => void handleSyncShipment(order)}
-                            type="button"
-                          >
-                            {shipmentBusyOrderId === order.id ? 'Sorgulanıyor...' : 'Durumu Sorgula'}
-                          </button>
-                          {order.cargoStatus !== 'DELIVERED' && order.cargoStatus !== 'CANCELLED' ? (
+                          <small>{translateCargoStatus(order.cargoStatus) ?? 'Sorgulanmadı'}</small>
+                          <div className="admin-order-card__inline-actions">
                             <button
                               className="admin-table-action"
                               disabled={shipmentBusyOrderId === order.id}
-                              onClick={() => void handleCancelShipment(order)}
+                              onClick={() => void handleSyncShipment(order)}
                               type="button"
                             >
-                              Kargo İptal
+                              {shipmentBusyOrderId === order.id ? 'Sorgulanıyor...' : 'Sorgula'}
                             </button>
-                          ) : null}
+                            {order.cargoStatus !== 'DELIVERED' && order.cargoStatus !== 'CANCELLED' ? (
+                              <button
+                                className="admin-table-action"
+                                disabled={shipmentBusyOrderId === order.id}
+                                onClick={() => void handleCancelShipment(order)}
+                                type="button"
+                              >
+                                İptal
+                              </button>
+                            ) : null}
+                          </div>
                         </>
                       ) : order.paymentStatus === 'paid' ? (
+                        <>
+                          <strong>Kargo bekliyor</strong>
+                          <small>Yurtiçi kaydı henüz yok</small>
+                          <button
+                            className="admin-table-action"
+                            disabled={shipmentBusyOrderId === order.id}
+                            onClick={() => void handleCreateShipment(order)}
+                            type="button"
+                          >
+                            {shipmentBusyOrderId === order.id ? 'Oluşturuluyor...' : 'Kargo Oluştur'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <strong>Hazır değil</strong>
+                          <small>Ödeme bekliyor</small>
+                        </>
+                      )}
+                    </section>
+
+                    <section className="admin-order-card__section admin-order-card__section--actions">
+                      <span>Aksiyon</span>
+                      <div className="admin-order-card__actions">
+                        <button className="admin-table-action" onClick={() => setDetailOrder(order)} type="button">
+                          Detay
+                        </button>
+                        <label className={`admin-table-action ${invoiceUploadingOrderId === order.id ? 'is-disabled' : ''}`}>
+                          {invoiceUploadingOrderId === order.id ? 'Yükleniyor...' : 'Fatura Yükle'}
+                          <input
+                            accept="application/pdf"
+                            hidden
+                            onChange={(event) => {
+                              void handleInvoiceUpload(order, event.target.files?.[0]);
+                              event.currentTarget.value = '';
+                            }}
+                            type="file"
+                          />
+                        </label>
                         <button
                           className="admin-table-action"
-                          disabled={shipmentBusyOrderId === order.id}
-                          onClick={() => void handleCreateShipment(order)}
+                          disabled={order.refundableAmount <= 0 || order.paymentStatus === 'refunded'}
+                          onClick={() => openRefundModal(order)}
                           type="button"
                         >
-                          {shipmentBusyOrderId === order.id ? 'Oluşturuluyor...' : 'Kargo Oluştur'}
+                          İade Et
                         </button>
-                      ) : (
-                        <span className="text-muted">Ödeme bekliyor</span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button className="admin-table-action" onClick={() => setDetailOrder(order)} type="button">
-                        Detay
-                      </button>
-                      <label className={`admin-table-action ${invoiceUploadingOrderId === order.id ? 'is-disabled' : ''}`}>
-                        {invoiceUploadingOrderId === order.id ? 'Yükleniyor...' : 'Fatura Yükle'}
-                        <input
-                          accept="application/pdf"
-                          hidden
-                          onChange={(event) => {
-                            void handleInvoiceUpload(order, event.target.files?.[0]);
-                            event.currentTarget.value = '';
-                          }}
-                          type="file"
-                        />
-                      </label>
-                      <button className="admin-table-action" disabled={order.refundableAmount <= 0 || order.paymentStatus === 'refunded'} onClick={() => openRefundModal(order)} type="button">
-                        İade Et
-                      </button>
-                      {order.refunds
-                        ?.filter((refund) => refund.status === 'pending')
-                        .map((refund) => (
+                        {pendingRefunds.map((refund) => (
                           <button className="admin-table-action admin-table-action--danger" key={refund.id} onClick={() => openRefundModal(order, refund)} type="button">
                             Talebi Onayla
                           </button>
                         ))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </div>
+                    </section>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
@@ -668,6 +676,16 @@ export function AdminOrdersPage() {
                 <dl>
                   <div><dt>Firma</dt><dd>{detailOrderLive?.cargoCompany ?? 'Yurtiçi Kargo'}</dd></div>
                   <div><dt>Barkod</dt><dd>{detailOrderLive?.cargoBarcode ?? '-'}</dd></div>
+                  <div>
+                    <dt>Takip Linki</dt>
+                    <dd>
+                      {detailOrderLive?.cargoTrackingUrl ? (
+                        <a href={detailOrderLive.cargoTrackingUrl} rel="noreferrer" target="_blank">Aç</a>
+                      ) : (
+                        '-'
+                      )}
+                    </dd>
+                  </div>
                   <div><dt>Durum</dt><dd>{translateCargoStatus(detailOrderLive?.cargoStatus) ?? 'Sorgulanmadı'}</dd></div>
                   <div><dt>Son Hareket</dt><dd>{detailOrderLive?.cargoLastEvent ?? '-'}</dd></div>
                   <div>
