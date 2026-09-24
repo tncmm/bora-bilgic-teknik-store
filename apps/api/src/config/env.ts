@@ -55,6 +55,12 @@ const envSchema = z.object({
   // Only '1' enforces email verification before login. Until SMTP delivery
   // is configured, unverified accounts must not be locked out.
   REQUIRE_EMAIL_VERIFICATION: z.preprocess(blankToUndefined, z.enum(['0', '1']).optional()),
+  // Mail saglayicisi: 'smtp' (varsayilan) veya 'resend'. 'resend' secilirse
+  // RESEND_API_KEY zorunlu; gonderim HTTPS API uzerinden yapilir (SMTP port
+  // engellerinden bagimsiz) ve spam deliverability icin kendi alan adimiz
+  // (SPF+DKIM+DMARC dogrulanmis) kullanilir.
+  MAIL_PROVIDER: z.preprocess(blankToUndefined, z.enum(['smtp', 'resend']).default('smtp')),
+  RESEND_API_KEY: optionalText,
   // Yurtiçi Kargo entegrasyonu — kimlik bilgileri sonradan tanımlanacaktır.
   // Üç bilgi (kullanıcı adı, şifre, müşteri no) tamamlanana kadar kargo
   // modülü kendisini "yapılandırılmamış" sayar ve 503 döner; API_URL ve
