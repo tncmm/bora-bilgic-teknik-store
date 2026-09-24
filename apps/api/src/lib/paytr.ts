@@ -158,6 +158,8 @@ export async function requestIframeToken(input: TokenRequestInput): Promise<stri
     test_mode: testMode,
     merchant_ok_url: okUrl,
     merchant_fail_url: failUrl,
+    // Bildirim URL'i istekle tasinir; magaza panelindeki tanima bagimlilik kalmaz.
+    callback_url: `${env.PUBLIC_SITE_URL.replace(/\/+$/, '')}/api/v1/payments/paytr/callback`,
     user_name: input.userName,
     user_address: input.userAddress,
     user_phone: input.userPhone,

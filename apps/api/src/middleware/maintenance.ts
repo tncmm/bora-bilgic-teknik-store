@@ -5,7 +5,9 @@ import { SiteSettingsService } from '../modules/site-settings/site-settings.serv
 const service = new SiteSettingsService();
 
 /** Bakim modunda bile acik kalan yollar: admin panel, oturum, durum/iletisim bilgisi. */
-const EXEMPT_PREFIXES = ['/auth', '/admin', '/contact-info', '/site-status'];
+// PayTR callback tam yol olarak muaf: odeme bildirimi bakim modunda bile
+// islenmeli; yoksa para cekilip siparis olusmayan Islemler birikir.
+const EXEMPT_PREFIXES = ['/auth', '/admin', '/contact-info', '/site-status', '/payments/paytr/callback'];
 
 /**
  * Bakim modu kapisi: acikken musteriye donuk tum /api/v1 yollari 503 doner.
