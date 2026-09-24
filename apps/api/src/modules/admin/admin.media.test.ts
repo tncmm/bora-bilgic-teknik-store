@@ -413,4 +413,20 @@ describe('R2 custom domain URL parsing', () => {
       'products/images/2026/09/drone.png',
     );
   });
+
+  it('rewrites legacy apex media URLs to the configured media subdomain in API responses', async () => {
+    vi.resetModules();
+    for (const [key, value] of Object.entries({ ...R2_ENV, R2_PUBLIC_BASE_URL: 'https://media.borabilgic.net.tr' })) {
+      process.env[key] = value;
+    }
+
+    const { resolveMediaUrl } = await import('../../lib/serializers.js');
+
+    expect(resolveMediaUrl('https://borabilgic.net.tr/media/products/images/2026/09/drone.png')).toBe(
+      'https://media.borabilgic.net.tr/products/images/2026/09/drone.png',
+    );
+    expect(resolveMediaUrl('https://borabilgic.net.tr/products/images/2026/09/drone.png')).toBe(
+      'https://media.borabilgic.net.tr/products/images/2026/09/drone.png',
+    );
+  });
 });

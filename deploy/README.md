@@ -21,7 +21,7 @@ R2 and PayTR keys can be added to that file later without changing the workflow.
 For production R2 custom-domain media, set:
 
 ```text
-R2_PUBLIC_BASE_URL="https://borabilgic.net.tr"
+R2_PUBLIC_BASE_URL="https://media.borabilgic.net.tr"
 ```
 
 The nginx config proxies `/products/images/`, `/products/posters/`,

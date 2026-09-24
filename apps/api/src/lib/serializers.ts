@@ -17,6 +17,7 @@ import type {
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 
 import { env } from '../config/env.js';
+import { buildPublicR2Url, normalizeR2KeyFromPath } from './media-url.js';
 import { buildYurticiTrackingUrl } from './yurtici.js';
 
 const r2PublicBaseUrl = env.R2_PUBLIC_BASE_URL?.replace(/\/+$/, '') ?? null;
@@ -28,8 +29,9 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     try {
       const parsed = new URL(url);
-      if (parsed.hostname.endsWith('.r2.dev')) {
-        return `${r2PublicBaseUrl}${parsed.pathname}`;
+      const r2Key = normalizeR2KeyFromPath(parsed.pathname);
+      if (r2Key && (parsed.hostname.endsWith('.r2.dev') || parsed.hostname === 'borabilgic.net.tr' || parsed.hostname === 'www.borabilgic.net.tr')) {
+        return buildPublicR2Url(r2PublicBaseUrl, r2Key);
       }
     } catch {
       return url;
@@ -39,7 +41,8 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
   }
 
   const normalizedPath = url.startsWith('/') ? url : `/${url}`;
-  return `${r2PublicBaseUrl}${normalizedPath}`;
+  const r2Key = normalizeR2KeyFromPath(normalizedPath);
+  return r2Key ? buildPublicR2Url(r2PublicBaseUrl, r2Key) : `${r2PublicBaseUrl}${normalizedPath}`;
 }
 
 export function decimalToNumber(value: Prisma.Decimal | number) {

@@ -18,6 +18,7 @@ import { randomUUID } from 'node:crypto';
 
 import { env } from '../config/env.js';
 import { AppError } from './app-error.js';
+import { buildPublicR2Url, normalizeBaseUrl, normalizeR2KeyFromPath } from './media-url.js';
 
 interface UploadMediaInput {
   kind: AdminUploadKind;
@@ -44,19 +45,9 @@ interface R2Config {
  * what makes the public R2 bucket cheap to serve from.
  */
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
-const R2_OBJECT_PREFIXES = ['products/images/', 'products/posters/', 'products/videos/', 'orders/invoices/'];
 
 let cachedClient: S3Client | null = null;
 let cachedConfig: R2Config | null = null;
-
-function normalizeBaseUrl(value: string) {
-  return value.replace(/\/+$/, '');
-}
-
-function normalizeR2KeyFromPath(pathname: string) {
-  const key = pathname.replace(/^\/+/, '').replace(/^media\/+/, '');
-  return R2_OBJECT_PREFIXES.some((prefix) => key.startsWith(prefix)) ? key : null;
-}
 
 /**
  * Reports whether R2 is usable without throwing. Callers use this to degrade
@@ -238,7 +229,7 @@ export async function uploadMediaToR2(input: UploadMediaInput) {
   }
 
   return {
-    url: `${config.publicBaseUrl}/${key}`,
+    url: buildPublicR2Url(config.publicBaseUrl, key),
     key,
     mimeType: input.mimeType,
     size: buffer.length,
@@ -304,7 +295,7 @@ export async function putR2Object(input: { key: string; body: Buffer; contentTyp
     }),
   );
 
-  return `${config.publicBaseUrl}/${input.key}`;
+  return buildPublicR2Url(config.publicBaseUrl, input.key);
 }
 
 /**
