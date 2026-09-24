@@ -2118,7 +2118,7 @@
     text-align: left;
   }
 
-  .admin-order-detail-modal {
+  .admin-modal.admin-order-detail-modal {
     width: min(760px, calc(100vw - 32px));
     max-height: 88vh;
   }
@@ -3037,6 +3037,13 @@
   border-radius: 20px;
   background: var(--surface);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.admin-modal.admin-order-detail-modal {
+  width: min(1280px, calc(100vw - 96px));
+  max-width: none;
+  max-height: min(86vh, 1080px);
+  overflow: auto;
 }
 
 .admin-modal-actions {
