@@ -11,13 +11,12 @@ const STATIC_PATHS = [
   '/aksiyon-kamera',
   '/aksesuar',
   '/kurumsal',
+  '/hakkimizda',
   '/iletisim',
   '/teslimat',
   '/iade',
   '/mesafeli-satis',
   '/gizlilik',
-  '/garanti',
-  '/sss',
 ];
 
 function escapeXml(value: string) {

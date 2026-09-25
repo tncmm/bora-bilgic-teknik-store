@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useState, type ComponentType, type ReactNode
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
-import { DeliveryPage, DistanceSalesPage, PrivacyPage, ReturnPage } from '../../features/catalog/info-pages';
+import { AboutPage, DeliveryPage, DistanceSalesPage, PrivacyPage, ReturnPage } from '../../features/catalog/info-pages';
 import { Seo } from '../../shared/components/Seo';
 import { AdminChrome } from '../../shared/components/AdminChrome';
 import { SiteChrome } from '../../shared/components/SiteChrome';
@@ -176,6 +176,7 @@ export function AppRouter() {
             <Route element={<CatalogPage />} path="/katalog" />
             <Route element={<ProductDetailPage />} path="/urun/:slug" />
             <Route element={<ContactPage />} path="/iletisim" />
+            <Route element={<AboutPage />} path="/hakkimizda" />
             <Route element={<DeliveryPage />} path="/teslimat" />
             <Route element={<ReturnPage />} path="/iade" />
             <Route element={<DistanceSalesPage />} path="/mesafeli-satis" />

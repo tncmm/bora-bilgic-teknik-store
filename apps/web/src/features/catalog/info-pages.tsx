@@ -146,6 +146,57 @@ export function DeliveryPage() {
   );
 }
 
+export function AboutPage() {
+  return (
+    <InfoPage
+      highlights={[
+        { title: 'Uzman Ürün Seçimi', description: 'Drone, gimbal, aksiyon kamera ve profesyonel görüntüleme ekipmanlarında ihtiyaca uygun ürün seçimi sunulur.' },
+        { title: 'Yetkili Satış Yaklaşımı', description: 'Satış öncesi bilgilendirme, fatura, garanti ve satış sonrası destek süreçleri şeffaf şekilde yürütülür.' },
+        { title: 'Güvenli Alışveriş', description: 'Ürün açıklamaları, fiyatlar, ödeme adımları, teslimat ve iade koşulları satın alma öncesinde açıkça gösterilir.' },
+      ]}
+      pathLabel="Hakkımızda"
+      sections={[
+        {
+          heading: 'Bora Bilgiç Teknik Kimdir?',
+          body: 'Bora Bilgiç Teknik, profesyonel görüntüleme teknolojileri, drone sistemleri, gimbal çözümleri, aksiyon kameraları ve tamamlayıcı aksesuarları müşterileriyle buluşturan teknik odaklı bir satış ve destek platformudur.',
+        },
+        {
+          heading: 'Ürün Gruplarımız',
+          bullets: [
+            'Drone ve uçuş ekipmanları',
+            'Gimbal ve kamera stabilizasyon çözümleri',
+            'Aksiyon kameraları ve creator ekipmanları',
+            'Batarya, çanta, mikrofon, bağlantı ve yedek parça aksesuarları',
+            'Kurumsal ihtiyaçlara yönelik proje ve toplu alım çözümleri',
+          ],
+        },
+        {
+          heading: 'Yetkili Satış ve Teknik Destek Yaklaşımı',
+          body: 'Müşterilerimize yalnızca ürün satışı değil, doğru ürün seçimi, stok teyidi, garanti kapsamı, kurulum ihtiyacı ve satış sonrası destek konularında da anlaşılır bilgi sağlamayı hedefleriz.',
+          bullets: [
+            'Ürünlerin temel özellikleri ve fiyatları ürün sayfalarında açıkça paylaşılır.',
+            'Satın alma öncesi teslimat, iade ve mesafeli satış koşulları erişilebilir tutulur.',
+            'Sipariş sonrası fatura, kargo ve destek süreçleri kayıtlı şekilde takip edilir.',
+          ],
+        },
+        {
+          heading: 'Şeffaf Satın Alma Süreci',
+          body: 'Sepet, teslimat bilgileri, fatura bilgileri ve ödeme adımları müşteriyi yormadan tamamlanacak şekilde tasarlanır. Sipariş sonrası kullanıcılar sipariş durumunu, kargo bilgisini, fatura durumunu ve iade taleplerini sistem üzerinden takip edebilir.',
+        },
+        {
+          heading: 'Bize Ulaşın',
+          body: 'Ürün seçimi, stok teyidi, kurumsal alım, teslimat, fatura veya iade süreçleriyle ilgili sorularınız için iletişim sayfamızdaki kanallardan bize ulaşabilirsiniz.',
+          bullets: ['İletişim sayfası: /iletisim', 'E-posta: info@borabilgicteknik.com', 'Telefon ve çalışma saatleri güncel iletişim sayfasında paylaşılır.'],
+        },
+      ]}
+      summary="Bora Bilgiç Teknik; profesyonel görüntüleme teknolojileri, drone, gimbal, aksiyon kamera ve aksesuar ürünlerinde şeffaf satış, fatura, teslimat, iade ve teknik destek süreçleri sunar."
+      title="HAKKIMIZDA"
+      seoTitle="Hakkımızda"
+      seoPath="/hakkimizda"
+    />
+  );
+}
+
 export function ReturnPage() {
   return (
     <InfoPage
@@ -181,7 +232,7 @@ export function ReturnPage() {
           bullets: [
             'Adım 1 – Başvuru: Sipariş numaranız ile info@borabilgicteknik.com adresine iade talebi oluşturun.',
             'Adım 2 – Onay: Destek ekibimiz talebinizi değerlendirir ve uygun ise iade onayı ile gönderim talimatını e-posta ile paylaşır.',
-            'Adım 3 – Gönderim: Ürünü belirtilen adrese, anlaşmalı kargo firması ile ücretsiz olarak gönderin. Kargo takip numarasını saklayınız.',
+            'Adım 3 – Gönderim: Ürünü belirtilen adrese, paylaşılan kargo talimatlarına uygun şekilde gönderin. Kargo takip numarasını saklayınız.',
             'Adım 4 – Kontrol: Ürün operasyon merkezimize ulaştığında teknik ekip tarafından incelenir; eksiklik veya hasar durumu tespit edilir.',
             'Adım 5 – Geri Ödeme: Kontrol olumlu sonuçlandığında ürün bedeli en geç 14 gün içinde orijinal ödeme yöntemine iade edilir.',
           ],

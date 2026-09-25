@@ -209,6 +209,7 @@ export function StoreFooter() {
         <div>
           <h4>KURUMSAL</h4>
           <nav>
+            <Link to="/hakkimizda">Hakkımızda</Link>
             <Link to="/gizlilik">KVKK / Gizlilik</Link>
             <Link to="/iletisim">İletişim</Link>
           </nav>
@@ -234,6 +235,7 @@ export function StoreFooter() {
       <div className="ui-shell dji-footer__bottom">
         <span>© 2024 Bora Bilgiç. Tüm hakları saklıdır.</span>
         <div>
+          <Link to="/hakkimizda">Hakkımızda</Link>
           <Link to="/mesafeli-satis">Mesafeli Satış</Link>
           <Link to="/gizlilik">Gizlilik Politikası</Link>
           <Link to="/teslimat">Teslimat</Link>
