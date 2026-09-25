@@ -479,8 +479,13 @@ export function OrderDetailPage() {
 
   const loadOrder = useCallback(() => {
     if (!token || !orderId) return;
-    setError(null);
-    void api.getMyOrder(token, orderId).then(setOrder).catch((nextError: Error) => setError(nextError.message));
+    void api
+      .getMyOrder(token, orderId)
+      .then((next) => {
+        setOrder(next);
+        setError(null);
+      })
+      .catch((nextError: Error) => setError(nextError.message));
   }, [orderId, token]);
 
   useEffect(() => {
