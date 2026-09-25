@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState, type ComponentType, type ReactNode
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 import { CatalogPage, ContactPage, HomePage, ProductDetailPage } from '../../features/catalog/pages';
+import { SupportPage, SupportTrackingPage } from '../../features/support/pages';
 import { AboutPage, DeliveryPage, DistanceSalesPage, PrivacyPage, ReturnPage } from '../../features/catalog/info-pages';
 import { Seo } from '../../shared/components/Seo';
 import { AdminChrome } from '../../shared/components/AdminChrome';
@@ -30,6 +31,7 @@ const admin = lazyFeature(() => import('../../features/admin/pages'), [
   'AdminProductFormPage',
   'AdminProductsPage',
   'AdminSiteSettingsPage',
+  'AdminSupportPage',
   'AdminUsersPage',
 ]);
 const auth = lazyFeature(() => import('../../features/auth/pages'), ['LoginPage', 'RegisterPage', 'VerifyEmailPage']);
@@ -187,6 +189,8 @@ export function AppRouter() {
             <Route element={<CatalogPage />} path="/katalog" />
             <Route element={<ProductDetailPage />} path="/urun/:slug" />
             <Route element={<ContactPage />} path="/iletisim" />
+            <Route element={<SupportPage />} path="/destek" />
+            <Route element={<SupportTrackingPage />} path="/destek-takip/:token" />
             <Route element={<AboutPage />} path="/hakkimizda" />
             <Route element={<DeliveryPage />} path="/teslimat" />
             <Route element={<ReturnPage />} path="/iade" />
@@ -224,6 +228,7 @@ export function AppRouter() {
               <Route element={<admin.AdminOrdersPage />} path="/admin/siparisler" />
               <Route element={<admin.AdminUsersPage />} path="/admin/kullanicilar" />
               <Route element={<admin.AdminSiteSettingsPage />} path="/admin/iletisim" />
+              <Route element={<admin.AdminSupportPage />} path="/admin/destek" />
             </Route>
           </Route>
 

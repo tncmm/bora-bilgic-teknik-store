@@ -205,6 +205,93 @@ Faturayı İndir
   return { subject, html, text };
 }
 
+export function supportTicketReceivedEmail(input: { name: string; ticketNumber: string; trackingUrl: string }) {
+  const subject = `Destek talebiniz alındı — ${input.ticketNumber}`;
+  const safeName = escapeHtml(input.name);
+  const safeTicketNumber = escapeHtml(input.ticketNumber);
+  const safeTrackingUrl = escapeHtml(input.trackingUrl);
+
+  const html = wrapEmail(`
+<h2 style="margin:0 0 16px;font-size:20px;color:#1a1a2e;">Destek talebiniz alındı, ${safeName}</h2>
+<p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#333;">
+${safeTicketNumber} numaralı destek talebiniz ekibimize iletildi. Talebinizin durumunu ve ekibimizin cevabını aşağıdaki güvenli bağlantıdan takip edebilirsiniz.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+<tr><td style="background-color:#1a1a2e;border-radius:6px;">
+<a href="${safeTrackingUrl}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">
+Talebimi Takip Et
+</a>
+</td></tr>
+</table>
+<p style="margin:0;font-size:13px;color:#1a1a2e;word-break:break-all;">
+<a href="${safeTrackingUrl}" style="color:#1a1a2e;text-decoration:underline;">${safeTrackingUrl}</a>
+</p>
+`);
+
+  const text = `Merhaba ${input.name},\n\n${input.ticketNumber} numaralı destek talebiniz alındı. Talebinizi bu bağlantıdan takip edebilirsiniz:\n\n${input.trackingUrl}`;
+
+  return { subject, html, text };
+}
+
+export function supportTicketAdminNotificationEmail(input: {
+  ticketNumber: string;
+  name: string;
+  email: string;
+  orderNumber: string | null;
+  subject: string;
+  message: string;
+}) {
+  const subject = `[DESTEK] ${input.ticketNumber} — ${input.subject}`;
+  const safeTicketNumber = escapeHtml(input.ticketNumber);
+  const safeName = escapeHtml(input.name);
+  const safeEmail = escapeHtml(input.email);
+  const safeSubject = escapeHtml(input.subject);
+  const safeMessage = escapeHtml(input.message).replace(/\n/g, '<br>');
+  const orderLine = input.orderNumber ? `<li>Sipariş No: ${escapeHtml(input.orderNumber)}</li>` : '';
+
+  const html = wrapEmail(`
+<h2 style="margin:0 0 16px;font-size:20px;color:#1a1a2e;">Yeni destek talebi</h2>
+<ul style="margin:0 0 24px;padding-left:20px;font-size:15px;line-height:1.8;color:#333;">
+<li>Talep No: ${safeTicketNumber}</li>
+<li>Gönderen: ${safeName} (${safeEmail})</li>
+${orderLine}
+<li>Konu: ${safeSubject}</li>
+</ul>
+<p style="margin:0 0 8px;font-size:15px;color:#333;"><strong>Mesaj:</strong></p>
+<p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#333;">${safeMessage}</p>
+<p style="margin:0;font-size:13px;color:#666;">Yönetim panelindeki Destek Talepleri ekranından yanıtlayabilirsiniz.</p>
+`);
+
+  const text = `Yeni destek talebi\n\nTalep No: ${input.ticketNumber}\nGönderen: ${input.name} (${input.email})\n${input.orderNumber ? `Sipariş No: ${input.orderNumber}\n` : ''}Konu: ${input.subject}\n\n${input.message}\n\nYönetim panelinden yanıtlayabilirsiniz.`;
+
+  return { subject, html, text };
+}
+
+export function supportTicketReplyEmail(input: { name: string; ticketNumber: string; reply: string; trackingUrl: string }) {
+  const subject = `Destek talebinize yanıt verildi — ${input.ticketNumber}`;
+  const safeName = escapeHtml(input.name);
+  const safeTicketNumber = escapeHtml(input.ticketNumber);
+  const safeReply = escapeHtml(input.reply).replace(/\n/g, '<br>');
+  const safeTrackingUrl = escapeHtml(input.trackingUrl);
+
+  const html = wrapEmail(`
+<h2 style="margin:0 0 16px;font-size:20px;color:#1a1a2e;">Destek talebinize yanıt, ${safeName}</h2>
+<p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#333;">
+${safeTicketNumber} numaralı destek talebinize ekibimiz yanıt verdi:
+</p>
+<div style="margin:0 0 24px;padding:16px 20px;background-color:#fafafa;border-left:3px solid #1a1a2e;font-size:15px;line-height:1.6;color:#333;">
+${safeReply}
+</div>
+<p style="margin:0;font-size:13px;color:#1a1a2e;word-break:break-all;">
+<a href="${safeTrackingUrl}" style="color:#1a1a2e;text-decoration:underline;">Talebi takip sayfasında görüntüle</a>
+</p>
+`);
+
+  const text = `Merhaba ${input.name},\n\n${input.ticketNumber} numaralı destek talebinize yanıt verdik:\n\n${input.reply}\n\nTalebi takip etmek için: ${input.trackingUrl}`;
+
+  return { subject, html, text };
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')

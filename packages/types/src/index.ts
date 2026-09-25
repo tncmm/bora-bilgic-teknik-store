@@ -241,6 +241,42 @@ export interface Refund {
   items?: RefundItem[];
 }
 
+/** Destek talebi durumu. */
+export type TicketStatus = 'open' | 'in_progress' | 'closed';
+
+/** Musteri destek talebi (public form + admin yonetimi + token'li takip). */
+export interface SupportTicket {
+  id: string;
+  ticketNumber: string;
+  name: string;
+  email: string;
+  orderNumber: string | null;
+  subject: string;
+  category: string;
+  message: string;
+  status: TicketStatus;
+  adminReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Destek talebi olusturma formu govdesi. */
+export interface CreateSupportTicketPayload {
+  name: string;
+  email: string;
+  orderNumber?: string;
+  subject: string;
+  category: string;
+  message: string;
+}
+
+/** Admin destek talebi guncelleme govdesi. */
+export interface UpdateSupportTicketPayload {
+  status?: TicketStatus;
+  reply?: string;
+}
+
 /** Site geneli iletişim ayarları (singleton, admin panelinden yönetilir). */
 export interface SiteSettings {
   contactHeroTitle: string | null;

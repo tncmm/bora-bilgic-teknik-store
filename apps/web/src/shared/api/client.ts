@@ -18,6 +18,9 @@ import type {
   ShipmentInfo,
   ShipmentReturnCode,
   SiteSettings,
+  SupportTicket,
+  CreateSupportTicketPayload,
+  UpdateSupportTicketPayload,
   ThemeMode,
   User,
   Wishlist,
@@ -275,8 +278,31 @@ export const api = {
   getContactInfo() {
     return request<SiteSettings>('/contact-info');
   },
+  createSupportTicket(payload: CreateSupportTicketPayload) {
+    return request<SupportTicket & { trackingToken: string; trackingUrl: string }>('/support/tickets', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  getSupportTicketByToken(trackingToken: string) {
+    const query = new URLSearchParams({ t: trackingToken });
+    return request<SupportTicket>(`/support/tickets/by-token?${query.toString()}`);
+  },
+  getMySupportTickets(token: string) {
+    return request<SupportTicket[]>('/support/my-tickets', {}, token);
+  },
   getAdminSiteSettings(token: string) {
     return request<SiteSettings>('/admin/site-settings', {}, token);
+  },
+  getAdminSupportTickets(token: string, status?: string) {
+    const query = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
+    return request<SupportTicket[]>(`/admin/support-tickets${query}`, {}, token);
+  },
+  updateAdminSupportTicket(token: string, ticketId: string, payload: UpdateSupportTicketPayload) {
+    return request<SupportTicket>(`/admin/support-tickets/${ticketId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }, token);
   },
   updateAdminSiteSettings(token: string, payload: Partial<SiteSettings>) {
     return request<SiteSettings>('/admin/site-settings', {

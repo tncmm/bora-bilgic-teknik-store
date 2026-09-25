@@ -55,6 +55,13 @@ model User {
   refunds          Refund[]
   refreshTokens    RefreshToken[]
   themePreference  ThemePreference?
+  supportTickets SupportTicket[]
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
 }
 
 enum AttemptStatus {
@@ -98,6 +105,30 @@ model SiteSettings {
   maintenanceMode        Boolean  @default(false)
   maintenanceMessage     String?
   updatedAt              DateTime @updatedAt
+}
+
+// Musteri destek talebi (public form + admin yonetimi + token'li takip).
+model SupportTicket {
+  id                      String       @id @default(cuid())
+  ticketNumber            String       @unique
+  name                    String
+  email                   String
+  orderNumber             String?
+  subject                 String
+  category                String       @default("diger")
+  message                 String
+  status                  TicketStatus @default(OPEN)
+  trackingTokenHash       String       @unique
+  trackingTokenEncrypted  String
+  adminReply              String?
+  repliedAt               DateTime?
+  requestedByUserId       String?
+  requestedBy             User?        @relation(fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@index([requestedByUserId])
 }
 
 model Campaign {

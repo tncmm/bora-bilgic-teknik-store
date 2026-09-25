@@ -83,6 +83,7 @@ const envSchema = z.object({
   RATE_LIMIT_REFRESH_MAX: positiveIntWithDefault(30),
   RATE_LIMIT_LOGOUT_MAX: positiveIntWithDefault(30),
   RATE_LIMIT_CHECKOUT_MAX: positiveIntWithDefault(20),
+  RATE_LIMIT_SUPPORT_MAX: positiveIntWithDefault(5),
   // Ödeme penceresi: bu süre içinde tamamlanmayan PaymentAttempt'lar süresi
   // dolmuş sayılıp rezerve ettikleri stoğu iade eder.
   PAYMENT_WINDOW_MINUTES: positiveIntWithDefault(30),
@@ -94,6 +95,9 @@ const envSchema = z.object({
   // hiçbir zaman secure; tanımsızsa NODE_ENV=production veya https WEB_URL
   // türevi kullanılır (aşağıdaki secureCookies türetilmiş alanı).
   COOKIE_SECURE: z.preprocess(blankToUndefined, z.enum(['0', '1']).optional()),
+  // Destek talebi bildirimlerinin gittigi magaza yonetici adresi; bos ise
+  // magaza gmail adresi kullanilir.
+  ADMIN_EMAIL: optionalText,
 });
 
 const parsed = envSchema.parse(process.env);

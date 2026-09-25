@@ -3645,3 +3645,57 @@
   color: var(--text-muted, #8b93a3);
   font-size: 0.8rem;
 }
+
+/* --- Destek sayfasi ve talep takibi -------------------------------------- */
+.support-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1.4fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .support-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.support-form-card h2 {
+  margin-bottom: 1rem;
+}
+
+.support-form-fields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.support-side {
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.support-ticket-body h3,
+.support-ticket-reply h3 {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.support-ticket-reply {
+  border-left: 3px solid var(--primary, #ff6a1a);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 10px 10px 0;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.support-ticket-reply--pending {
+  border-left-color: rgba(255, 255, 255, 0.2);
+}
+
+.support-success h2 {
+  text-align: center;
+}
+
+.support-success p {
+  text-align: center;
+}

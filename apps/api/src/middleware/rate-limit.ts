@@ -70,6 +70,13 @@ export const logoutLimiter = createLimiter({
   message: 'Çok fazla çıkış isteği gönderildi.',
 });
 
+/** Destek talebi formu: saatte 5 talep — spam form gonderimlerini engeller. */
+export const supportLimiter = createLimiter({
+  windowMinutes: env.RATE_LIMIT_HOURLY_WINDOW_MINUTES,
+  limit: env.RATE_LIMIT_SUPPORT_MAX,
+  message: 'Çok fazla destek talebi gönderildi.',
+});
+
 /** Odeme checkout: orta seviye — yeniden denemelere izin verir. */
 export const checkoutLimiter = createLimiter({
   windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES,

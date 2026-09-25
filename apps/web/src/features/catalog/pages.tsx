@@ -1136,6 +1136,9 @@ export function ContactPage() {
               {contact.contactHoursDays ? <p>{contact.contactHoursDays}</p> : null}
               {contact.contactHoursTime ? <p>{contact.contactHoursTime}</p> : null}
               {contact.contactRemoteNote ? <p>{contact.contactRemoteNote}</p> : null}
+              <Link className="admin-table-action" style={{ marginTop: '0.6rem', display: 'inline-block' }} to="/destek">
+                Destek Talebi Oluştur
+              </Link>
             </div>
           ) : null}
           {contact.contactMapUrl ? (

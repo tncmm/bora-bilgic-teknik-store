@@ -29,6 +29,7 @@ export function AdminChrome() {
           <NavLink to="/admin/siparisler">Siparişler</NavLink>
           <NavLink to="/admin/kullanicilar">Kullanıcılar</NavLink>
           <NavLink to="/admin/iletisim">İletişim Bilgileri</NavLink>
+          <NavLink to="/admin/destek">Destek Talepleri</NavLink>
           <NavLink to="/">Mağazayı Gör</NavLink>
         </nav>
         {maintenanceOn ? (

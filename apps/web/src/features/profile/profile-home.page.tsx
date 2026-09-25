@@ -1,5 +1,5 @@
 import { Button } from '@bora/ui';
-import type { Address, Order } from '@bora/types';
+import type { Address, Order, SupportTicket } from '@bora/types';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,12 @@ const navCards = [
     title: 'Adreslerim',
     description: 'Teslimat adreslerini yönet',
   },
+  {
+    to: '/destek',
+    icon: 'support_agent',
+    title: 'Destek',
+    description: 'Sorunlarını destek talebi olarak ilet',
+  },
 ];
 
 export function ProfilePage() {
@@ -32,11 +38,13 @@ export function ProfilePage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
 
   useEffect(() => {
     if (!token) return;
     void api.getMyOrders(token).then(setOrders).catch(() => undefined);
     void api.listAddresses(token).then(setAddresses).catch(() => undefined);
+    void api.getMySupportTickets(token).then(setSupportTickets).catch(() => undefined);
   }, [token]);
 
   if (!user || !token) {
@@ -98,6 +106,34 @@ export function ProfilePage() {
             <span>Adres</span>
           </div>
         </div>
+
+        {supportTickets.length > 0 ? (
+          <div className="profile-card profile-card--full">
+            <div className="section-header">
+              <div>
+                <div className="detail-chip">Destek</div>
+                <h2>Destek Taleplerim</h2>
+                <p>Gönderdiğiniz destek taleplerini ve ekibimizin yanıtlarını buradan takip edebilirsiniz.</p>
+              </div>
+              <Link to="/destek">
+                <Button variant="secondary">Yeni Talep</Button>
+              </Link>
+            </div>
+            <div className="order-list-stack">
+              {supportTickets.map((ticket) => (
+                <div className="order-list-card" key={ticket.id}>
+                  <div>
+                    <strong>{ticket.ticketNumber}</strong>
+                    <p>{ticket.subject}</p>
+                    {ticket.adminReply ? <small style={{ color: 'var(--primary, #ff6a1a)' }}>Yanıtlandı: {ticket.adminReply.slice(0, 80)}{ticket.adminReply.length > 80 ? '…' : ''}</small> : null}
+                  </div>
+                  <span className="order-badge order-badge--payment-pending">{ticket.status === 'open' ? 'Açık' : ticket.status === 'in_progress' ? 'İşleniyor' : 'Kapandı'}</span>
+                  <strong>{new Date(ticket.updatedAt).toLocaleDateString('tr-TR')}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="account-nav-grid">
           {navCards.map((card) => (

@@ -39,6 +39,7 @@ export function SiteChrome() {
                 {section.label.toUpperCase()}
               </NavLink>
             ))}
+            <NavLink onClick={closeMenu} to="/destek">DESTEK</NavLink>
             <NavLink onClick={closeMenu} to="/iletisim">İLETİŞİM</NavLink>
           </nav>
 

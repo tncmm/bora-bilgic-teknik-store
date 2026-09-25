@@ -64,6 +64,19 @@ export function translatePaymentStatus(language: Language, status?: string) {
   return dictionary[normalized]?.[language] ?? status;
 }
 
+/** Destek talebi durumu için arayüz etiketi. */
+export function translateTicketStatus(status?: string | null) {
+  if (!status) return null;
+
+  const dictionary: Record<string, string> = {
+    open: 'Açık',
+    in_progress: 'İşleniyor',
+    closed: 'Kapandı',
+  };
+
+  return dictionary[status] ?? status;
+}
+
 /** Normalize kargo durumu (packages/types CargoStatus) için arayüz etiketi. */
 export function translateCargoStatus(status?: string | null) {
   if (!status) return null;
