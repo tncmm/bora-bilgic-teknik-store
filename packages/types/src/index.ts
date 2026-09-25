@@ -304,6 +304,9 @@ export interface Order {
   paidWithoutOrderAt?: string | null;
   /** Odemesi alinip siparis olusmayan denemeler icin operator notu. */
   reviewNote?: string | null;
+  /** true ise bu satir gercek bir Order degil, inceleme icin listelenen
+   *  PaymentAttempt'tir; durum/kargo/iade islemleri uygulanamaz. */
+  isAttemptReview?: boolean;
   // --- Kargo (Yurtiçi) -----------------------------------------------------
   // Alanlar opsiyoneldir: eski serileştiriciler bunları doldurmayabilir.
   /** Yurtiçi Kargo takip numarası (barkod); kargo kaydı oluşturulunca dolar. */

@@ -471,6 +471,10 @@ export class AdminService {
         email: attempt.customerEmail,
         paidWithoutOrderAt: attempt.paidWithoutOrderAt ? attempt.paidWithoutOrderAt.toISOString() : null,
         reviewNote: attempt.reviewNote,
+        // Frontend bu satirlari salt-okunur inceleme satiri olarak render
+        // etmeli: arkasinda Order olmadigindan durum/kargo/iade islemleri
+        // "bulunamadi" 404'una duserek karisiklik yaratir.
+        isAttemptReview: true,
       };
     });
 

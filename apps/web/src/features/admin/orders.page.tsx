@@ -362,7 +362,10 @@ export function AdminOrdersPage() {
                   <div className="admin-order-card__main">
                     <div className="admin-order-card__identity">
                       <span className="admin-order-card__eyebrow">{formatDate(order.createdAt, 'tr')}</span>
-                      <strong>{order.orderNumber}</strong>
+                      <strong>
+                        {order.orderNumber}
+                        {order.isAttemptReview ? ' · İNCELEME' : ''}
+                      </strong>
                       <span>{order.customer}</span>
                       <small>{order.email}</small>
                     </div>
@@ -386,33 +389,48 @@ export function AdminOrdersPage() {
                   <div className="admin-order-card__sections">
                     <section className="admin-order-card__section">
                       <span>Durum</span>
-                      <select
-                        className="ui-select"
-                        onChange={(event) => void handleStatusChange(order, event.target.value)}
-                        value={order.status.toUpperCase()}
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      {order.isAttemptReview ? (
+                        <>
+                          <span className="order-badge order-badge--payment-pending">İnceleme</span>
+                          <small>Ödeme alındı; sipariş oluşmadı. PayTR panelinden iade edin.</small>
+                        </>
+                      ) : (
+                        <select
+                          className="ui-select"
+                          onChange={(event) => void handleStatusChange(order, event.target.value)}
+                          value={order.status.toUpperCase()}
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </section>
 
                     <section className="admin-order-card__section">
                       <span>Fatura</span>
-                      <strong>{order.invoicePdfUrl ? 'PDF yüklendi' : 'PDF bekliyor'}</strong>
-                      <small>{order.invoiceSentAt ? 'Müşteriye gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</small>
-                      {order.invoicePdfUrl ? (
-                        <a className="admin-table-action" href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
-                          PDF Aç
-                        </a>
-                      ) : null}
+                      {order.isAttemptReview ? (
+                        <small>Sipariş oluşmadığından fatura kesilmez.</small>
+                      ) : (
+                        <>
+                          <strong>{order.invoicePdfUrl ? 'PDF yüklendi' : 'PDF bekliyor'}</strong>
+                          <small>{order.invoiceSentAt ? 'Müşteriye gönderildi' : order.invoiceUploadedAt ? 'Mail bekliyor' : 'PDF max 10 MB'}</small>
+                          {order.invoicePdfUrl ? (
+                            <a className="admin-table-action" href={order.invoicePdfUrl} rel="noreferrer" target="_blank">
+                              PDF Aç
+                            </a>
+                          ) : null}
+                        </>
+                      )}
                     </section>
 
                     <section className="admin-order-card__section">
                       <span>Kargo</span>
-                      {order.cargoBarcode ? (
+                      {order.isAttemptReview ? (
+                        <small>Gönderi oluşturulamaz.</small>
+                      ) : order.cargoBarcode ? (
                         <>
                           <strong>{order.cargoBarcode}</strong>
                           <small>{translateCargoStatus(order.cargoStatus) ?? 'Sorgulanmadı'}</small>
@@ -437,7 +455,7 @@ export function AdminOrdersPage() {
                             ) : null}
                           </div>
                         </>
-                      ) : order.paymentStatus === 'paid' ? (
+                      ) : order.paymentStatus === 'paid' && !order.isAttemptReview ? (
                         <>
                           <strong>Kargo bekliyor</strong>
                           <small>Yurtiçi kaydı henüz yok</small>
@@ -464,6 +482,8 @@ export function AdminOrdersPage() {
                         <button className="admin-table-action" onClick={() => setDetailOrder(order)} type="button">
                           Detay
                         </button>
+                        {order.isAttemptReview ? null : (
+                        <>
                         <label className={`admin-table-action ${invoiceUploadingOrderId === order.id ? 'is-disabled' : ''}`}>
                           {invoiceUploadingOrderId === order.id ? 'Yükleniyor...' : 'Fatura Yükle'}
                           <input
@@ -489,6 +509,8 @@ export function AdminOrdersPage() {
                             Talebi Onayla
                           </button>
                         ))}
+                        </>
+                        )}
                       </div>
                     </section>
                   </div>
