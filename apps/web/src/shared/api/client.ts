@@ -58,6 +58,7 @@ export interface CheckoutPayload {
   taxOffice?: string;
   taxNumber?: string;
   identityNumber: string;
+  contractsAccepted: boolean;
   notes?: string;
 }
 

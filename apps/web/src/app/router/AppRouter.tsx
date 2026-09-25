@@ -109,6 +109,16 @@ function ProtectedRoute({ adminOnly = false }: { adminOnly?: boolean }) {
   return <Outlet />;
 }
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search]);
+
+  return null;
+}
+
 /** Route elemanı olarak meta bağlamak için sarmalayıcı; özel sayfalar noindex. */
 function SeoRoute({
   title,
@@ -162,6 +172,7 @@ function NotFoundPage() {
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <MaintenanceGate>
         <Routes>

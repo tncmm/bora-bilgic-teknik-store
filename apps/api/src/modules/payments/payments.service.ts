@@ -5,7 +5,7 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
 import { decryptBillingIdentity, encryptBillingIdentity, hashTrackingToken } from '../../lib/crypto.js';
 import { sendMail } from '../../lib/mail/transport.js';
-import { guestOrderTrackingEmail } from '../../lib/mail/templates.js';
+import { orderConfirmationEmail } from '../../lib/mail/templates.js';
 import { computeLineUnitPrice, findPackageOption, isFallbackPackageRequest } from '../../lib/serializers.js';
 import {
   isPaytrConfigured,
@@ -88,6 +88,9 @@ const checkoutSchema = z.object({
   taxOffice: z.string().optional(),
   taxNumber: z.string().optional(),
   identityNumber: z.string().regex(/^\d{11}$/, 'TC kimlik numarasi 11 haneli olmalidir.'),
+  contractsAccepted: z.literal(true, {
+    error: 'Mesafeli satis, teslimat, iade ve gizlilik metinlerini onaylamalisiniz.',
+  }),
   notes: z.string().optional(),
 });
 
@@ -340,13 +343,13 @@ export class PaymentsService {
 
       if (order.trackingTokenEncrypted) {
         const trackingToken = decryptBillingIdentity(order.trackingTokenEncrypted);
-        const email = guestOrderTrackingEmail({
+        const email = orderConfirmationEmail({
           name: order.shippingName,
           orderNumber: order.orderNumber,
           trackingUrl: `${env.WEB_URL}/siparis-takip/${trackingToken}`,
         });
         await sendMail({ to: order.customerEmail, ...email }).catch((error) => {
-          console.error('[PAYTR] Guest order tracking email failed', { merchantOid, error });
+          console.error('[PAYTR] Order confirmation email failed', { merchantOid, customerEmail: order.customerEmail, error });
         });
       }
       return { outcome: 'paid' as const };

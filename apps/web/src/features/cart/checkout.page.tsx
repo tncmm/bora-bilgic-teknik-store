@@ -29,6 +29,7 @@ const emptyForm: CheckoutForm = {
   taxOffice: '',
   taxNumber: '',
   identityNumber: '',
+  contractsAccepted: false,
   notes: '',
 };
 
@@ -114,7 +115,8 @@ export function CheckoutPage() {
       billing.billingCity.trim() &&
       billing.billingDistrict.trim() &&
       billing.billingAddressLine.trim() &&
-      /^\d{11}$/.test(form.identityNumber.trim()),
+      /^\d{11}$/.test(form.identityNumber.trim()) &&
+      form.contractsAccepted,
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -143,6 +145,7 @@ export function CheckoutPage() {
         taxOffice: form.billingType === 'corporate' ? form.taxOffice : undefined,
         taxNumber: form.billingType === 'corporate' ? form.taxNumber : undefined,
         identityNumber: form.identityNumber,
+        contractsAccepted: form.contractsAccepted,
         notes: form.notes,
       };
       const session = await api.startPayment(token, payload);
@@ -322,6 +325,15 @@ export function CheckoutPage() {
                   <p>Ödeme formu PayTR tarafından sunulur; onay sonrası siparişin otomatik oluşur.</p>
                 </div>
               </div>
+              <label className="checkout-check" style={{ marginTop: '1rem' }}>
+                <input checked={form.contractsAccepted} onChange={(e) => setForm((v) => ({ ...v, contractsAccepted: e.target.checked }))} type="checkbox" />
+                <span>
+                  <Link to="/mesafeli-satis" target="_blank">Mesafeli Satış Ön Bilgilendirme</Link>,{' '}
+                  <Link to="/teslimat" target="_blank">Kargo ve Teslimat</Link>,{' '}
+                  <Link to="/iade" target="_blank">İade ve Değişim</Link> ve{' '}
+                  <Link to="/gizlilik" target="_blank">Gizlilik Politikası</Link> metinlerini okudum, anladım ve kabul ediyorum.
+                </span>
+              </label>
             </div>
           </div>
 
@@ -354,7 +366,7 @@ export function CheckoutPage() {
               <Button disabled={!formReady || submitting} style={{ width: '100%', marginTop: '1rem' }} type="submit">
                 {submitting ? 'Ödeme Hazırlanıyor...' : 'Güvenli Ödemeye Geç'}
               </Button>
-              {!formReady ? <p className="admin-field-hint">Devam için geçerli e-posta, teslimat, fatura ve TC kimlik bilgilerini tamamla.</p> : null}
+              {!formReady ? <p className="admin-field-hint">Devam için geçerli e-posta, teslimat, fatura, TC kimlik bilgileri ve sözleşme onayını tamamla.</p> : null}
             </div>
           </aside>
         </form>

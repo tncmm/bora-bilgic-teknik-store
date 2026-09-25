@@ -29,7 +29,9 @@ export function PaymentSuccessPage() {
   const { token, isAuthenticated } = useSession();
   const navigate = useNavigate();
   const merchantOid = useMerchantOid();
-  const [message, setMessage] = useState('Ödeme onayı bekleniyor; siparişiniz birkaç saniye içinde hazırlanacak.');
+  const [message, setMessage] = useState(
+    'Ödeme onayı bekleniyor; siparişiniz birkaç saniye içinde hazırlanacak. Sipariş mailiniz gönderildiğinde gelen kutunuzu ve spam / gereksiz klasörünü kontrol edin.',
+  );
   const [timedOut, setTimedOut] = useState(() => !merchantOid);
   const [trackingUrl] = useState(() => window.sessionStorage.getItem('bora-pending-tracking-url'));
   const timeoutRef = useRef<number | null>(null);
@@ -70,7 +72,7 @@ export function PaymentSuccessPage() {
           return;
         }
 
-        setMessage('Ödeme alındı; PayTR onayı bekleniyor. Bu genelde birkaç saniye sürer.');
+        setMessage('Ödeme alındı; PayTR onayı bekleniyor. Bu genelde birkaç saniye sürer. Sipariş maili için gelen kutunuzu ve spam / gereksiz klasörünü kontrol edin.');
       } catch (error) {
         if (!cancelled) {
           // Eski oturumlarda tracking token bulunmaz ve status çağrısı 404 döner; bunu zaman aşımı olarak ele al.
@@ -109,7 +111,7 @@ export function PaymentSuccessPage() {
         <div className="ui-shell">
           <div className="profile-card profile-card--full">
             <EmptyState
-              description="Ödemenin sonucunu şu anda doğrulayamadık. Banka ekstrenizden ödemeyi kontrol edebilirsiniz; ödemeniz tamamlandıysa siparişiniz kısa süre içinde takip linkinize düşer. Sorun sürerse sepetiniz korunur, ödemeyi tekrar deneyebilirsiniz."
+              description="Ödemenin sonucunu şu anda doğrulayamadık. Banka ekstrenizden ödemeyi kontrol edebilirsiniz; ödemeniz tamamlandıysa siparişiniz kısa süre içinde takip linkinize düşer. Sipariş maili için gelen kutunuzu ve spam / gereksiz klasörünü de kontrol edin. Sorun sürerse sepetiniz korunur, ödemeyi tekrar deneyebilirsiniz."
               title="Ödeme sonucu doğrulanamadı"
             />
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>

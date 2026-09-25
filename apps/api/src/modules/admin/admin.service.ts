@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { AppError } from '../../lib/app-error.js';
 import { decryptBillingIdentity } from '../../lib/crypto.js';
 import { sendMail } from '../../lib/mail/transport.js';
-import { invoiceReadyEmail } from '../../lib/mail/templates.js';
+import { invoiceReadyEmail, orderStatusChangedEmail } from '../../lib/mail/templates.js';
+import { env } from '../../config/env.js';
 import { isRetryablePaytrRefundError, requestRefund } from '../../lib/paytr.js';
 import { buildRefundSelection } from '../../lib/refunds.js';
 import { serializeDashboardMetrics, serializeOrder, serializeProduct, serializeUser } from '../../lib/serializers.js';
@@ -483,23 +484,55 @@ export class AdminService {
 
   async updateOrderStatus(id: string, payload: unknown) {
     const data = orderStatusSchema.parse(payload);
+    const existingOrder = await this.repository.getOrder(id);
+
+    if (!existingOrder) {
+      throw new AppError('Siparis bulunamadi.', 404);
+    }
 
     // Fulfilment must never start before money is in the till: moving an
     // order past PENDING requires a successful PayTR payment first.
     if (data.status !== 'PENDING') {
-      const order = await this.repository.getOrder(id);
-
-      if (!order) {
-        throw new AppError('Siparis bulunamadi.', 404);
-      }
-
-      if (order.paymentStatus !== 'PAID') {
+      if (existingOrder.paymentStatus !== 'PAID') {
         throw new AppError('Odeme tamamlanmadan siparis isleme alinamaz veya kargolanamaz.', 409);
       }
     }
 
     const order = await this.repository.updateOrderStatus(id, data.status as OrderStatus);
+    await this.sendOrderStatusChangedEmail(existingOrder, order);
     return serializeOrder(order);
+  }
+
+  private async sendOrderStatusChangedEmail(previousOrder: any, order: any) {
+    if (previousOrder.status === order.status || !order.customerEmail) {
+      return;
+    }
+
+    let trackingUrl: string | null = null;
+    if (order.trackingTokenEncrypted) {
+      try {
+        trackingUrl = `${env.WEB_URL}/siparis-takip/${decryptBillingIdentity(order.trackingTokenEncrypted)}`;
+      } catch (error) {
+        console.error('[ADMIN] Order status email tracking token decrypt failed', { orderId: order.id, error });
+      }
+    }
+
+    const email = orderStatusChangedEmail({
+      name: order.shippingName,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      trackingUrl,
+    });
+
+    await sendMail({ to: order.customerEmail, ...email }).catch((error) => {
+      console.error('[ADMIN] Order status email failed', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerEmail: order.customerEmail,
+        status: order.status,
+        error,
+      });
+    });
   }
 
   async refundOrder(id: string, adminId: string | undefined, payload: unknown) {

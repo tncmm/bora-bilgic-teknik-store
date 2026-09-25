@@ -43,6 +43,7 @@ const checkoutPayload = {
   billingSameAsShipping: true,
   billingType: 'individual',
   identityNumber: '12345678901',
+  contractsAccepted: true,
 };
 
 const cartWithItem = {
@@ -247,6 +248,16 @@ describe('PaymentsService.createCheckout', () => {
     await expect(service.createCheckout('user-1', 'musteri@example.com', checkoutPayload, '127.0.0.1')).rejects.toMatchObject({
       statusCode: 409,
     });
+    expect(repository.createAttempt).not.toHaveBeenCalled();
+  });
+
+  it('requires legal contract approval before starting payment', async () => {
+    const repository = createRepository();
+    const service = new PaymentsService(repository as never);
+
+    await expect(
+      service.createCheckout('user-1', 'musteri@example.com', { ...checkoutPayload, contractsAccepted: false }, '127.0.0.1'),
+    ).rejects.toThrow('Mesafeli satis, teslimat, iade ve gizlilik metinlerini onaylamalisiniz.');
     expect(repository.createAttempt).not.toHaveBeenCalled();
   });
 
