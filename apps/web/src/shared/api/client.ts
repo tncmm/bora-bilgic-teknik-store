@@ -293,13 +293,13 @@ export const api = {
   getAdminCategories(token: string) {
     return request<AdminCategory[]>('/admin/categories', {}, token);
   },
-  createAdminCategory(token: string, payload: { name: string; slug: string; description?: string; heroImageUrl?: string | null; sortOrder?: number }) {
+  createAdminCategory(token: string, payload: { name: string; slug: string; description?: string; heroTitle?: string | null; heroDescription?: string | null; heroImageUrl?: string | null; sortOrder?: number }) {
     return request<Category>('/admin/categories', {
       method: 'POST',
       body: JSON.stringify(payload),
     }, token);
   },
-  updateAdminCategory(token: string, categoryId: string, payload: { name?: string; slug?: string; description?: string; heroImageUrl?: string | null; sortOrder?: number }) {
+  updateAdminCategory(token: string, categoryId: string, payload: { name?: string; slug?: string; description?: string; heroTitle?: string | null; heroDescription?: string | null; heroImageUrl?: string | null; sortOrder?: number }) {
     return request<Category>(`/admin/categories/${categoryId}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),

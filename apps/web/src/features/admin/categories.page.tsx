@@ -1,6 +1,6 @@
 import { Button, EmptyState, InputField } from '@bora/ui';
 import { PRODUCT_MEDIA_IMAGE_MIME_TYPES, PRODUCT_MEDIA_LIMITS } from '@bora/types';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 import { useSession } from '../../app/providers/SessionProvider';
 import { useToast } from '../../app/providers/ToastProvider';
@@ -26,9 +26,18 @@ export function AdminCategoriesPage() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
+  const [newDescription, setNewDescription] = useState('');
   const [newHeroImageUrl, setNewHeroImageUrl] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState({ name: '', slug: '', heroImageUrl: '', sortOrder: '0' });
+  const [editDraft, setEditDraft] = useState({
+    name: '',
+    slug: '',
+    heroImageUrl: '',
+    sortOrder: '0',
+    description: '',
+    heroTitle: '',
+    heroDescription: '',
+  });
   const [busy, setBusy] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
@@ -88,10 +97,12 @@ export function AdminCategoriesPage() {
       await api.createAdminCategory(token, {
         name: newName.trim(),
         slug: slugify(newName),
+        description: newDescription.trim(),
         heroImageUrl: newHeroImageUrl.trim() || null,
         sortOrder: categories.length + 1,
       });
       setNewName('');
+      setNewDescription('');
       setNewHeroImageUrl('');
       await loadCategories();
       showToast({ tone: 'success', title: 'Kategori eklendi' });
@@ -104,7 +115,15 @@ export function AdminCategoriesPage() {
 
   function startEdit(category: AdminCategory) {
     setEditingId(category.id);
-    setEditDraft({ name: category.name, slug: category.slug, heroImageUrl: category.heroImageUrl ?? '', sortOrder: String(category.sortOrder ?? 0) });
+    setEditDraft({
+      name: category.name,
+      slug: category.slug,
+      heroImageUrl: category.heroImageUrl ?? '',
+      sortOrder: String(category.sortOrder ?? 0),
+      description: category.description ?? '',
+      heroTitle: category.heroTitle ?? '',
+      heroDescription: category.heroDescription ?? '',
+    });
   }
 
   async function handleUpdate(categoryId: string) {
@@ -115,6 +134,9 @@ export function AdminCategoriesPage() {
       await api.updateAdminCategory(token, categoryId, {
         name: editDraft.name.trim(),
         slug: editDraft.slug.trim(),
+        description: editDraft.description.trim(),
+        heroTitle: editDraft.heroTitle.trim() || null,
+        heroDescription: editDraft.heroDescription.trim() || null,
         heroImageUrl: editDraft.heroImageUrl.trim() || null,
         sortOrder: Number(editDraft.sortOrder) || 0,
       });
@@ -193,6 +215,16 @@ export function AdminCategoriesPage() {
               />
             </label>
           </div>
+          <label className="admin-field" style={{ alignSelf: 'end' }}>
+            <span>Kategori Açıklaması</span>
+            <textarea
+              className="ui-textarea"
+              onChange={(event) => setNewDescription(event.target.value)}
+              placeholder="Kategori sayfasında görünecek kısa açıklama (opsiyonel)."
+              rows={2}
+              value={newDescription}
+            />
+          </label>
           <Button disabled={busy || !newName.trim()} onClick={() => void handleCreate()} style={{ alignSelf: 'end' }}>
             Ekle
           </Button>
@@ -226,65 +258,101 @@ export function AdminCategoriesPage() {
               </thead>
               <tbody>
                 {categories.map((category) => (
-                  <tr key={category.id}>
+                  <Fragment key={category.id}>
+                    <tr>
+                      {editingId === category.id ? (
+                        <>
+                          <td>
+                            <input className="ui-input" onChange={(event) => setEditDraft((v) => ({ ...v, name: event.target.value }))} value={editDraft.name} />
+                          </td>
+                          <td>
+                            <input className="ui-input" onChange={(event) => setEditDraft((v) => ({ ...v, slug: event.target.value }))} value={editDraft.slug} />
+                          </td>
+                          <td>
+                            <div className="admin-category-image-field">
+                              <input className="ui-input" onChange={(event) => setEditDraft((v) => ({ ...v, heroImageUrl: event.target.value }))} value={editDraft.heroImageUrl} />
+                              <label className="media-tile__upload">
+                                {uploadingKey === category.id ? 'Yükleniyor...' : 'Yükle'}
+                                <input
+                                  accept={PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
+                                  hidden
+                                  onChange={(event) => {
+                                    const file = event.target.files?.[0];
+                                    if (!file) return;
+                                    void uploadCategoryImage(category.id, file, (url) => setEditDraft((v) => ({ ...v, heroImageUrl: url })));
+                                    event.currentTarget.value = '';
+                                  }}
+                                  type="file"
+                                />
+                              </label>
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>{category._count?.products ?? 0}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
+                              <Button disabled={busy} onClick={() => void handleUpdate(category.id)}>Kaydet</Button>
+                              <Button onClick={() => setEditingId(null)} variant="ghost">Vazgeç</Button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td><strong>{category.name}</strong></td>
+                          <td><code className="text-muted">/{category.slug}</code></td>
+                          <td>
+                            {category.heroImageUrl ? (
+                              <a className="admin-table-action" href={category.heroImageUrl} rel="noreferrer" target="_blank">
+                                Görsel Aç
+                              </a>
+                            ) : (
+                              <span className="text-muted">Yok</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>{category._count?.products ?? 0}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
+                              <Button onClick={() => startEdit(category)} variant="secondary">Düzenle</Button>
+                              <Button onClick={() => void handleDelete(category)} variant="ghost">Sil</Button>
+                            </div>
+                          </td>
+                        </>
+                      )}
+                    </tr>
                     {editingId === category.id ? (
-                      <>
-                        <td>
-                          <input className="ui-input" onChange={(event) => setEditDraft((v) => ({ ...v, name: event.target.value }))} value={editDraft.name} />
-                        </td>
-                        <td>
-                          <input className="ui-input" onChange={(event) => setEditDraft((v) => ({ ...v, slug: event.target.value }))} value={editDraft.slug} />
-                        </td>
-                        <td>
-                          <div className="admin-category-image-field">
-                            <input className="ui-input" onChange={(event) => setEditDraft((v) => ({ ...v, heroImageUrl: event.target.value }))} value={editDraft.heroImageUrl} />
-                            <label className="media-tile__upload">
-                              {uploadingKey === category.id ? 'Yükleniyor...' : 'Yükle'}
-                              <input
-                                accept={PRODUCT_MEDIA_IMAGE_MIME_TYPES.join(',')}
-                                hidden
-                                onChange={(event) => {
-                                  const file = event.target.files?.[0];
-                                  if (!file) return;
-                                  void uploadCategoryImage(category.id, file, (url) => setEditDraft((v) => ({ ...v, heroImageUrl: url })));
-                                  event.currentTarget.value = '';
-                                }}
-                                type="file"
+                      <tr>
+                        <td colSpan={5} style={{ background: 'rgba(255,255,255,0.02)' }}>
+                          <div className="admin-form-grid" style={{ margin: '0.5rem 0' }}>
+                            <label className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                              <span>Kategori Açıklaması</span>
+                              <textarea
+                                className="ui-textarea"
+                                onChange={(event) => setEditDraft((v) => ({ ...v, description: event.target.value }))}
+                                placeholder="Kategori sayfasında ve listelerde görünen açıklama."
+                                rows={2}
+                                value={editDraft.description}
+                              />
+                            </label>
+                            <InputField
+                              label="Kart Başlığı (heroTitle)"
+                              onChange={(event) => setEditDraft((v) => ({ ...v, heroTitle: event.target.value }))}
+                              placeholder="Kategori sayfası başlığı (boşsa kategori adı)"
+                              value={editDraft.heroTitle}
+                            />
+                            <label className="admin-field">
+                              <span>Kart Açıklaması (heroDescription)</span>
+                              <textarea
+                                className="ui-textarea"
+                                onChange={(event) => setEditDraft((v) => ({ ...v, heroDescription: event.target.value }))}
+                                placeholder="Kategori sayfası hero alanındaki açıklama."
+                                rows={2}
+                                value={editDraft.heroDescription}
                               />
                             </label>
                           </div>
                         </td>
-                        <td style={{ textAlign: 'center' }}>{category._count?.products ?? 0}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
-                            <Button disabled={busy} onClick={() => void handleUpdate(category.id)}>Kaydet</Button>
-                            <Button onClick={() => setEditingId(null)} variant="ghost">Vazgeç</Button>
-                          </div>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td><strong>{category.name}</strong></td>
-                        <td><code className="text-muted">/{category.slug}</code></td>
-                        <td>
-                          {category.heroImageUrl ? (
-                            <a className="admin-table-action" href={category.heroImageUrl} rel="noreferrer" target="_blank">
-                              Görsel Aç
-                            </a>
-                          ) : (
-                            <span className="text-muted">Yok</span>
-                          )}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>{category._count?.products ?? 0}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div className="admin-table__actions" style={{ justifyContent: 'flex-end' }}>
-                            <Button onClick={() => startEdit(category)} variant="secondary">Düzenle</Button>
-                            <Button onClick={() => void handleDelete(category)} variant="ghost">Sil</Button>
-                          </div>
-                        </td>
-                      </>
-                    )}
-                  </tr>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
